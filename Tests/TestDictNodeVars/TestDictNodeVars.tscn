@@ -1,0 +1,37 @@
+[gd_scene load_steps=4 format=2]
+
+[ext_resource path="res://addons/FracturalNodeVars/Editor/DictNodeVarsContainer.cs" type="Script" id=1]
+[ext_resource path="res://Tests/TestDictNodeVars/PrefabWithDictNodeVars.tscn" type="PackedScene" id=2]
+[ext_resource path="res://Tests/TestDictNodeVars/DoublePrefabWithDictNodeVars.tscn" type="PackedScene" id=3]
+
+[node name="TestDictNodeVars" type="Node"]
+script = ExtResource( 1 )
+__meta__ = {
+"_nodeVars/visible": true
+}
+Mode = 0
+_nodeVars = {
+"Var1": {
+"InitialValue": 0,
+"Operation": 0,
+"ValueType": "System.Int32"
+},
+"Var2": {
+"InitialValue": false,
+"Operation": 0,
+"ValueType": "System.Boolean"
+},
+"Var3": {
+"InitialValue": "0sdfsdf",
+"Operation": 0,
+"ValueType": "System.String"
+}
+}
+
+[node name="PrefabWithDictNodeVars" parent="." instance=ExtResource( 2 )]
+_nodeVars = {
+}
+
+[node name="Node" type="Node" parent="."]
+
+[node name="DoublePrefabWithDictNodeVars" parent="." instance=ExtResource( 3 )]

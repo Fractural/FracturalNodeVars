@@ -40,7 +40,6 @@ namespace Fractural.NodeVars
             if (node.Filename == "") return null;
             var packedScene = ResourceLoader.Load<PackedScene>(node.Filename);
             var instance = packedScene.Instance();
-            GD.Print("got inst filename: ", instance.Filename);
             instance.QueueFree();
             var dict = _packedSceneDefaultValuesRegistry.GetDefaultValue<GDC.Dictionary>(node, path);
             return dict;

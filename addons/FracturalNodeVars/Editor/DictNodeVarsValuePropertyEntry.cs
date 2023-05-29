@@ -447,7 +447,7 @@ namespace Fractural.NodeVars
         private void OnContainerVarSelectPressed()
         {
             var container = _relativeToNode.GetNode<INodeVarsContainer>(Data.ContainerPath);
-            _containerVarPopupSearch.SearchEntries = container.GetDictNodeVarsList().Select(x => x.Name).ToArray();
+            _containerVarPopupSearch.SearchEntries = container.GetNodeVarsList().Select(x => x.Name).ToArray();
             _containerVarPopupSearch.Popup_(_containerVarSelectButton.GetGlobalRect());
         }
 

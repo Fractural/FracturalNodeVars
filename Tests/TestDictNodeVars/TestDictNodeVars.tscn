@@ -11,21 +11,6 @@ __meta__ = {
 }
 Mode = 0
 _nodeVars = {
-"Var1": {
-"InitialValue": 0,
-"Operation": 0,
-"ValueType": "System.Int32"
-},
-"Var2": {
-"InitialValue": false,
-"Operation": 0,
-"ValueType": "System.Boolean"
-},
-"Var3": {
-"InitialValue": "0sdfsdf",
-"Operation": 0,
-"ValueType": "System.String"
-}
 }
 
 [node name="PrefabWithDictNodeVars" parent="." instance=ExtResource( 2 )]

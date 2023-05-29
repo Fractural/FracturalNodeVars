@@ -1,4 +1,5 @@
 ﻿using Fractural.Commons;
+using Fractural.DependencyInjection;
 using Fractural.Utils;
 using Godot;
 using System;
@@ -19,7 +20,7 @@ namespace Fractural.NodeVars
         /// Gets a list of all DictNodeVars for this <see cref="INodeVarsContainer"/>
         /// </summary>
         /// <returns></returns>
-        NodeVarData[] GetDictNodeVarsList();
+        NodeVarData[] GetNodeVarsList();
         /// <summary>
         /// Gets a NodeVar value at runtime. Does nothing when called from the editor.
         /// </summary>
@@ -36,14 +37,13 @@ namespace Fractural.NodeVars
 
     [RegisteredType(nameof(DictNodeVarsContainer), "res://addons/FracturalNodeVars/Assets/dependency-container.svg")]
     [Tool]
-    public class DictNodeVarsContainer : Node, INodeVarsContainer
+    public class DictNodeVarsContainer : Node, INodeVarsContainer, IInjectDIContainer
     {
         // Native C# Dictionary is around x9 faster than Godot Dictionary
         private IDictionary<string, NodeVarData> _dictNodeVars;
         public IDictionary<string, NodeVarData> DictNodeVars { get; private set; }
 
         private GDC.Dictionary _nodeVars;
-
         private HintString.DictNodeVarsMode _mode = HintString.DictNodeVarsMode.LocalAttributes;
         [Export]
         public HintString.DictNodeVarsMode Mode
@@ -55,6 +55,12 @@ namespace Fractural.NodeVars
                 PropertyListChangedNotify();
             }
         }
+        private PackedSceneDefaultValuesRegistry _packedSceneDefaultValuesRegistry;
+
+        public void Construct(DIContainer container)
+        {
+            _packedSceneDefaultValuesRegistry = container.Resolve<PackedSceneDefaultValuesRegistry>();
+        }
 
         public override void _Ready()
         {
@@ -63,16 +69,29 @@ namespace Fractural.NodeVars
                 return;
 #endif
             DictNodeVars = new Dictionary<string, NodeVarData>();
-            foreach (string key in _nodeVars)
-            {
-                var data = NodeVarData.FromGDDict(_nodeVars.Get<GDC.Dictionary>(key), key);
-                DictNodeVars[key] = data;
+            foreach (string key in _nodeVars.Keys)
+                AddNodeVar(NodeVarData.FromGDDict(_nodeVars.Get<GDC.Dictionary>(key), key));
 
-                if (data.IsPointer)
-                    data.Container = GetNode(data.ContainerPath);
-                else
-                    data.Reset();
+            var defaultNodeVars = _packedSceneDefaultValuesRegistry.GetDefaultValue<GDC.Dictionary>(Filename, nameof(_nodeVars));
+            foreach (string key in defaultNodeVars.Keys)
+            {
+                if (!DictNodeVars.ContainsKey(key))
+                    AddNodeVar(NodeVarData.FromGDDict(defaultNodeVars.Get<GDC.Dictionary>(key), key));
             }
+        }
+
+        /// <summary>
+        /// Adds a new NodeVar to the container. This is used at runtime.
+        /// </summary>
+        /// <param name="nodeVar"></param>
+        public void AddNodeVar(NodeVarData nodeVar)
+        {
+            DictNodeVars.Add(nodeVar.Name, nodeVar);
+
+            if (nodeVar.IsPointer)
+                nodeVar.Container = GetNode(nodeVar.ContainerPath);
+            else
+                nodeVar.Reset();
         }
 
         /// <summary>
@@ -108,7 +127,7 @@ namespace Fractural.NodeVars
         /// Gets a list of all DictNodeVars for this <see cref="INodeVarsContainer"/>
         /// </summary>
         /// <returns></returns>
-        public NodeVarData[] GetDictNodeVarsList()
+        public NodeVarData[] GetNodeVarsList()
         {
             int index = 0;
             NodeVarData[] result = new NodeVarData[_nodeVars.Count];

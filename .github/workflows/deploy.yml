@@ -30,7 +30,7 @@ jobs:
       - name: Create Release
         run: |
           mkdir release
-          mv addons/FracturalCommons addons/FracturalNodeVars release
+          mv addons/FracturalCommons addons/FracturalInject addons/FracturalNodeVars release
           pushd release
           zip -r ../Release.zip *
           popd

@@ -130,14 +130,18 @@ namespace Fractural.NodeVars
 
         private bool IsValueDefault()
         {
-            if (_defaultNodeVarsDict == null)
+            if (Value.Count == 0)
+                return true;
+            if (_fixedNodeVarsDict == null)
                 return false;
-            if (Value.Count != _defaultNodeVarsDict.Count)
+            if (Value.Count > _fixedNodeVarsDict.Count)
                 return false;
             foreach (string key in Value.Keys)
             {
                 var itemNodeVar = NodeVarData.FromGDDict(Value.Get<GDC.Dictionary>(key), key);
-                if (_defaultNodeVarsDict.TryGetValue(key, out NodeVarData defaultNodeVar) && !itemNodeVar.Equals(defaultNodeVar))
+                if (!_fixedNodeVarsDict.TryGetValue(key, out NodeVarData defaultNodeVar))
+                    return false;
+                if (!itemNodeVar.Equals(defaultNodeVar))
                     return false;
             }
             return true;
@@ -145,7 +149,7 @@ namespace Fractural.NodeVars
 
         public override void UpdateProperty()
         {
-            if (Value == null || IsValueDefault())
+            if (Value == null || (Value.Count > 0 && IsValueDefault()))
                 Value = new GDC.Dictionary();
 
             var displayedNodeVars = new Dictionary<string, NodeVarData>();
@@ -238,7 +242,7 @@ namespace Fractural.NodeVars
                     entry = _keyValueEntriesVBox.GetChild<DictNodeVarsValuePropertyEntry>(index);
 
                 if (currFocusedEntry == null || entry != currFocusedEntry)
-                    entry.SetData(nodeVar, _fixedNodeVarsDict?.GetValue(nodeVar.Name, null)?.InitialValue);
+                    entry.SetData(nodeVar, _fixedNodeVarsDict?.GetValue(nodeVar.Name, null));
                 if (HasFixedNodeVars)
                 {
                     var isFixed = _fixedNodeVarsDict.ContainsKey(nodeVar.Name);
@@ -311,10 +315,7 @@ namespace Fractural.NodeVars
         private void OnEntryDataChanged(string key, NodeVarData newValue)
         {
             // Remove entry if it is the same as the default value (no point in storing redundant information)
-            if (HasFixedNodeVars && _fixedNodeVarsDict.TryGetValue(key, out NodeVarData existingDefaultValue) && (
-                    (existingDefaultValue.InitialValue == null && newValue.InitialValue == null) ||
-                    (existingDefaultValue.InitialValue?.Equals(newValue.InitialValue) ?? false)
-                ))
+            if (HasFixedNodeVars && _fixedNodeVarsDict.TryGetValue(key, out NodeVarData existingDefaultValue) && existingDefaultValue.Equals(newValue))
                 Value.Remove(key);
             else
                 Value[key] = newValue.ToGDDict();

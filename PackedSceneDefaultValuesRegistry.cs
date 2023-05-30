@@ -106,6 +106,7 @@ namespace Fractural.NodeVars
         /// <returns></returns>
         public Dictionary<string, object> GetDefaultValues(string packedScenePath)
         {
+            if (packedScenePath == "") return null;
             if (!UseCache)
                 return FetchDefaultValues(ResourceLoader.Load<PackedScene>(packedScenePath, null, true));
             if (PackedSceneToDefaultValuesDict == null) return null;

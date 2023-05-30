@@ -99,7 +99,7 @@ namespace Fractural.NodeVars
 
         public StringValueProperty NameProperty { get; set; }
         public NodeVarData Data { get; set; }
-        public object DefaultInitialValue { get; set; }
+        public NodeVarData DefaultData { get; set; }
 
         private PopupSearch _containerVarPopupSearch;
         private Button _containerVarSelectButton;
@@ -236,9 +236,10 @@ namespace Fractural.NodeVars
 
         private void OnResetButtonPressed()
         {
-            Data.InitialValue = DefaultInitialValue;
+            Data = DefaultData.Clone();
             _valueProperty.SetValue(Data.InitialValue, false);
-            UpdateResetButton();
+            _containerPathProperty.SetValue(Data.ContainerPath, false);
+            UpdateIsPointerVisibility();
             InvokeDataChanged();
         }
 
@@ -264,12 +265,12 @@ namespace Fractural.NodeVars
             _operationButton.Select(operationTypeData.Index);
         }
 
-        public void SetData(NodeVarData value, object defaultInitialValue = null)
+        public void SetData(NodeVarData value, NodeVarData defaultData = null)
         {
             var oldData = Data;
             // Clone the data
             Data = value.Clone();
-            DefaultInitialValue = defaultInitialValue;
+            DefaultData = defaultData;
 
             if ((oldData == null && Data != null) || (oldData != null && oldData.ValueType != Data.ValueType))
                 UpdateValuePropertyType();
@@ -305,7 +306,6 @@ namespace Fractural.NodeVars
             _valueProperty.ValueChanged += (newValue) =>
             {
                 Data.InitialValue = newValue;
-                UpdateResetButton();
                 InvokeDataChanged();
             };
             _valueProperty.SetValue(Data.InitialValue, false);
@@ -314,7 +314,7 @@ namespace Fractural.NodeVars
 
         private void UpdateResetButton()
         {
-            _resetInitalValueButton.Visible = DefaultInitialValue != null && !Equals(Data.InitialValue, DefaultInitialValue);
+            _resetInitalValueButton.Visible = DefaultData != null && !Data.Equals(DefaultData);
         }
 
         private void InitOperationTypes()
@@ -390,7 +390,11 @@ namespace Fractural.NodeVars
             }
         }
 
-        private void InvokeDataChanged() => DataChanged?.Invoke(Data.Name, Data);
+        private void InvokeDataChanged()
+        {
+            UpdateResetButton();
+            DataChanged?.Invoke(Data.Name, Data);
+        }
 
         private void OnNameChanged(string newName)
         {
@@ -436,7 +440,7 @@ namespace Fractural.NodeVars
             }
             else
             {
-                _containerPathProperty.SetValue(Data.ContainerPath, false);
+                _containerPathProperty.SetValue(null, false);
                 Data.ContainerPath = null;
                 Data.ContainerVarName = null;
             }
@@ -447,7 +451,16 @@ namespace Fractural.NodeVars
         private void OnContainerVarSelectPressed()
         {
             var container = _relativeToNode.GetNode<INodeVarContainer>(Data.ContainerPath);
-            _containerVarPopupSearch.SearchEntries = container.GetNodeVarsList().Select(x => x.Name).ToArray();
+            _containerVarPopupSearch.SearchEntries = container.GetNodeVarsList()
+                .Where(x =>
+                {
+                    if (x.ValueType != Data.ValueType) return false;
+                    if (x.Operation == Data.Operation
+                        || Data.Operation == NodeVarOperation.Get && x.Operation == NodeVarOperation.GetSet
+                        || Data.Operation == NodeVarOperation.Set && x.Operation == NodeVarOperation.GetSet) return true;
+                    return false;
+                })
+                .Select(x => x.Name).ToArray();
             _containerVarPopupSearch.Popup_(_containerVarSelectButton.GetGlobalRect());
         }
 

@@ -1,0 +1,45 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://addons/FracturalNodeVars/Editor/NodeVarContainer.cs" type="Script" id=2]
+
+[node name="ForwardedNodeVarContainer" type="Node"]
+script = ExtResource( 2 )
+__meta__ = {
+"_nodeVars/visible": true
+}
+_nodeVars = {
+"Var1": {
+"ContainerPath": NodePath("ChildNodeVarContainer"),
+"ContainerVarName": "dummy",
+"InitialValue": 0,
+"Operation": 0,
+"ValueType": "System.Int32"
+},
+"Var2": {
+"InitialValue": "Heyoo",
+"Operation": 0,
+"ValueType": "System.String"
+},
+"Var3": {
+"InitialValue": 0,
+"Operation": 0,
+"ValueType": "System.Int32"
+}
+}
+
+[node name="SomeNode" type="Node" parent="."]
+
+[node name="SomeOtherNode" type="Node" parent="."]
+
+[node name="ChildNodeVarContainer" type="Node" parent="."]
+script = ExtResource( 2 )
+__meta__ = {
+"_nodeVars/visible": true
+}
+_nodeVars = {
+"dummy": {
+"InitialValue": 235,
+"Operation": 0,
+"ValueType": "System.Int32"
+}
+}

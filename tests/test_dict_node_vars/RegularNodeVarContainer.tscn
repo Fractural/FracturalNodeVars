@@ -2,7 +2,7 @@
 
 [ext_resource path="res://tests/test_dict_node_vars/InheritedNodeVarContainer.cs" type="Script" id=1]
 
-[node name="PrefabWithDictNodeVars" type="Node"]
+[node name="RegularNodeVarContainer" type="Node"]
 script = ExtResource( 1 )
 __meta__ = {
 "_nodeVars/visible": true

@@ -1,8 +1,10 @@
-[gd_scene load_steps=4 format=2]
+[gd_scene load_steps=6 format=2]
 
-[ext_resource path="res://tests/test_dict_node_vars/DoublePrefabWithDictNodeVars.tscn" type="PackedScene" id=1]
-[ext_resource path="res://tests/test_dict_node_vars/PrefabWithDictNodeVars.tscn" type="PackedScene" id=2]
-[ext_resource path="res://tests/test_dict_node_vars/TriplePrefabWithDictNodeVars.tscn" type="PackedScene" id=3]
+[ext_resource path="res://tests/test_dict_node_vars/DoubleInhertiNodeVarContainer.tscn" type="PackedScene" id=1]
+[ext_resource path="res://tests/test_dict_node_vars/RegularNodeVarContainer.tscn" type="PackedScene" id=2]
+[ext_resource path="res://tests/test_dict_node_vars/TripleInheritNodeVarContainer.tscn" type="PackedScene" id=3]
+[ext_resource path="res://addons/FracturalNodeVars/Editor/NodeVarContainer.cs" type="Script" id=4]
+[ext_resource path="res://tests/test_dict_node_vars/ForwardedNodeVarContainer.tscn" type="PackedScene" id=5]
 
 [node name="TestDictNodeVars" type="Node"]
 __meta__ = {
@@ -52,3 +54,44 @@ _nodeVars = {
 }
 
 [node name="Node" type="Node" parent="."]
+
+[node name="AnotherContainer" type="Node" parent="."]
+script = ExtResource( 4 )
+__meta__ = {
+"_nodeVars/visible": true
+}
+_nodeVars = {
+"SettableVar": {
+"InitialValue": Vector2( 0, 0 ),
+"Operation": 2,
+"ValueType": "Godot.Vector2"
+},
+"SomeString": {
+"InitialValue": "This is from another container!",
+"Operation": 0,
+"ValueType": "System.String"
+}
+}
+
+[node name="Forwarded" parent="." instance=ExtResource( 5 )]
+_nodeVars = {
+"Var2": {
+"ContainerPath": NodePath("../AnotherContainer"),
+"ContainerVarName": "SomeString",
+"InitialValue": "Heyoo",
+"Operation": 0,
+"ValueType": "System.String"
+},
+"Var3": {
+"InitialValue": 0,
+"Operation": 0,
+"ValueType": "System.Int32"
+},
+"Var4": {
+"ContainerPath": NodePath("../AnotherContainer"),
+"ContainerVarName": "SettableVar",
+"InitialValue": Vector2( 0, 0 ),
+"Operation": 1,
+"ValueType": "Godot.Vector2"
+}
+}

@@ -28,7 +28,10 @@ namespace Fractural.NodeVars
             }
             set
             {
-                _value = value;
+                if (IsPointer)
+                    Container.SetDictNodeVar(ContainerVarName, value);
+                else
+                    _value = value;
             }
         }
 

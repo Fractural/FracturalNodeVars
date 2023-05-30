@@ -72,10 +72,13 @@ namespace Fractural.NodeVars
             foreach (string key in _nodeVars.Keys)
                 AddNodeVar(NodeVarData.FromGDDict(_nodeVars.Get<GDC.Dictionary>(key), key));
 
-            var defaultNodeVars = _packedSceneDefaultValuesRegistry.GetDefaultValue<GDC.Dictionary>(Filename, nameof(_nodeVars));
-            foreach (string key in defaultNodeVars.Keys)
-                if (!DictNodeVars.ContainsKey(key))
-                    AddNodeVar(NodeVarData.FromGDDict(defaultNodeVars.Get<GDC.Dictionary>(key), key));
+            if (Filename != "")
+            {
+                var defaultNodeVars = _packedSceneDefaultValuesRegistry.GetDefaultValue<GDC.Dictionary>(Filename, nameof(_nodeVars));
+                foreach (string key in defaultNodeVars.Keys)
+                    if (!DictNodeVars.ContainsKey(key))
+                        AddNodeVar(NodeVarData.FromGDDict(defaultNodeVars.Get<GDC.Dictionary>(key), key));
+            }
 
             var defaultAttributes = NodeVarUtils.GetNodeVarsFromAttributes(GetType());
             foreach (var nodeVar in defaultAttributes)

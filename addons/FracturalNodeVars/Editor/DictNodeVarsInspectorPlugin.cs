@@ -56,7 +56,7 @@ namespace Fractural.NodeVars
                 NodeVarData[] defaultNodeVars = null;
                 bool canAddNewVars = false;
 
-                var sceneRoot = _plugin.GetEditorInterface();
+                var sceneRoot = _plugin.GetEditorInterface().GetEditedSceneRoot();
                 if (sceneRoot != @object)
                 {
                     // Inherit default values from original scene file

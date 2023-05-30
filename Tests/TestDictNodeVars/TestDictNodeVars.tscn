@@ -1,22 +1,49 @@
 [gd_scene load_steps=4 format=2]
 
-[ext_resource path="res://addons/FracturalNodeVars/Editor/DictNodeVarsContainer.cs" type="Script" id=1]
 [ext_resource path="res://Tests/TestDictNodeVars/PrefabWithDictNodeVars.tscn" type="PackedScene" id=2]
 [ext_resource path="res://Tests/TestDictNodeVars/DoublePrefabWithDictNodeVars.tscn" type="PackedScene" id=3]
+[ext_resource path="res://Tests/TestDictNodeVars/TriplePrefabWithDictNodeVars.tscn" type="PackedScene" id=4]
 
 [node name="TestDictNodeVars" type="Node"]
-script = ExtResource( 1 )
 __meta__ = {
 "_nodeVars/visible": true
 }
-Mode = 0
+
+[node name="Prefab" parent="." instance=ExtResource( 2 )]
 _nodeVars = {
+"MyAttributeGetVar": {
+"InitialValue": true,
+"Operation": 0,
+"ValueType": "System.Boolean"
+},
+"MyFloatVar": {
+"InitialValue": 0.543,
+"Operation": 2,
+"ValueType": "System.Single"
+}
 }
 
-[node name="PrefabWithDictNodeVars" parent="." instance=ExtResource( 2 )]
+[node name="DoubleInherit" parent="." instance=ExtResource( 3 )]
+_nodeVars = {
+"MyBoolVar": {
+"InitialValue": false,
+"Operation": 2,
+"ValueType": "System.Boolean"
+},
+"MyFloatVar": {
+"InitialValue": 2.3,
+"Operation": 2,
+"ValueType": "System.Single"
+},
+"MyGetVar": {
+"InitialValue": true,
+"Operation": 1,
+"ValueType": "System.Boolean"
+}
+}
+
+[node name="TripleInherit" parent="." instance=ExtResource( 4 )]
 _nodeVars = {
 }
 
 [node name="Node" type="Node" parent="."]
-
-[node name="DoublePrefabWithDictNodeVars" parent="." instance=ExtResource( 3 )]

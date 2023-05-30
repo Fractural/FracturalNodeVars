@@ -5,7 +5,7 @@ using GDC = Godot.Collections;
 namespace Tests
 {
     [Tool]
-    public class InheritedDictNodeVarsContainer : DictNodeVarsContainer
+    public class InheritedNodeVarContainer : NodeVarContainer
     {
         [Export]
         public Vector2 SomeVector2 { get; set; }

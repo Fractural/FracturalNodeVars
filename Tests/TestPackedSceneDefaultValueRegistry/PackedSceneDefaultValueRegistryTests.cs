@@ -1,4 +1,4 @@
-﻿using Fractural.NodeVars;
+using Fractural.NodeVars;
 using Fractural.IO;
 using Godot;
 

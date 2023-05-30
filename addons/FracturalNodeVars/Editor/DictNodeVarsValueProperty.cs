@@ -68,10 +68,7 @@ namespace Fractural.NodeVars
                 // - NodeVar attributes on some of the Node's properties
                 _fixedNodeVarsDict = new Dictionary<string, NodeVarData>();
                 foreach (var nodeVar in localFixedNodeVars)
-                {
-                    GD.Print("fixedNodeVar adding ", nodeVar.Name);
                     _fixedNodeVarsDict[nodeVar.Name] = nodeVar;
-                }
             }
             if (defaultNodeVars != null && defaultNodeVars.Length > 0)
             {
@@ -80,7 +77,6 @@ namespace Fractural.NodeVars
                 _defaultNodeVarsDict = new Dictionary<string, NodeVarData>();
                 foreach (var nodeVar in defaultNodeVars)
                 {
-                    GD.Print("defaultNodeVar adding ", nodeVar.Name);
                     _fixedNodeVarsDict[nodeVar.Name] = nodeVar;
                     _defaultNodeVarsDict.Add(nodeVar.Name, nodeVar);
                 }

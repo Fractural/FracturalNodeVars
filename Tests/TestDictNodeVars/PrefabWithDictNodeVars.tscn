@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=2]
 
-[ext_resource path="res://Tests/TestDictNodeVars/InheritedDictNodeVarsContainer.cs" type="Script" id=1]
+[ext_resource path="res://Tests/TestDictNodeVars/InheritedNodeVarContainer.cs" type="Script" id=1]
 
 [node name="PrefabWithDictNodeVars" type="Node"]
 script = ExtResource( 1 )
@@ -13,6 +13,26 @@ SomeDictionary = {
 }
 SomeArray = [  ]
 _nodeVars = {
+"InstancedVar1": {
+"InitialValue": 0,
+"Operation": 0,
+"ValueType": "System.Int32"
+},
+"InstancedVar2": {
+"InitialValue": "heyo",
+"Operation": 0,
+"ValueType": "System.String"
+},
+"MyAttributeSetVar": {
+"InitialValue": true,
+"Operation": 1,
+"ValueType": "System.Boolean"
+},
+"MyGetVar": {
+"InitialValue": "hi",
+"Operation": 1,
+"ValueType": "System.String"
+}
 }
 
 [node name="SomeNode" type="Node" parent="."]

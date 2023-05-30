@@ -11,13 +11,13 @@ namespace Fractural.NodeVars
 {
     public static class DictNodeVarsContainerExtensions
     {
-        public static T GetDictNodeVar<T>(this INodeVarsContainer container, string key) => (T)container.GetDictNodeVar(key);
+        public static T GetDictNodeVar<T>(this INodeVarContainer container, string key, bool force = false) => (T)container.GetDictNodeVar(key, force);
     }
 
-    public interface INodeVarsContainer
+    public interface INodeVarContainer
     {
         /// <summary>
-        /// Gets a list of all DictNodeVars for this <see cref="INodeVarsContainer"/>
+        /// Gets a list of all DictNodeVars for this <see cref="INodeVarContainer"/>
         /// </summary>
         /// <returns></returns>
         NodeVarData[] GetNodeVarsList();
@@ -26,18 +26,18 @@ namespace Fractural.NodeVars
         /// </summary>
         /// <param name="key"></param>
         /// <returns></returns>
-        object GetDictNodeVar(string key);
+        object GetDictNodeVar(string key, bool force = false);
         /// <summary>
         /// Sets a NodeVar value at runtime. Does nothing when called from the editor.
         /// </summary>
         /// <param name="key"></param>
         /// <param name="value"></param>
-        void SetDictNodeVar(string key, object value);
+        void SetDictNodeVar(string key, object value, bool force = false);
     }
 
-    [RegisteredType(nameof(DictNodeVarsContainer), "res://addons/FracturalNodeVars/Assets/dependency-container.svg")]
+    [RegisteredType(nameof(NodeVarContainer), "res://addons/FracturalNodeVars/Assets/dependency-container.svg")]
     [Tool]
-    public class DictNodeVarsContainer : Node, INodeVarsContainer, IInjectDIContainer
+    public class NodeVarContainer : Node, INodeVarContainer, IInjectDIContainer
     {
         // Native C# Dictionary is around x9 faster than Godot Dictionary
         private IDictionary<string, NodeVarData> _dictNodeVars;
@@ -89,7 +89,7 @@ namespace Fractural.NodeVars
             DictNodeVars.Add(nodeVar.Name, nodeVar);
 
             if (nodeVar.IsPointer)
-                nodeVar.Container = GetNode(nodeVar.ContainerPath);
+                nodeVar.Container = GetNode<INodeVarContainer>(nodeVar.ContainerPath);
             else
                 nodeVar.Reset();
         }
@@ -100,15 +100,18 @@ namespace Fractural.NodeVars
         /// <typeparam name="T"></typeparam>
         /// <param name="key"></param>
         /// <returns></returns>
-        public T GetDictNodeVar<T>(string key) => (T)GetDictNodeVar(key);
+        public T GetDictNodeVar<T>(string key, bool force = false) => (T)GetDictNodeVar(key, force);
+
         /// <summary>
         /// Gets a NodeVar value at runtime. Does nothing when called from the editor.
         /// </summary>
         /// <param name="key"></param>
         /// <returns></returns>
-        public object GetDictNodeVar(string key)
+        public object GetDictNodeVar(string key, bool force = false)
         {
             var data = DictNodeVars[key];
+            if (!force && data.Operation != NodeVarOperation.Get && data.Operation != NodeVarOperation.GetSet)
+                throw new Exception($"NodeVar: Attempted to get a non-getttable NodeVar \"{data.Name}\".");
             return data.Value;
         }
 
@@ -117,14 +120,16 @@ namespace Fractural.NodeVars
         /// </summary>
         /// <param name="key"></param>
         /// <param name="value"></param>
-        public void SetDictNodeVar(string key, object value)
+        public void SetDictNodeVar(string key, object value, bool force = false)
         {
             var data = DictNodeVars[key];
+            if (!force && data.Operation != NodeVarOperation.Set && data.Operation != NodeVarOperation.GetSet)
+                throw new Exception($"NodeVar: Attempted to set a non-setttable NodeVar \"{data.Name}\".");
             data.Value = value;
         }
 
         /// <summary>
-        /// Gets a list of all DictNodeVars for this <see cref="INodeVarsContainer"/>
+        /// Gets a list of all DictNodeVars for this <see cref="INodeVarContainer"/>
         /// </summary>
         /// <returns></returns>
         public NodeVarData[] GetNodeVarsList()

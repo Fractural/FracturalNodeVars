@@ -154,7 +154,7 @@ namespace Fractural.NodeVars
             _valuePropertyContainer = new MarginContainer();
             _valuePropertyContainer.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
 
-            _containerPathProperty = new NodePathValueProperty(sceneRoot, (node) => node is INodeVarsContainer);
+            _containerPathProperty = new NodePathValueProperty(sceneRoot, (node) => node is INodeVarContainer);
             _containerPathProperty.ValueChanged += OnNodePathChanged;
             _containerPathProperty.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
             _containerPathProperty.RelativeToNode = relativeToNode;
@@ -287,7 +287,7 @@ namespace Fractural.NodeVars
 
         private void UpdateIsPointerVisibility()
         {
-            var containerNode = _relativeToNode.GetNodeOrNull(Data?.ContainerPath ?? new NodePath()) as INodeVarsContainer;
+            var containerNode = _relativeToNode.GetNodeOrNull(Data?.ContainerPath ?? new NodePath()) as INodeVarContainer;
             _containerPathProperty.Visible = Data.IsPointer;
             _containerVarSelectButton.Visible = Data.IsPointer;
             _containerVarSelectButton.Disabled = containerNode == null;
@@ -446,7 +446,7 @@ namespace Fractural.NodeVars
 
         private void OnContainerVarSelectPressed()
         {
-            var container = _relativeToNode.GetNode<INodeVarsContainer>(Data.ContainerPath);
+            var container = _relativeToNode.GetNode<INodeVarContainer>(Data.ContainerPath);
             _containerVarPopupSearch.SearchEntries = container.GetNodeVarsList().Select(x => x.Name).ToArray();
             _containerVarPopupSearch.Popup_(_containerVarSelectButton.GetGlobalRect());
         }

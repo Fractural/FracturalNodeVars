@@ -4,4 +4,14 @@
 
 [node name="DoublePrefabWithDictNodeVars" instance=ExtResource( 1 )]
 _nodeVars = {
+"MyBoolVar": {
+"InitialValue": true,
+"Operation": 2,
+"ValueType": "System.Boolean"
+},
+"MyFloatVar": {
+"InitialValue": 3.4,
+"Operation": 2,
+"ValueType": "System.Single"
+}
 }

@@ -14,16 +14,27 @@ Node variables or `NodeVar` for short are improved inspector variables. These va
 
 NodeVars features: 
 - Can fetch it's value from a NodeVar on another node, allowing painless dependency injection directly within the inspector
+    - `ContainerPath` - Path to NodeVarContainer
+    - `ContainerVarName` - Name of the source NodeVar in the NodeVarContainer
 - Visibilitiy modifiers to specify what operations are allowing on the NodeVar
-    - Get - The NodeVar is readable from outside of the node.
-    - Set - The NodeVar is writable from outside of the node.
-    - Get/Set - The NodeVar is writable and readable from outside of the node. 
+    - `Get` - The NodeVar is readable from outside of the node.
+    - `Set` - The NodeVar is writable from outside of the node.
+    - `Get/Set` - The NodeVar is writable and readable from outside of the node. 
 - Can be exported as a dictionary of `NodeVars`, that is editable within the Inspector.
 
-## DictNodeVars
+## NodeVarContainer
 
-Node Var Dictionaries or `DictNodeVars` are dictionaries of NodeVars. They can be exported using the `HintString.AddDictNodevarsProp` extension method for `PropertyListBuilder`. A functioning node vars container is provided by `DictNodeVarsContainer`.
+`NodeVarContainer` is a collection of NodeVars. This node can be inherited.
+
+Variables
+- Node Vars - An editable dictionary of Node Vars. Inherited Node Vars cannot be deleted.
+- Mode - The behaviour of the container
+    - `Local` - User can add or remove NodeVars from the container.
+    - `Attributes` - Container only displays properties on the container with the `NodeVar` attribute. Containers that inherit from NodeVarContainer can declare properties that use the `NodeVar` attribute.
+    - `LocalAttributes` - User can add or remove NodeVars, and properties on the container with `NodeVar` attribute are also added to the container.
+
+You can also implement your own version of a container by creating a Node that implements the `INodeVarContainer` interface.  
 
 > **NOTE:**
 > 
-> `DictNodeVars` does not work with inherited scenes. This is due to a Godot limitation of not exposing the inhertance of a scene at all to tool scripts.
+> `NodeVarContainer` does not work with inherited scenes. This is due to a Godot limitation of not exposing the inhertance of a scene at all to tool scripts.

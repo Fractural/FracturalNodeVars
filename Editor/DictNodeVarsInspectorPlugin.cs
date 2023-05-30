@@ -40,7 +40,6 @@ namespace Fractural.NodeVars
             if (node.Filename == "") return null;
             var packedScene = ResourceLoader.Load<PackedScene>(node.Filename);
             var instance = packedScene.Instance();
-            GD.Print("got inst filename: ", instance.Filename);
             instance.QueueFree();
             var dict = _packedSceneDefaultValuesRegistry.GetDefaultValue<GDC.Dictionary>(node, path);
             return dict;
@@ -57,7 +56,7 @@ namespace Fractural.NodeVars
                 NodeVarData[] defaultNodeVars = null;
                 bool canAddNewVars = false;
 
-                var sceneRoot = _plugin.GetEditorInterface();
+                var sceneRoot = _plugin.GetEditorInterface().GetEditedSceneRoot();
                 if (sceneRoot != @object)
                 {
                     // Inherit default values from original scene file
@@ -76,7 +75,7 @@ namespace Fractural.NodeVars
 
                 var mode = (HintString.DictNodeVarsMode)Enum.Parse(typeof(HintString.DictNodeVarsMode), modeString);
                 if (mode == HintString.DictNodeVarsMode.Attributes || mode == HintString.DictNodeVarsMode.LocalAttributes)
-                    localFixedNodeVars = DictNodeVarsUtils.GetNodeVarsFromAttributes(objectType);
+                    localFixedNodeVars = NodeVarUtils.GetNodeVarsFromAttributes(objectType);
                 if (mode == HintString.DictNodeVarsMode.Local || mode == HintString.DictNodeVarsMode.LocalAttributes)
                     canAddNewVars = true;
 

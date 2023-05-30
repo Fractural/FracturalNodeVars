@@ -7,18 +7,6 @@ namespace Fractural.NodeVars
 {
     public class NodeVarData
     {
-        public static string NodeVarToPropertyName(string nodeVarName)
-        {
-            // We use underscores to avoid name conflicts with regular properties
-            return $"____{nodeVarName}____";
-        }
-
-        public static string PropertyToNodeVarName(string propertyName)
-        {
-            // We use underscores to avoid name conflicts with regular properties
-            return propertyName.TrimPrefix("____").TrimSuffix("____");
-        }
-
         // Serialized
         public Type ValueType { get; set; }
         public NodeVarOperation Operation { get; set; }
@@ -27,29 +15,20 @@ namespace Fractural.NodeVars
         public NodePath ContainerPath { get; set; }
 
         // Runtime
-        public Node Container { get; set; }
+        public INodeVarContainer Container { get; set; }
         public object InitialValue { get; set; }
         private object _value;
         public object Value
         {
             get
             {
-                if (Operation != NodeVarOperation.Get && Operation != NodeVarOperation.GetSet)
-                    throw new Exception($"NodeVar: Attempted to get a non-getttable NodeVar \"{Name}\".");
+                if (IsPointer)
+                    return Container.GetDictNodeVar(ContainerVarName);
                 return _value;
             }
             set
             {
-                if (Operation != NodeVarOperation.Set && Operation != NodeVarOperation.GetSet)
-                    throw new Exception($"NodeVar: Attempted to set a non-setttable NodeVar \"{Name}\".");
                 _value = value;
-                if (IsPointer)
-                {
-                    if (Container is INodeVarsContainer dictNodeVarsContainer)
-                        dictNodeVarsContainer.GetDictNodeVar(ContainerVarName);
-                    else
-                        Container.Get(NodeVarToPropertyName(ContainerVarName));
-                }
             }
         }
 

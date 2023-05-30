@@ -6,7 +6,7 @@ using Godot;
 
 namespace Fractural.NodeVars
 {
-    public static class DictNodeVarsUtils
+    public static class NodeVarUtils
     {
         /// <summary>
         /// Returns all fixed node vars for a given type, with each node var
@@ -59,6 +59,6 @@ namespace Fractural.NodeVars
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public static NodeVarData[] GetFixedDictNodeVars<T>() => GetNodeVarsFromAttributes(typeof(T));
+        public static NodeVarData[] GetNodeVarsFromAttributes<T>() => GetNodeVarsFromAttributes(typeof(T));
     }
 }

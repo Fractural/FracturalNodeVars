@@ -75,7 +75,7 @@ namespace Fractural.NodeVars
 
                 var mode = (HintString.DictNodeVarsMode)Enum.Parse(typeof(HintString.DictNodeVarsMode), modeString);
                 if (mode == HintString.DictNodeVarsMode.Attributes || mode == HintString.DictNodeVarsMode.LocalAttributes)
-                    localFixedNodeVars = DictNodeVarsUtils.GetNodeVarsFromAttributes(objectType);
+                    localFixedNodeVars = NodeVarUtils.GetNodeVarsFromAttributes(objectType);
                 if (mode == HintString.DictNodeVarsMode.Local || mode == HintString.DictNodeVarsMode.LocalAttributes)
                     canAddNewVars = true;
 

@@ -29,15 +29,15 @@ namespace Tests
         }
 
         [NodeVar]
-        public bool MySetVar
+        public Vector3 MySetVar
         {
             set => SetDictNodeVar(nameof(MySetVar), value);
         }
 
         [NodeVar]
-        public bool MyGetVar
+        public string MyGetVar
         {
-            get => GetDictNodeVar<bool>(nameof(MyGetVar));
+            get => GetDictNodeVar<string>(nameof(MyGetVar));
         }
 
         [NodeVar(NodeVarOperation.Set)]

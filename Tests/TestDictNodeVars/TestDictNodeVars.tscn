@@ -11,6 +11,11 @@ __meta__ = {
 
 [node name="Prefab" parent="." instance=ExtResource( 2 )]
 _nodeVars = {
+"InstancedVar3": {
+"InitialValue": "new stuff",
+"Operation": 0,
+"ValueType": "System.String"
+},
 "MyAttributeGetVar": {
 "InitialValue": true,
 "Operation": 0,
@@ -20,6 +25,11 @@ _nodeVars = {
 "InitialValue": 0.543,
 "Operation": 2,
 "ValueType": "System.Single"
+},
+"MyGetVar": {
+"InitialValue": "newText",
+"Operation": 1,
+"ValueType": "System.String"
 }
 }
 
@@ -34,11 +44,6 @@ _nodeVars = {
 "InitialValue": 2.3,
 "Operation": 2,
 "ValueType": "System.Single"
-},
-"MyGetVar": {
-"InitialValue": true,
-"Operation": 1,
-"ValueType": "System.Boolean"
 }
 }
 

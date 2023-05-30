@@ -23,13 +23,18 @@ _nodeVars = {
 "Operation": 0,
 "ValueType": "System.String"
 },
+"InstancedVar3": {
+"InitialValue": "replace me",
+"Operation": 0,
+"ValueType": "System.String"
+},
 "MyAttributeSetVar": {
 "InitialValue": true,
 "Operation": 1,
 "ValueType": "System.Boolean"
 },
 "MyGetVar": {
-"InitialValue": "hi",
+"InitialValue": "defaulText",
 "Operation": 1,
 "ValueType": "System.String"
 }

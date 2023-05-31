@@ -5,7 +5,24 @@ using GDC = Godot.Collections;
 
 namespace Fractural.NodeVars
 {
-    public class NodeVarData
+    public interface INodeVar
+    {
+        string Name { get; set; }
+    }
+
+    public interface ISetNodeVar : INodeVar
+    {
+        object Value { set; }
+    }
+
+    public interface IGetNodeVar : INodeVar
+    {
+        object Value { get; }
+    }
+
+    public interface IGetSetNodeVar : ISetNodeVar, IGetNodeVar { }
+
+    public class NodeVarData : IGetSetNodeVar
     {
         // Serialized
         public Type ValueType { get; set; }

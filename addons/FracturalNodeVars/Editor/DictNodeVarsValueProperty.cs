@@ -32,10 +32,17 @@ namespace Fractural.NodeVars
     [Tool]
     public class DictNodeVarsValueProperty : ValueProperty<GDC.Dictionary>, ISerializationListener
     {
+        private enum AddOptionIndex
+        {
+            Dynamic = 0,
+            Expression = 1
+        }
+
         private Button _editButton;
         private Control _container;
         private Button _addElementButton;
-        private VBoxContainer _keyValueEntriesVBox;
+        private OptionButton _addOptionButton;
+        private VBoxContainer _nodeVarEntriesVBox;
         private Node _sceneRoot;
         private Node _relativeToNode;
         private Dictionary<string, NodeVarData> _fixedNodeVarsDict;
@@ -90,18 +97,28 @@ namespace Fractural.NodeVars
             AddChild(_editButton);
 
             _addElementButton = new Button();
-            _addElementButton.Text = "Add DictNodeVar";
+            _addElementButton.Text = "Add NodeVar";
             _addElementButton.Connect("pressed", this, nameof(OnAddElementPressed));
             _addElementButton.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
             _addElementButton.RectMinSize = new Vector2(24 * 4, 0);
             _addElementButton.Visible = _canAddNewVars;
 
-            _keyValueEntriesVBox = new VBoxContainer();
+            _addOptionButton = new OptionButton();
+            _addOptionButton.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
+            _addOptionButton.AddItem("Dynamic", (int)AddOptionIndex.Dynamic);
+            _addOptionButton.AddItem("Expression", (int)AddOptionIndex.Expression);
+            _addOptionButton.Select((int)AddOptionIndex.Dynamic);
+
+            var hbox = new HBoxContainer();
+            hbox.AddChild(_addElementButton);
+            hbox.AddChild(_addOptionButton);
+
+            _nodeVarEntriesVBox = new VBoxContainer();
 
             var vbox = new VBoxContainer();
             vbox.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
-            vbox.AddChild(_addElementButton);
-            vbox.AddChild(_keyValueEntriesVBox);
+            vbox.AddChild(hbox);
+            vbox.AddChild(_nodeVarEntriesVBox);
 
             _container = vbox;
             AddChild(_container);
@@ -225,38 +242,41 @@ namespace Fractural.NodeVars
                 else
                 {
                     // Swap the entry that's currently in the focused entry's place with the focused entry.
-                    var targetEntry = _keyValueEntriesVBox.GetChild<NodeVarEntry>(keyIndex);
-                    _keyValueEntriesVBox.SwapChildren(targetEntry, currFocusedEntry);
+                    var targetEntry = _nodeVarEntriesVBox.GetChild<NodeVarEntry>(keyIndex);
+                    _nodeVarEntriesVBox.SwapChildren(targetEntry, currFocusedEntry);
                 }
             }
 
             // Set the data of each entry with the corresponding values from the Value dictionary
             int index = 0;
-            int childCount = _keyValueEntriesVBox.GetChildCount();
-            foreach (DynamicNodeVarData nodeVar in sortedDisplayNodeVars)
+            int childCount = _nodeVarEntriesVBox.GetChildCount();
+            foreach (NodeVarData nodeVar in sortedDisplayNodeVars)
             {
                 NodeVarEntry entry;
                 if (index >= childCount)
-                    entry = CreateDefaultEntry();
+                    entry = CreateDefaultEntry(nodeVar);
                 else
-                    entry = _keyValueEntriesVBox.GetChild<NodeVarEntry>(index);
-
+                    entry = _nodeVarEntriesVBox.GetChild<NodeVarEntry>(index);
+                if (!CanEntryHandleNodeVar(entry, nodeVar))
+                {
+                    // If the Entry can't handle the NodeVar (because they are different types)
+                    // then we free the entry and replace it with the correct one.
+                    entry.QueueFree();
+                    entry = CreateDefaultEntry(nodeVar);
+                    _nodeVarEntriesVBox.MoveChild(entry, index);
+                }
                 if (currFocusedEntry == null || entry != currFocusedEntry)
                     entry.SetData(nodeVar, _fixedNodeVarsDict?.GetValue(nodeVar.Name, null));
                 if (HasFixedNodeVars)
-                {
-                    var isFixed = _fixedNodeVarsDict.ContainsKey(nodeVar.Name);
-                    entry.SetFixed(isFixed);
-                }
+                    entry.IsFixed = _fixedNodeVarsDict.ContainsKey(nodeVar.Name);
                 index++;
             }
-
             // Free extra entries
             if (index < childCount)
             {
                 for (int i = childCount - 1; i >= index; i--)
                 {
-                    var entry = _keyValueEntriesVBox.GetChild<NodeVarEntry>(i);
+                    var entry = _nodeVarEntriesVBox.GetChild<NodeVarEntry>(i);
                     entry.NameChanged -= OnEntryNameChanged;
                     entry.DataChanged -= OnEntryDataChanged;
                     entry.QueueFree();
@@ -270,6 +290,8 @@ namespace Fractural.NodeVars
             _addElementButton.Disabled = !_canAddNewVars || (Value?.Contains(nextKey) ?? false);
         }
 
+        private string GetNextVarName() => NodeVarUtils.GetNextVarName(Value?.Keys.Cast<string>());
+
         private new ValueProperty CreateValueProperty(Type type)
         {
             var property = ValueProperty.CreateValueProperty(type);
@@ -281,14 +303,29 @@ namespace Fractural.NodeVars
             return property;
         }
 
-        private NodeVarEntry CreateDefaultEntry()
+        private bool CanEntryHandleNodeVar(NodeVarEntry entry, NodeVarData nodeVarData)
         {
-            var entry = new DictNodeVarsValuePropertyEntry(_assetsRegistry, _sceneRoot, _relativeToNode);
+            if (nodeVarData is DynamicNodeVarData && entry is DynamicNodeVarEntry)
+                return true;
+            if (nodeVarData is ExpressionNodeVarData && entry is ExpressionNodeVarEntry)
+                return true;
+            return false;
+        }
+
+        private NodeVarEntry CreateDefaultEntry(NodeVarData nodeVar)
+        {
+            NodeVarEntry entry;
+            if (nodeVar is DynamicNodeVarData)
+                entry = new DynamicNodeVarEntry(_assetsRegistry, _sceneRoot, _relativeToNode);
+            else if (nodeVar is ExpressionNodeVarData)
+                entry = new ExpressionNodeVarEntry(_assetsRegistry, _sceneRoot, _relativeToNode);
+            else
+                throw new Exception($"{nameof(DictNodeVarsValueProperty)}: No suitable entry type foudn for {nodeVar.GetType()}.");
+
             entry.NameChanged += OnEntryNameChanged;
             entry.DataChanged += OnEntryDataChanged;
             entry.Deleted += OnEntryDeleted;
-            // Add entry if we ran out of existing ones
-            _keyValueEntriesVBox.AddChild(entry);
+            _nodeVarEntriesVBox.AddChild(entry);
             return entry;
         }
 
@@ -330,12 +367,26 @@ namespace Fractural.NodeVars
             //
             // Use default types for the newly added element
             var nextKey = GetNextVarName();
-            Value[nextKey] = new DynamicNodeVarData()
+            switch ((AddOptionIndex)_addOptionButton.Selected)
             {
-                Name = nextKey,
-                ValueType = typeof(int),
-                InitialValue = DefaultValueUtils.GetDefault<int>()
-            }.ToGDDict();
+                case AddOptionIndex.Dynamic:
+                    Value[nextKey] = new DynamicNodeVarData()
+                    {
+                        Name = nextKey,
+                        ValueType = typeof(int),
+                        InitialValue = DefaultValueUtils.GetDefault<int>()
+                    }.ToGDDict();
+                    break;
+                case AddOptionIndex.Expression:
+                    Value[nextKey] = new ExpressionNodeVarData()
+                    {
+                        Name = nextKey,
+                        ValueType = typeof(int)
+                    }.ToGDDict();
+                    break;
+                default:
+                    throw new Exception($"{nameof(DictNodeVarsValueProperty)}: Could not handle adding NodeVar with option \"{_addOptionButton.Selected}\".");
+            }
             InvokeValueChanged(Value);
         }
 
@@ -343,20 +394,6 @@ namespace Fractural.NodeVars
         {
             SetMeta("visible", toggled);
             _container.Visible = toggled;
-        }
-
-        private string GetNextVarName()
-        {
-            var previousValues = Value?.Keys.Cast<string>();
-            uint highestNumber = 0;
-            if (previousValues != null)
-            {
-                foreach (var value in previousValues)
-                    if (uint.TryParse(value.TrimPrefix("Var"), out uint intValue) && intValue > highestNumber)
-                        highestNumber = intValue;
-                highestNumber++;
-            }
-            return "Var" + highestNumber.ToString();
         }
 
         public void OnBeforeSerialize()

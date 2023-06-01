@@ -22,7 +22,7 @@ namespace Fractural.NodeVars
             /// Usually the same as the ContainerVarName, but must be different
             /// if two variables have the same ContainerVarName.
             /// </summary>
-            public string LocalVarName { get; set; }
+            public string Name { get; set; }
 
             // Runtime
             public INodeVarContainer Container { get; set; }
@@ -39,16 +39,16 @@ namespace Fractural.NodeVars
                 {
                     { nameof(ContainerPath), ContainerPath },
                 };
-                if (ContainerVarName != null)
+                if (ContainerVarName != Name)
                     dict[nameof(ContainerVarName)] = ContainerVarName;
                 return dict;
             }
 
             public void FromGDDict(GDC.Dictionary dict, string key)
             {
+                Name = key;
                 ContainerPath = dict.Get<NodePath>(nameof(ContainerPath));
-                ContainerVarName = dict.Get<string>(nameof(ContainerVarName));
-                LocalVarName = key;
+                ContainerVarName = dict.Get(nameof(ContainerVarName), Name);
             }
 
             public NodeVarReference Clone()
@@ -57,7 +57,7 @@ namespace Fractural.NodeVars
                 {
                     ContainerPath = ContainerPath,
                     ContainerVarName = ContainerVarName,
-                    LocalVarName = LocalVarName
+                    Name = Name
                 };
             }
         }

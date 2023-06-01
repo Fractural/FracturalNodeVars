@@ -28,14 +28,9 @@ namespace Fractural.NodeVars
             return false;
         }
 
-        public static NodeVarData[] GetCompatibleVariables(this INodeVarContainer container, NodeVarOperation operation, Type valueType)
-        {
-            return container.GetNodeVarsList().Where(nodeVar => CheckNodeVarCompatible(nodeVar, operation, valueType)).ToArray();
-        }
-
         public static NodeVarData NodeVarDataFromGDDict(GDC.Dictionary dict, string key)
         {
-            string type = dict.Get<string>("Type");
+            string type = dict.Get<string>("Type", nameof(DynamicNodeVarData));
             NodeVarData result;
             switch (type)
             {
@@ -105,5 +100,18 @@ namespace Fractural.NodeVars
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
         public static DynamicNodeVarData[] GetNodeVarsFromAttributes<T>() => GetNodeVarsFromAttributes(typeof(T));
+
+        public static string GetNextVarName(IEnumerable<string> previousValues)
+        {
+            uint highestNumber = 0;
+            if (previousValues != null)
+            {
+                foreach (var value in previousValues)
+                    if (uint.TryParse(value.TrimPrefix("Var"), out uint intValue) && intValue > highestNumber)
+                        highestNumber = intValue;
+                highestNumber++;
+            }
+            return "Var" + highestNumber.ToString();
+        }
     }
 }

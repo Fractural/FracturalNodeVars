@@ -27,80 +27,20 @@ namespace Fractural.NodeVars
             public int Index { get; set; }
         }
 
-        private bool _disabled = false;
-        public bool Disabled
-        {
-            get => _disabled;
-            set
-            {
-                _disabled = value;
-                if (IsInsideTree())
-                    UpdateDisabledUI();
-            }
-        }
-        private bool _nameEditable = true;
-        public bool NameEditable
-        {
-            get => _nameEditable;
-            set
-            {
-                _nameEditable = value;
-                if (IsInsideTree())
-                    UpdateDisabledUI();
-            }
-        }
-        private bool _valueTypeEditable = true;
-        public bool ValueTypeEditable
-        {
-            get => _valueTypeEditable;
-            set
-            {
-                _valueTypeEditable = value;
-                if (IsInsideTree())
-                    UpdateDisabledUI();
-            }
-        }
-        private bool _operationEditable = true;
-        public bool OperationEditable
-        {
-            get => _operationEditable;
-            set
-            {
-                _operationEditable = value;
-                if (IsInsideTree())
-                    UpdateDisabledUI();
-            }
-        }
-        private bool _deletable = true;
-        public bool Deletable
-        {
-            get => _deletable;
-            set
-            {
-                _deletable = value;
-                if (IsInsideTree())
-                    UpdateDisabledUI();
-            }
-        }
-
-        private PopupSearch _containerVarPopupSearch;
-        private Button _containerVarSelectButton;
-        private NodePathValueProperty _containerPathProperty;
         private OptionButton _valueTypeButton;
         private OptionButton _operationButton;
         private Button _isPointerButton;
         private MarginContainer _valuePropertyContainer;
         private StringValueProperty _nameProperty;
         private ValueProperty _valueProperty;
-        private Button _deleteButton;
         private ValueTypeData[] _valueTypes;
         private OperationTypeData[] _operationTypes;
         private Node _relativeToNode;
         private IAssetsRegistry _assetsRegistry;
-        private Button _resetInitalValueButton;
+        private NodeVarPointerSelect _nodeVarPointerSelect;
 
         public DynamicNodeVarEntry() { }
-        public DynamicNodeVarEntry(IAssetsRegistry assetsRegistry, Node sceneRoot, Node relativeToNode)
+        public DynamicNodeVarEntry(IAssetsRegistry assetsRegistry, Node sceneRoot, Node relativeToNode) : base()
         {
             _assetsRegistry = assetsRegistry;
             _relativeToNode = relativeToNode;
@@ -125,22 +65,8 @@ namespace Fractural.NodeVars
             _nameProperty.ValueChanged += OnNameChanged;
             _nameProperty.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
 
-            _containerVarSelectButton = new Button();
-            _containerVarSelectButton.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
-            _containerVarSelectButton.ClipText = true;
-            _containerVarSelectButton.Connect("pressed", this, nameof(OnContainerVarSelectPressed));
-
-            _containerVarPopupSearch = new PopupSearch();
-            _containerVarPopupSearch.ItemListLineHeight = (int)(_containerVarPopupSearch.ItemListLineHeight * _assetsRegistry.Scale);
-            _containerVarPopupSearch.Connect(nameof(PopupSearch.EntrySelected), this, nameof(OnContainerVarNameSelected));
-
             _valuePropertyContainer = new MarginContainer();
             _valuePropertyContainer.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
-
-            _containerPathProperty = new NodePathValueProperty(sceneRoot, (node) => node is INodeVarContainer);
-            _containerPathProperty.ValueChanged += OnNodePathChanged;
-            _containerPathProperty.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
-            _containerPathProperty.RelativeToNode = relativeToNode;
 
             _valueTypeButton = new OptionButton();
             _valueTypeButton.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
@@ -157,44 +83,33 @@ namespace Fractural.NodeVars
             _isPointerButton.ToggleMode = true;
             _isPointerButton.Connect("toggled", this, nameof(OnIsPointerToggled));
 
-            _deleteButton = new Button();
-            _deleteButton.Connect("pressed", this, nameof(OnDeletePressed));
-
-            _resetInitalValueButton = new Button();
-            _resetInitalValueButton.Connect("pressed", this, nameof(OnResetButtonPressed));
-
-            AddChild(_containerVarPopupSearch);
+            _nodeVarPointerSelect = new NodeVarPointerSelect(assetsRegistry, sceneRoot, relativeToNode, (nodeVar) => NodeVarUtils.CheckNodeVarCompatible(nodeVar, Data.Operation, Data.ValueType));
+            _nodeVarPointerSelect.NodePathChanged += OnNodePathChanged;
 
             firstRowHBox.AddChild(_nameProperty);
             firstRowHBox.AddChild(_valueTypeButton);
             firstRowHBox.AddChild(_operationButton);
 
-            //control = new Control();
-            //control.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
-            //control.SizeFlagsStretchRatio = 0.1f;
-            //control.RectSize = new Vector2(24, 0);
-            //secondRowHBox.AddChild(control);
             secondRowHBox.AddChild(_isPointerButton);
-            secondRowHBox.AddChild(_containerPathProperty);
-            secondRowHBox.AddChild(_containerVarSelectButton);
+            secondRowHBox.AddChild(_nodeVarPointerSelect);
             secondRowHBox.AddChild(_valuePropertyContainer);
-            secondRowHBox.AddChild(_resetInitalValueButton);
+            secondRowHBox.AddChild(_resetInitialValueButton);
             secondRowHBox.AddChild(_deleteButton);
         }
 
         public override void _Ready()
         {
+            base._Ready();
+
 #if TOOLS
             if (NodeUtils.IsInEditorSceneTab(this))
                 return;
 #endif
-            _deleteButton.Icon = GetIcon("Remove", "EditorIcons");
             _isPointerButton.Icon = GetIcon("GuiScrollArrowRightHl", "EditorIcons");
-            _resetInitalValueButton.Icon = GetIcon("Reload", "EditorIcons");
 
             InitValueTypes();
             InitOperationTypes();
-            UpdateDisabledUI();
+            UpdateDisabledAndFixedUI();
         }
 
         public override void _Notification(int what)
@@ -202,43 +117,25 @@ namespace Fractural.NodeVars
             if (what == NotificationPredelete)
             {
                 _nameProperty.ValueChanged -= OnNameChanged;
-                _containerPathProperty.ValueChanged -= OnNodePathChanged;
+                _nodeVarPointerSelect.NodePathChanged -= OnNodePathChanged;
             }
         }
 
-        public override void SetFixed(bool isFixed)
+        protected override void UpdateDisabledAndFixedUI()
         {
-            NameEditable = !isFixed;
-            ValueTypeEditable = !isFixed;
-            OperationEditable = !isFixed;
-            Deletable = !isFixed;
-        }
-
-        private void UpdateDisabledUI()
-        {
-            _nameProperty.Disabled = _disabled || !NameEditable;
-            _valueTypeButton.Disabled = _disabled || !ValueTypeEditable;
-            _operationButton.Disabled = _disabled || !OperationEditable;
-            _valueProperty.Disabled = _disabled;
-            _deleteButton.Visible = Deletable;
-            _containerPathProperty.Disabled = _disabled;
-            _containerVarSelectButton.Disabled = _disabled;
-            _deleteButton.Disabled = _disabled;
-        }
-
-        private void OnResetButtonPressed()
-        {
-            Data = DefaultData.TypedClone();
-            _valueProperty.SetValue(Data.InitialValue, false);
-            _containerPathProperty.SetValue(Data.ContainerPath, false);
-            UpdateIsPointerVisibility();
-            InvokeDataChanged();
+            _nameProperty.Disabled = Disabled || IsFixed;
+            _valueTypeButton.Disabled = Disabled || IsFixed;
+            _operationButton.Disabled = Disabled || IsFixed;
+            if (_valueProperty != null)
+                _valueProperty.Disabled = Disabled;
+            _deleteButton.Visible = !IsFixed;
+            _nodeVarPointerSelect.Disabled = Disabled;
+            _deleteButton.Disabled = Disabled;
         }
 
         private void OnContainerVarNameSelected(string name)
         {
             Data.ContainerVarName = name;
-            _containerVarSelectButton.Text = name;
             InvokeDataChanged();
         }
 
@@ -266,9 +163,7 @@ namespace Fractural.NodeVars
         public override void SetData(DynamicNodeVarData value, DynamicNodeVarData defaultData = null)
         {
             var oldData = Data;
-            // Clone the data
-            Data = value.TypedClone();
-            DefaultData = defaultData;
+            base.SetData(value, defaultData);
 
             if ((oldData == null && Data != null) || (oldData != null && oldData.ValueType != Data.ValueType))
                 UpdateValuePropertyType();
@@ -277,19 +172,15 @@ namespace Fractural.NodeVars
             SetOperationsValueDisplay(Data.Operation);
             _nameProperty.SetValue(Data.Name);
             _valueProperty.SetValue(Data.InitialValue, false);
-            _containerPathProperty.SetValue(Data.ContainerPath, false);
-            _containerVarSelectButton.Text = Data.ContainerVarName ?? "[Empty]";
             _isPointerButton.SetPressedNoSignal(Data.IsPointer);
-            UpdateIsPointerVisibility();
+            UpdatePointerSelectAndVisibility();
             UpdateResetButton();
         }
 
-        private void UpdateIsPointerVisibility()
+        private void UpdatePointerSelectAndVisibility()
         {
-            var containerNode = _relativeToNode.GetNodeOrNull(Data?.ContainerPath ?? new NodePath()) as INodeVarContainer;
-            _containerPathProperty.Visible = Data.IsPointer;
-            _containerVarSelectButton.Visible = Data.IsPointer;
-            _containerVarSelectButton.Disabled = containerNode == null;
+            _nodeVarPointerSelect.SetValue(Data.ContainerPath, Data.ContainerVarName);
+            _nodeVarPointerSelect.Visible = Data.IsPointer;
             _valuePropertyContainer.Visible = !Data.IsPointer;
         }
 
@@ -308,11 +199,6 @@ namespace Fractural.NodeVars
             };
             _valueProperty.SetValue(Data.InitialValue, false);
             _valuePropertyContainer.AddChild(_valueProperty);
-        }
-
-        private void UpdateResetButton()
-        {
-            _resetInitalValueButton.Visible = DefaultData != null && !Data.Equals(DefaultData);
         }
 
         private void InitOperationTypes()
@@ -404,7 +290,6 @@ namespace Fractural.NodeVars
         private void OnNodePathChanged(NodePath newValue)
         {
             Data.ContainerPath = newValue;
-            UpdateIsPointerVisibility();
             InvokeDataChanged();
         }
 
@@ -438,22 +323,12 @@ namespace Fractural.NodeVars
             }
             else
             {
-                _containerPathProperty.SetValue(null, false);
                 Data.ContainerPath = null;
                 Data.ContainerVarName = null;
             }
-            UpdateIsPointerVisibility();
+            UpdatePointerSelectAndVisibility();
             InvokeDataChanged();
         }
-
-        private void OnContainerVarSelectPressed()
-        {
-            var container = _relativeToNode.GetNode<INodeVarContainer>(Data.ContainerPath);
-            _containerVarPopupSearch.SearchEntries = container.GetCompatibleVariables(Data.Operation, Data.ValueType).Select(x => x.Name).ToArray();
-            _containerVarPopupSearch.Popup_(_containerVarSelectButton.GetGlobalRect());
-        }
-
-        private void OnDeletePressed() => InvokeDeleted();
     }
 }
 #endif

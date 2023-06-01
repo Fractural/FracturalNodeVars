@@ -11,7 +11,7 @@ namespace Fractural.NodeVars
 {
     public static class DictNodeVarsContainerExtensions
     {
-        public static T GetDictNodeVar<T>(this INodeVarContainer container, string key, bool force = false) => (T)container.GetDictNodeVar(key, force);
+        public static T GetDictNodeVar<T>(this INodeVarContainer container, string key) => (T)container.GetDictNodeVar(key);
     }
 
     public interface INodeVarContainer
@@ -26,13 +26,13 @@ namespace Fractural.NodeVars
         /// </summary>
         /// <param name="key"></param>
         /// <returns></returns>
-        object GetDictNodeVar(string key, bool force = false);
+        object GetDictNodeVar(string key);
         /// <summary>
         /// Sets a NodeVar value at runtime. Does nothing when called from the editor.
         /// </summary>
         /// <param name="key"></param>
         /// <param name="value"></param>
-        void SetDictNodeVar(string key, object value, bool force = false);
+        void SetDictNodeVar(string key, object value);
     }
 
     [RegisteredType(nameof(NodeVarContainer), "res://addons/FracturalNodeVars/Assets/dependency-container.svg")]
@@ -70,14 +70,14 @@ namespace Fractural.NodeVars
 #endif
             DictNodeVars = new Dictionary<string, NodeVarData>();
             foreach (string key in _nodeVars.Keys)
-                AddNodeVar(NodeVarData.FromGDDict(_nodeVars.Get<GDC.Dictionary>(key), key));
+                AddNodeVar(NodeVarUtils.NodeVarDataFromGDDict(_nodeVars.Get<GDC.Dictionary>(key), key));
 
             if (Filename != "")
             {
                 var defaultNodeVars = _packedSceneDefaultValuesRegistry.GetDefaultValue<GDC.Dictionary>(Filename, nameof(_nodeVars));
                 foreach (string key in defaultNodeVars.Keys)
                     if (!DictNodeVars.ContainsKey(key))
-                        AddNodeVar(NodeVarData.FromGDDict(defaultNodeVars.Get<GDC.Dictionary>(key), key));
+                        AddNodeVar(NodeVarUtils.NodeVarDataFromGDDict(defaultNodeVars.Get<GDC.Dictionary>(key), key));
             }
 
             var defaultAttributes = NodeVarUtils.GetNodeVarsFromAttributes(GetType());
@@ -92,12 +92,8 @@ namespace Fractural.NodeVars
         /// <param name="nodeVar"></param>
         public void AddNodeVar(NodeVarData nodeVar)
         {
+            nodeVar.Ready(this);
             DictNodeVars.Add(nodeVar.Name, nodeVar);
-
-            if (nodeVar.IsPointer)
-                nodeVar.Container = GetNode<INodeVarContainer>(nodeVar.ContainerPath);
-            else
-                nodeVar.Reset();
         }
 
         /// <summary>
@@ -106,19 +102,19 @@ namespace Fractural.NodeVars
         /// <typeparam name="T"></typeparam>
         /// <param name="key"></param>
         /// <returns></returns>
-        public T GetDictNodeVar<T>(string key, bool force = false) => (T)GetDictNodeVar(key, force);
+        public T GetDictNodeVar<T>(string key) => (T)GetDictNodeVar(key);
 
         /// <summary>
         /// Gets a NodeVar value at runtime. Does nothing when called from the editor.
         /// </summary>
         /// <param name="key"></param>
         /// <returns></returns>
-        public object GetDictNodeVar(string key, bool force = false)
+        public object GetDictNodeVar(string key)
         {
             var data = DictNodeVars[key];
-            if (!force && data.Operation != NodeVarOperation.Get && data.Operation != NodeVarOperation.GetSet)
-                throw new Exception($"NodeVar: Attempted to get a non-getttable NodeVar \"{data.Name}\".");
-            return data.Value;
+            if (data is IGetNodeVar getNodeVar)
+                return getNodeVar.Value;
+            throw new Exception($"{nameof(NodeVarContainer)}: Could not get NodeVar of \"{key}\".");
         }
 
         /// <summary>
@@ -126,12 +122,15 @@ namespace Fractural.NodeVars
         /// </summary>
         /// <param name="key"></param>
         /// <param name="value"></param>
-        public void SetDictNodeVar(string key, object value, bool force = false)
+        public void SetDictNodeVar(string key, object value)
         {
             var data = DictNodeVars[key];
-            if (!force && data.Operation != NodeVarOperation.Set && data.Operation != NodeVarOperation.GetSet)
-                throw new Exception($"NodeVar: Attempted to set a non-setttable NodeVar \"{data.Name}\".");
-            data.Value = value;
+            if (data is ISetNodeVar setNodeVar)
+            {
+                setNodeVar.Value = value;
+                return;
+            }
+            throw new Exception($"{nameof(NodeVarContainer)}: Could not set NodeVar of \"{key}\".");
         }
 
         /// <summary>
@@ -144,7 +143,7 @@ namespace Fractural.NodeVars
             NodeVarData[] result = new NodeVarData[_nodeVars.Count];
             foreach (string key in _nodeVars.Keys)
             {
-                result[index] = NodeVarData.FromGDDict(_nodeVars.Get<GDC.Dictionary>(key), key);
+                result[index] = NodeVarUtils.NodeVarDataFromGDDict(_nodeVars.Get<GDC.Dictionary>(key), key);
                 index++;
             }
             return result;

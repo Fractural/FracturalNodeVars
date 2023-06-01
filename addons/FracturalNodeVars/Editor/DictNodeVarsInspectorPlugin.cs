@@ -66,10 +66,10 @@ namespace Fractural.NodeVars
                     var defaultNodeVarDict = GetDefaultNodeVarDict(node, path);
                     if (defaultNodeVarDict != null)
                     {
-                        defaultNodeVars = new NodeVarData[defaultNodeVarDict.Count];
+                        defaultNodeVars = new DynamicNodeVarData[defaultNodeVarDict.Count];
                         int index = 0;
                         foreach (string key in defaultNodeVarDict.Keys)
-                            defaultNodeVars[index++] = NodeVarData.FromGDDict(defaultNodeVarDict.Get<GDC.Dictionary>(key), key);
+                            defaultNodeVars[index++] = NodeVarUtils.NodeVarDataFromGDDict(defaultNodeVarDict.Get<GDC.Dictionary>(key), key);
                     }
                 }
 

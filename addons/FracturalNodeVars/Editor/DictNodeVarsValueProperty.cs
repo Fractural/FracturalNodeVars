@@ -138,7 +138,7 @@ namespace Fractural.NodeVars
                 return false;
             foreach (string key in Value.Keys)
             {
-                var itemNodeVar = NodeVarData.FromGDDict(Value.Get<GDC.Dictionary>(key), key);
+                var itemNodeVar = NodeVarUtils.NodeVarDataFromGDDict(Value.Get<GDC.Dictionary>(key), key);
                 if (!_fixedNodeVarsDict.TryGetValue(key, out NodeVarData defaultNodeVar))
                     return false;
                 if (!itemNodeVar.Equals(defaultNodeVar))
@@ -154,7 +154,7 @@ namespace Fractural.NodeVars
 
             var displayedNodeVars = new Dictionary<string, NodeVarData>();
             foreach (string key in Value.Keys)
-                displayedNodeVars.Add(key, NodeVarData.FromGDDict(Value.Get<GDC.Dictionary>(key), key));
+                displayedNodeVars.Add(key, NodeVarUtils.NodeVarDataFromGDDict(Value.Get<GDC.Dictionary>(key), key));
 
             if (HasFixedNodeVars)
             {
@@ -181,7 +181,7 @@ namespace Fractural.NodeVars
                     {
                         if (_fixedNodeVarsDict.ContainsKey(key))
                             continue;
-                        var entry = NodeVarData.FromGDDict(Value.Get<GDC.Dictionary>(key), key);
+                        var entry = NodeVarUtils.NodeVarDataFromGDDict(Value.Get<GDC.Dictionary>(key), key);
                         // _fixedDictNodeVars doesn't contain an entry in Value dict, so we remove it from Value dict
                         Value.Remove(key);
                     }
@@ -209,7 +209,7 @@ namespace Fractural.NodeVars
             // Move the current focused entry into it's Value dict index inside the entries vBox.
             // We don't want to just overwrite the current focused entry since that would
             // cause the user to retain gui focus on the wrong entry.
-            var currFocusedEntry = _currentFocused?.GetAncestor<DictNodeVarsValuePropertyEntry>();
+            var currFocusedEntry = _currentFocused?.GetAncestor<NodeVarEntry>();
             if (currFocusedEntry != null)
             {
                 // Find the new index of the current focused entry within the Value dictionary.
@@ -225,7 +225,7 @@ namespace Fractural.NodeVars
                 else
                 {
                     // Swap the entry that's currently in the focused entry's place with the focused entry.
-                    var targetEntry = _keyValueEntriesVBox.GetChild<DictNodeVarsValuePropertyEntry>(keyIndex);
+                    var targetEntry = _keyValueEntriesVBox.GetChild<NodeVarEntry>(keyIndex);
                     _keyValueEntriesVBox.SwapChildren(targetEntry, currFocusedEntry);
                 }
             }
@@ -233,23 +233,20 @@ namespace Fractural.NodeVars
             // Set the data of each entry with the corresponding values from the Value dictionary
             int index = 0;
             int childCount = _keyValueEntriesVBox.GetChildCount();
-            foreach (NodeVarData nodeVar in sortedDisplayNodeVars)
+            foreach (DynamicNodeVarData nodeVar in sortedDisplayNodeVars)
             {
-                DictNodeVarsValuePropertyEntry entry;
+                NodeVarEntry entry;
                 if (index >= childCount)
                     entry = CreateDefaultEntry();
                 else
-                    entry = _keyValueEntriesVBox.GetChild<DictNodeVarsValuePropertyEntry>(index);
+                    entry = _keyValueEntriesVBox.GetChild<NodeVarEntry>(index);
 
                 if (currFocusedEntry == null || entry != currFocusedEntry)
                     entry.SetData(nodeVar, _fixedNodeVarsDict?.GetValue(nodeVar.Name, null));
                 if (HasFixedNodeVars)
                 {
                     var isFixed = _fixedNodeVarsDict.ContainsKey(nodeVar.Name);
-                    entry.NameEditable = !isFixed;
-                    entry.ValueTypeEditable = !isFixed;
-                    entry.OperationEditable = !isFixed;
-                    entry.Deletable = !isFixed;
+                    entry.SetFixed(isFixed);
                 }
                 index++;
             }
@@ -259,7 +256,7 @@ namespace Fractural.NodeVars
             {
                 for (int i = childCount - 1; i >= index; i--)
                 {
-                    var entry = _keyValueEntriesVBox.GetChild<DictNodeVarsValuePropertyEntry>(i);
+                    var entry = _keyValueEntriesVBox.GetChild<NodeVarEntry>(i);
                     entry.NameChanged -= OnEntryNameChanged;
                     entry.DataChanged -= OnEntryDataChanged;
                     entry.QueueFree();
@@ -284,7 +281,7 @@ namespace Fractural.NodeVars
             return property;
         }
 
-        private DictNodeVarsValuePropertyEntry CreateDefaultEntry()
+        private NodeVarEntry CreateDefaultEntry()
         {
             var entry = new DictNodeVarsValuePropertyEntry(_assetsRegistry, _sceneRoot, _relativeToNode);
             entry.NameChanged += OnEntryNameChanged;
@@ -295,15 +292,13 @@ namespace Fractural.NodeVars
             return entry;
         }
 
-        private void OnEntryNameChanged(string oldKey, DictNodeVarsValuePropertyEntry entry)
+        private void OnEntryNameChanged(string oldKey, NodeVarEntry entry)
         {
             var newKey = entry.Data.Name;
             if (Value.Contains(newKey))
             {
-                // Revert CurrentKey back
-                entry.Data.Name = oldKey;
                 // Reject change since the newKey already exists
-                entry.NameProperty.SetValue(oldKey);
+                entry.ResetName(oldKey);
                 return;
             }
             var currValue = Value[oldKey];
@@ -335,7 +330,7 @@ namespace Fractural.NodeVars
             //
             // Use default types for the newly added element
             var nextKey = GetNextVarName();
-            Value[nextKey] = new NodeVarData()
+            Value[nextKey] = new DynamicNodeVarData()
             {
                 Name = nextKey,
                 ValueType = typeof(int),

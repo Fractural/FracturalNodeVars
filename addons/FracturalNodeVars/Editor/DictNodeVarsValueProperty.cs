@@ -88,12 +88,14 @@ namespace Fractural.NodeVars
             _addElementButton.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
             _addElementButton.RectMinSize = new Vector2(24 * 4, 0);
             _addElementButton.Visible = _canAddNewVars;
+            _addElementButton.ClipText = true;
 
             _addOptionButton = new OptionButton();
             _addOptionButton.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
             _addOptionButton.AddItem("Dynamic", (int)AddOptionIndex.Dynamic);
             _addOptionButton.AddItem("Expression", (int)AddOptionIndex.Expression);
             _addOptionButton.Select((int)AddOptionIndex.Dynamic);
+            _addOptionButton.ClipText = true;
 
             var hbox = new HBoxContainer();
             hbox.AddChild(_addElementButton);
@@ -126,6 +128,14 @@ namespace Fractural.NodeVars
             // the tree being busy setting up nodes.
             SetBottomEditor(_container);
             SetProcess(false);
+        }
+
+        protected override void OnDisabled(bool disabled)
+        {
+            _addElementButton.Disabled = disabled;
+            _addOptionButton.Disabled = disabled;
+            foreach (NodeVarEntry entry in _nodeVarEntriesVBox.GetChildren())
+                entry.Disabled = disabled;
         }
 
         private Control _currentFocused;

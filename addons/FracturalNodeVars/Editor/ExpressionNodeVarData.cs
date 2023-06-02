@@ -70,7 +70,7 @@ namespace Fractural.NodeVars
         }
 
         // Serialized
-        public string Expression { get; set; }
+        public string Expression { get; set; } = "";
         public IDictionary<string, NodeVarReference> NodeVarReferences { get; set; } = new Dictionary<string, NodeVarReference>();
 
         // Runtime
@@ -144,7 +144,7 @@ namespace Fractural.NodeVars
             var nodeVarReferencesDict = new GDC.Dictionary();
             foreach (var pair in NodeVarReferences)
                 nodeVarReferencesDict[pair.Key] = pair.Value.ToGDDict();
-            dict[nameof(NodeVarReference)] = nodeVarReferencesDict;
+            dict[nameof(NodeVarReferences)] = nodeVarReferencesDict;
             return dict;
         }
 

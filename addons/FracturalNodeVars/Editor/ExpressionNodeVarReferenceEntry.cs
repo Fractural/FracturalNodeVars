@@ -8,9 +8,9 @@ using static Fractural.NodeVars.ExpressionNodeVarData;
 #if TOOLS
 namespace Fractural.NodeVars
 {
-    public class NodeVarReferenceEntry : VBoxContainer
+    public class ExpressionNodeVarReferenceEntry : HBoxContainer
     {
-        public event Action<string, NodeVarReferenceEntry> NameChanged;
+        public event Action<string, ExpressionNodeVarReferenceEntry> NameChanged;
         public event Action<string, NodeVarReference> DataChanged;
         public event Action<string> Deleted;
 
@@ -40,34 +40,40 @@ namespace Fractural.NodeVars
         }
 
         private NodeVarPointerSelect _nodeVarPointerSelect;
-        private StringValueProperty _localVarAliasProperty;
+        private StringValueProperty _nameProperty;
         private Button _deleteButton;
 
-        public NodeVarReferenceEntry() { }
-        public NodeVarReferenceEntry(IAssetsRegistry assetsRegistry, Node sceneRoot, Node relativeToNode, Func<NodeVarData, bool> conditionFunc = null)
+        public ExpressionNodeVarReferenceEntry() { }
+        public ExpressionNodeVarReferenceEntry(IAssetsRegistry assetsRegistry, Node sceneRoot, Node relativeToNode, Func<NodeVarData, bool> conditionFunc = null)
         {
-            _localVarAliasProperty = new StringValueProperty();
+            var control = new Control();
+            control.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
+            control.SizeFlagsStretchRatio = 0.1f;
+            control.RectSize = new Vector2(24, 0);
+            AddChild(control);
+
+            var contentVBox = new VBoxContainer();
+            contentVBox.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
+            contentVBox.SizeFlagsStretchRatio = 0.9f;
+            AddChild(contentVBox);
+
+            _nameProperty = new StringValueProperty();
+            _nameProperty.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
+            _nameProperty.ValueChanged += OnNameChanged;
+
             _nodeVarPointerSelect = new NodeVarPointerSelect(assetsRegistry, sceneRoot, relativeToNode, conditionFunc);
-            _nodeVarPointerSelect.NodePathChanged += (path) =>
-            {
-                Data.ContainerPath = path;
-                InvokeDataChanged();
-            };
-            _nodeVarPointerSelect.VarNameChanged += (name) =>
-            {
-                Data.ContainerVarName = name;
-                InvokeDataChanged();
-            };
+            _nodeVarPointerSelect.NodePathChanged += OnContainerPathChanged;
+            _nodeVarPointerSelect.VarNameChanged += OnContainerVarNameChanged;
 
             _deleteButton = new Button();
             _deleteButton.Connect("pressed", this, nameof(OnDeletePressed));
 
             var hbox = new HBoxContainer();
-            hbox.AddChild(_localVarAliasProperty);
+            hbox.AddChild(_nameProperty);
             hbox.AddChild(_deleteButton);
 
-            AddChild(hbox);
-            AddChild(_nodeVarPointerSelect);
+            contentVBox.AddChild(hbox);
+            contentVBox.AddChild(_nodeVarPointerSelect);
         }
 
         public override void _Ready()
@@ -85,24 +91,42 @@ namespace Fractural.NodeVars
             Data = data;
             DefaultData = data;
             _nodeVarPointerSelect.SetValue(data.ContainerPath, data.ContainerVarName);
-            _localVarAliasProperty.SetValue(data.Name, false);
+            _nameProperty.SetValue(data.Name, false);
         }
 
         public void ResetName(string oldName)
         {
             Data.Name = oldName;
-            _localVarAliasProperty.SetValue(oldName, false);
+            _nameProperty.SetValue(oldName, false);
         }
 
         private void UpdateDisabledAndFixedUI()
         {
             _deleteButton.Disabled = IsFixed || Disabled;
-            _localVarAliasProperty.Disabled = IsFixed || Disabled;
+            _nameProperty.Disabled = IsFixed || Disabled;
             _nodeVarPointerSelect.Disabled = Disabled;
         }
 
-        private void OnDeletePressed() => InvokeDeleted();
+        private void OnContainerPathChanged(NodePath path)
+        {
+            Data.ContainerPath = path;
+            InvokeDataChanged();
+        }
 
+        private void OnContainerVarNameChanged(string name)
+        {
+            Data.ContainerVarName = name;
+            InvokeDataChanged();
+        }
+
+        private void OnNameChanged(string newName)
+        {
+            var oldName = Data.Name;
+            Data.Name = newName;
+            NameChanged?.Invoke(oldName, this);
+        }
+
+        private void OnDeletePressed() => InvokeDeleted();
         private void InvokeDataChanged() => DataChanged?.Invoke(Data.Name, Data);
         private void InvokeDeleted() => Deleted?.Invoke(Data.Name);
     }

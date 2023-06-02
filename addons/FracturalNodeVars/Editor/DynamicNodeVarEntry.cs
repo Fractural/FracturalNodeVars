@@ -68,6 +68,7 @@ namespace Fractural.NodeVars
             _isPointerButton.Connect("toggled", this, nameof(OnIsPointerToggled));
 
             _nodeVarPointerSelect = new NodeVarPointerSelect(assetsRegistry, sceneRoot, relativeToNode, (nodeVar) => NodeVarUtils.CheckNodeVarCompatible(nodeVar, Data.Operation, Data.ValueType));
+            _nodeVarPointerSelect.VarNameChanged += OnContainerVarNameSelected;
             _nodeVarPointerSelect.NodePathChanged += OnNodePathChanged;
 
             firstRowHBox.AddChild(_nameProperty);
@@ -94,15 +95,6 @@ namespace Fractural.NodeVars
             InitValueTypes();
             InitOperationTypes();
             UpdateDisabledAndFixedUI();
-        }
-
-        public override void _Notification(int what)
-        {
-            base._Notification(what);
-            if (what == NotificationPredelete)
-            {
-                _nodeVarPointerSelect.NodePathChanged -= OnNodePathChanged;
-            }
         }
 
         protected override void UpdateDisabledAndFixedUI()

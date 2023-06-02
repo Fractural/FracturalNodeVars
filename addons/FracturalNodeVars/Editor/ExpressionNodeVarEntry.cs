@@ -17,6 +17,7 @@ namespace Fractural.NodeVars
         private StringValueProperty _expressionProperty;
         private VBoxContainer _referenceEntriesVBox;
         private Button _addElementButton;
+        private TextureRect _expressionIconRect;
 
         private IAssetsRegistry _assetsRegistry;
         private Node _sceneRoot;
@@ -30,22 +31,30 @@ namespace Fractural.NodeVars
             _relativeToNode = relativeToNode;
 
             _expressionProperty = new StringValueProperty();
+            _expressionProperty.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
+            _expressionProperty.PlaceholderText = "Expression";
+            _expressionProperty.ValueChanged += OnExpressionChanged;
+
             _referenceEntriesVBox = new VBoxContainer();
 
             _addElementButton = new Button();
-            _addElementButton.Text = "Add Reference";
             _addElementButton.Connect("pressed", this, nameof(OnAddElementPressed));
-            _addElementButton.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
-            _addElementButton.RectMinSize = new Vector2(24 * 4, 0);
 
-            var hbox = new HBoxContainer();
-            hbox.AddChild(_nameProperty);
-            hbox.AddChild(_resetInitialValueButton);
-            hbox.AddChild(_deleteButton);
+            _expressionIconRect = new TextureRect();
+            _expressionIconRect.SizeFlagsVertical = (int)SizeFlags.ShrinkCenter;
 
-            _contentVBox.AddChild(hbox);
-            _contentVBox.AddChild(_addElementButton);
-            _contentVBox.AddChild(_expressionProperty);
+            var topHBox = new HBoxContainer();
+            topHBox.AddChild(_nameProperty);
+            topHBox.AddChild(_resetInitialValueButton);
+            topHBox.AddChild(_deleteButton);
+
+            var midHBox = new HBoxContainer();
+            midHBox.AddChild(_expressionIconRect);
+            midHBox.AddChild(_expressionProperty);
+            midHBox.AddChild(_addElementButton);
+
+            _contentVBox.AddChild(topHBox);
+            _contentVBox.AddChild(midHBox);
             _contentVBox.AddChild(_referenceEntriesVBox);
         }
 
@@ -56,6 +65,7 @@ namespace Fractural.NodeVars
             if (NodeUtils.IsInEditorSceneTab(this))
                 return;
 #endif
+            _expressionIconRect.Texture = GetIcon("SceneUniqueName", "EditorIcons");
             _addElementButton.Icon = GetIcon("Add", "EditorIcons");
             GetViewport().Connect("gui_focus_changed", this, nameof(OnFocusChanged));
         }
@@ -64,6 +74,22 @@ namespace Fractural.NodeVars
         {
             base.SetData(value, defaultData);
 
+            UpdateUI();
+        }
+
+        protected override void UpdateDisabledAndFixedUI()
+        {
+            _expressionProperty.Disabled = Disabled;
+            _nameProperty.Disabled = Disabled;
+            foreach (ExpressionNodeVarReferenceEntry entry in _referenceEntriesVBox.GetChildren())
+            {
+                entry.Disabled = Disabled;
+                entry.IsFixed = DefaultData?.NodeVarReferences.ContainsKey(entry.Name) ?? false;
+            }
+        }
+
+        private void UpdateUI()
+        {
             var displayedReferences = new Dictionary<string, NodeVarReference>();
             foreach (string key in Data.NodeVarReferences.Keys)
                 displayedReferences.Add(key, Data.NodeVarReferences[key]);
@@ -97,7 +123,7 @@ namespace Fractural.NodeVars
                 return a.Name.CompareTo(b.Name);
             });
 
-            var currFocusedEntry = _currentFocused?.GetAncestor<NodeVarReferenceEntry>();
+            var currFocusedEntry = _currentFocused?.GetAncestor<ExpressionNodeVarReferenceEntry>();
             if (currFocusedEntry != null)
             {
                 int keyIndex = sortedReferences.FindIndex(x => x.Name == currFocusedEntry.Data.Name);
@@ -114,14 +140,14 @@ namespace Fractural.NodeVars
             int childCount = _referenceEntriesVBox.GetChildCount();
             foreach (NodeVarReference reference in sortedReferences)
             {
-                NodeVarReferenceEntry entry;
+                ExpressionNodeVarReferenceEntry entry;
                 if (index >= childCount)
                     entry = CreateNewEntry();
                 else
-                    entry = _referenceEntriesVBox.GetChild<NodeVarReferenceEntry>(index);
+                    entry = _referenceEntriesVBox.GetChild<ExpressionNodeVarReferenceEntry>(index);
                 if (currFocusedEntry == null || entry != currFocusedEntry)
                     entry.SetData(reference, DefaultData?.NodeVarReferences.GetValue(reference.Name, null));
-                entry.IsFixed = DefaultData.NodeVarReferences.ContainsKey(reference.Name);
+                entry.IsFixed = DefaultData?.NodeVarReferences.ContainsKey(reference.Name) ?? false;
                 index++;
             }
 
@@ -129,7 +155,7 @@ namespace Fractural.NodeVars
             {
                 for (int i = childCount - 1; i >= index; i--)
                 {
-                    var entry = _referenceEntriesVBox.GetChild<NodeVarReferenceEntry>(i);
+                    var entry = _referenceEntriesVBox.GetChild<ExpressionNodeVarReferenceEntry>(i);
                     entry.NameChanged -= OnEntryNameChanged;
                     entry.DataChanged -= OnEntryDataChanged;
                     entry.Deleted -= OnEntryDeleted;
@@ -140,19 +166,20 @@ namespace Fractural.NodeVars
             _addElementButton.Disabled = CheckAllVarNamesTaken();
         }
 
-        protected override void UpdateDisabledAndFixedUI()
+        protected override void InvokeDataChanged()
         {
-            _expressionProperty.Disabled = Disabled;
-            _nameProperty.Disabled = Disabled;
-            foreach (NodeVarReferenceEntry entry in _referenceEntriesVBox.GetChildren())
-            {
-                entry.Disabled = Disabled;
-                entry.IsFixed = DefaultData.NodeVarReferences.ContainsKey(entry.Name);
-            }
+            base.InvokeDataChanged();
+            UpdateUI();
         }
 
         private Control _currentFocused;
         private void OnFocusChanged(Control control) => _currentFocused = control;
+
+        private void OnExpressionChanged(string newExpression)
+        {
+            Data.Expression = newExpression;
+            InvokeDataChanged();
+        }
 
         private bool CheckAllVarNamesTaken()
         {
@@ -178,9 +205,9 @@ namespace Fractural.NodeVars
             InvokeDataChanged();
         }
 
-        private NodeVarReferenceEntry CreateNewEntry()
+        private ExpressionNodeVarReferenceEntry CreateNewEntry()
         {
-            var entry = new NodeVarReferenceEntry(
+            var entry = new ExpressionNodeVarReferenceEntry(
                 _assetsRegistry,
                 _sceneRoot,
                 _relativeToNode,
@@ -193,7 +220,7 @@ namespace Fractural.NodeVars
             return entry;
         }
 
-        private void OnEntryNameChanged(string oldKey, NodeVarReferenceEntry entry)
+        private void OnEntryNameChanged(string oldKey, ExpressionNodeVarReferenceEntry entry)
         {
             var newKey = entry.Data.Name;
             if (Data.NodeVarReferences.ContainsKey(newKey))

@@ -12,7 +12,7 @@ namespace Fractural.NodeVars
     public class NodeVarPointerSelect : HBoxContainer
     {
         public event Action<NodePath> NodePathChanged;
-        public event Action<NodePath> VarNameChanged;
+        public event Action<string> VarNameChanged;
 
         private bool _disabled;
         public bool Disabled
@@ -70,33 +70,33 @@ namespace Fractural.NodeVars
             VarName = varName;
 
             _containerPathProperty.SetValue(containerPath, false);
-            UpdateVarSelectButtonUI();
+            UpdateDisabledUI();
         }
 
         private void UpdateDisabledUI()
         {
             _containerPathProperty.Disabled = _disabled;
             _containerVarSelectButton.Disabled = _disabled;
-        }
 
-        private void UpdateVarSelectButtonUI()
-        {
             _containerVarSelectButton.Text = VarName ?? "[Empty]";
             var containerNode = _relativeToNode.GetNodeOrNull(ContainerPath ?? new NodePath()) as INodeVarContainer;
-            _containerVarSelectButton.Disabled = containerNode == null;
+            _containerVarSelectButton.Disabled = _disabled || containerNode == null;
         }
 
         private void OnContainerPathChanged(NodePath path)
         {
             ContainerPath = path;
-            UpdateVarSelectButtonUI();
+            if (ContainerPath == null || ContainerPath.IsEmpty())
+                OnContainerVarNameSelected(null);
+            else
+                UpdateDisabledUI();
             NodePathChanged?.Invoke(path);
         }
 
         private void OnContainerVarNameSelected(string name)
         {
             VarName = name;
-            UpdateVarSelectButtonUI();
+            UpdateDisabledUI();
             VarNameChanged?.Invoke(name);
         }
 

@@ -94,7 +94,27 @@ _nodeVars = {
 "Type": "DynamicNodeVarData",
 "ValueType": "System.String"
 },
-"joe": {
+"Var1": {
+"InitialValue": 0,
+"Operation": 0,
+"Type": "DynamicNodeVarData",
+"ValueType": "System.Int32"
+},
+"aVar2": {
+"Expression": "a + b = c",
+"NodeVarReferences": {
+"Var2": {
+"ContainerPath": null,
+"ContainerVarName": null
+},
+"joemama": {
+"ContainerPath": NodePath(""),
+"ContainerVarName": null
+}
+},
+"Type": "ExpressionNodeVarData"
+},
+"sdf": {
 "Expression": null,
 "NodeVarReference": {
 "Var1": {

@@ -12,7 +12,7 @@ namespace Fractural.NodeVars
     {
         public static bool CheckNodeVarCompatible(NodeVarData nodeVar, NodeVarOperation operation, Type valueType = null)
         {
-            if (nodeVar is ITypedNodeVar typedNodeVar && typedNodeVar.ValueType != valueType) return false;
+            if (valueType != null && nodeVar is ITypedNodeVar typedNodeVar && typedNodeVar.ValueType != valueType) return false;
             NodeVarOperation nodeVarOperation = NodeVarOperation.Get;
             if (nodeVar is ISetNodeVar)
                 nodeVarOperation = NodeVarOperation.Set;

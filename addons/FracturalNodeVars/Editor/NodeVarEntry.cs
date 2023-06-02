@@ -89,14 +89,6 @@ namespace Fractural.NodeVars
             _resetInitialValueButton.Icon = GetIcon("Reload", "EditorIcons");
         }
 
-        public override void _Notification(int what)
-        {
-            if (what == NotificationPredelete)
-            {
-                _nameProperty.ValueChanged -= OnNameChanged;
-            }
-        }
-
         public virtual void ResetName(string oldName)
         {
             Data.Name = oldName;
@@ -110,7 +102,7 @@ namespace Fractural.NodeVars
         {
             Data = data.Clone();
             DefaultData = defaultData;
-            _nameProperty.Name = data.Name;
+            _nameProperty.SetValue(data.Name, false);
             UpdateResetButton();
         }
 

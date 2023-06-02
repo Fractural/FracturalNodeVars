@@ -10,11 +10,12 @@ namespace Fractural.NodeVars
 {
     public class NodeVarReferenceEntry : VBoxContainer
     {
-        public event Action<string, NodeVarReference> LocalVarAliasChanged;
+        public event Action<string, NodeVarReferenceEntry> NameChanged;
         public event Action<string, NodeVarReference> DataChanged;
-        private event Action<string> Deleted;
+        public event Action<string> Deleted;
 
         public NodeVarReference Data { get; private set; }
+        public NodeVarReference DefaultData { get; private set; }
         private bool _isFixed;
         public bool IsFixed
         {
@@ -79,9 +80,10 @@ namespace Fractural.NodeVars
             _deleteButton.Icon = GetIcon("Remove", "EditorIcons");
         }
 
-        public void SetData(NodeVarReference data)
+        public void SetData(NodeVarReference data, NodeVarReference defaultData)
         {
             Data = data;
+            DefaultData = data;
             _nodeVarPointerSelect.SetValue(data.ContainerPath, data.ContainerVarName);
             _localVarAliasProperty.SetValue(data.Name, false);
         }

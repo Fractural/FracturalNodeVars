@@ -31,7 +31,6 @@ namespace Fractural.NodeVars
         private OptionButton _operationButton;
         private Button _isPointerButton;
         private MarginContainer _valuePropertyContainer;
-        private StringValueProperty _nameProperty;
         private ValueProperty _valueProperty;
         private ValueTypeData[] _valueTypes;
         private OperationTypeData[] _operationTypes;
@@ -45,25 +44,10 @@ namespace Fractural.NodeVars
             _assetsRegistry = assetsRegistry;
             _relativeToNode = relativeToNode;
 
-            var control = new Control();
-            control.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
-            control.SizeFlagsStretchRatio = 0.1f;
-            control.RectSize = new Vector2(24, 0);
-            AddChild(control);
-
-            var vBox = new VBoxContainer();
-            vBox.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
-            vBox.SizeFlagsStretchRatio = 0.9f;
-            AddChild(vBox);
-
             var firstRowHBox = new HBoxContainer();
             var secondRowHBox = new HBoxContainer();
-            vBox.AddChild(firstRowHBox);
-            vBox.AddChild(secondRowHBox);
-
-            _nameProperty = new StringValueProperty();
-            _nameProperty.ValueChanged += OnNameChanged;
-            _nameProperty.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
+            _contentVBox.AddChild(firstRowHBox);
+            _contentVBox.AddChild(secondRowHBox);
 
             _valuePropertyContainer = new MarginContainer();
             _valuePropertyContainer.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
@@ -114,9 +98,9 @@ namespace Fractural.NodeVars
 
         public override void _Notification(int what)
         {
+            base._Notification(what);
             if (what == NotificationPredelete)
             {
-                _nameProperty.ValueChanged -= OnNameChanged;
                 _nodeVarPointerSelect.NodePathChanged -= OnNodePathChanged;
             }
         }
@@ -154,12 +138,6 @@ namespace Fractural.NodeVars
             _operationButton.Select(operationTypeData.Index);
         }
 
-        public override void ResetName(string oldKey)
-        {
-            Data.Name = oldKey;
-            _nameProperty.SetValue(oldKey);
-        }
-
         public override void SetData(DynamicNodeVarData value, DynamicNodeVarData defaultData = null)
         {
             var oldData = Data;
@@ -170,7 +148,6 @@ namespace Fractural.NodeVars
 
             SetValueTypeValueDisplay(Data.ValueType);
             SetOperationsValueDisplay(Data.Operation);
-            _nameProperty.SetValue(Data.Name);
             _valueProperty.SetValue(Data.InitialValue, false);
             _isPointerButton.SetPressedNoSignal(Data.IsPointer);
             UpdatePointerSelectAndVisibility();
@@ -278,13 +255,6 @@ namespace Fractural.NodeVars
         {
             UpdateResetButton();
             base.InvokeDataChanged();
-        }
-
-        private void OnNameChanged(string newName)
-        {
-            var oldName = Data.Name;
-            Data.Name = newName;
-            InvokeNameChanged(oldName);
         }
 
         private void OnNodePathChanged(NodePath newValue)

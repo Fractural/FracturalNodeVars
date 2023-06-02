@@ -8,9 +8,10 @@ namespace Fractural.NodeVars
     /// <summary>
     /// NodeVar that can change it's behaviour. It can change it's operation, and also change whether it's a pointer or not.
     /// </summary>
-    public class DynamicNodeVarData : NodeVarData<DynamicNodeVarData>, IGetSetNodeVar
+    public class DynamicNodeVarData : NodeVarData<DynamicNodeVarData>, IGetSetNodeVar, ITypedNodeVar
     {
         // Serialized
+        public Type ValueType { get; set; }
         public NodeVarOperation Operation { get; set; }
         public string ContainerVarName { get; set; }
         public NodePath ContainerPath { get; set; }
@@ -55,21 +56,11 @@ namespace Fractural.NodeVars
         /// </summary>
         public bool IsPointer => ContainerPath != null;
 
-        /// <summary>
-        /// Attempts to apply the values of newData ontop of this NodeVar.
-        /// Some values will only be copied on certain conditions, such as 
-        /// NodeValue being only copied over if the NodeType of the newData 
-        /// is the same.
-        /// </summary>
-        /// <param name="newData"></param>
-        /// <returns></returns>
         public override DynamicNodeVarData WithChanges(DynamicNodeVarData newData)
         {
-            var inheritedData = TypedClone();
-            if (newData.Name != Name)
-                return inheritedData;
-            if (newData.ValueType == ValueType)
+            if (newData.Name == Name && newData.ValueType == ValueType)
             {
+                var inheritedData = TypedClone();
                 if (!Equals(newData.InitialValue, InitialValue))
                     // If the newData's value is different from our value, then prefer the new data's value
                     inheritedData.InitialValue = newData.InitialValue;
@@ -77,8 +68,9 @@ namespace Fractural.NodeVars
                     inheritedData.ContainerPath = newData.ContainerPath;
                 if (!Equals(newData.ContainerVarName, ContainerVarName))
                     inheritedData.ContainerVarName = newData.ContainerVarName;
+                return inheritedData;
             }
-            return inheritedData;
+            return null;
         }
 
         public override DynamicNodeVarData TypedClone()

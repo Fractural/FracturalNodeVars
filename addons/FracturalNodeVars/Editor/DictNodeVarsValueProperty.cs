@@ -46,11 +46,9 @@ namespace Fractural.NodeVars
         private Node _sceneRoot;
         private Node _relativeToNode;
         private Dictionary<string, NodeVarData> _fixedNodeVarsDict;
-        private Dictionary<string, NodeVarData> _defaultNodeVarsDict;
 
         private string EditButtonText => $"DictNodeVars [{Value.Count}]";
         private bool HasFixedNodeVars => _fixedNodeVarsDict != null;
-        private bool HasDefaultNodeVars => _defaultNodeVarsDict != null;
         private bool _canAddNewVars;
         private IAssetsRegistry _assetsRegistry;
 
@@ -59,34 +57,22 @@ namespace Fractural.NodeVars
             IAssetsRegistry assetsRegistry,
             Node sceneRoot,
             Node relativeToNode,
-            NodeVarData[] localFixedNodeVars = null,
-            NodeVarData[] defaultNodeVars = null,
+            NodeVarData[] fixedNodeVars = null,
             bool canAddNewVars = true
         ) : base()
         {
             _assetsRegistry = assetsRegistry;
             _sceneRoot = sceneRoot;
             _relativeToNode = relativeToNode;
-            if (localFixedNodeVars != null && localFixedNodeVars.Length > 0)
+            if (fixedNodeVars != null && fixedNodeVars.Length > 0)
             {
                 // fixedNodeVars are NodeVars that should be shown, but not actually saved unless they've changed.
                 // This can include
-                // - Default node vars values inherited from the PackedScene that the node was an instance of
+                // - Fixed node vars values inherited from the PackedScene that the node was an instance of
                 // - NodeVar attributes on some of the Node's properties
                 _fixedNodeVarsDict = new Dictionary<string, NodeVarData>();
-                foreach (var nodeVar in localFixedNodeVars)
+                foreach (var nodeVar in fixedNodeVars)
                     _fixedNodeVarsDict[nodeVar.Name] = nodeVar;
-            }
-            if (defaultNodeVars != null && defaultNodeVars.Length > 0)
-            {
-                if (_fixedNodeVarsDict == null)
-                    _fixedNodeVarsDict = new Dictionary<string, NodeVarData>();
-                _defaultNodeVarsDict = new Dictionary<string, NodeVarData>();
-                foreach (var nodeVar in defaultNodeVars)
-                {
-                    _fixedNodeVarsDict[nodeVar.Name] = nodeVar;
-                    _defaultNodeVarsDict.Add(nodeVar.Name, nodeVar);
-                }
             }
             _canAddNewVars = canAddNewVars;
 
@@ -145,7 +131,7 @@ namespace Fractural.NodeVars
         private Control _currentFocused;
         private void OnFocusChanged(Control control) => _currentFocused = control;
 
-        private bool IsValueDefault()
+        private bool IsValueFixed()
         {
             if (Value.Count == 0)
                 return true;
@@ -156,9 +142,9 @@ namespace Fractural.NodeVars
             foreach (string key in Value.Keys)
             {
                 var itemNodeVar = NodeVarUtils.NodeVarDataFromGDDict(Value.Get<GDC.Dictionary>(key), key);
-                if (!_fixedNodeVarsDict.TryGetValue(key, out NodeVarData defaultNodeVar))
+                if (!_fixedNodeVarsDict.TryGetValue(key, out NodeVarData fixedNodeVar))
                     return false;
-                if (!itemNodeVar.Equals(defaultNodeVar))
+                if (!itemNodeVar.Equals(fixedNodeVar))
                     return false;
             }
             return true;
@@ -166,8 +152,12 @@ namespace Fractural.NodeVars
 
         public override void UpdateProperty()
         {
-            if (Value == null || (Value.Count > 0 && IsValueDefault()))
+            if (Value == null || (Value.Count > 0 && IsValueFixed()))
                 Value = new GDC.Dictionary();
+
+            _container.Visible = this.GetMeta<bool>("visible", true);   // Fixed to being visible if the meta tag doesn't exist.
+            _editButton.Pressed = _container.Visible;
+            _editButton.Text = EditButtonText;
 
             var displayedNodeVars = new Dictionary<string, NodeVarData>();
             foreach (string key in Value.Keys)
@@ -175,25 +165,23 @@ namespace Fractural.NodeVars
 
             if (HasFixedNodeVars)
             {
-                // Popupulate Value with any _fixedNodeVars that it is missing
+                // Add any fixed vars that are missing
                 foreach (var fixedNodeVar in _fixedNodeVarsDict.Values)
                 {
                     var displayNodeVar = fixedNodeVar;
                     if (displayedNodeVars.TryGetValue(fixedNodeVar.Name, out NodeVarData existingNodeVar))
                     {
-                        if (existingNodeVar.ValueType == fixedNodeVar.ValueType)
-                            displayNodeVar = fixedNodeVar.WithChanges(existingNodeVar);
+                        var nodeVarWithChanges = fixedNodeVar.WithChanges(existingNodeVar);
+                        if (nodeVarWithChanges != null)
+                            displayNodeVar = nodeVarWithChanges; // Changes were compatible
                         else
-                            // If the exiting entry's type is different from the fixed entry, then we must purge
-                            // the existing entry to ensure the saved entries are always consistent with the fixed entries
-                            Value.Remove(existingNodeVar.Name);
+                            Value.Remove(existingNodeVar.Name); // Changes were not compatible, so NodeVarWithChanges was null
                     }
                     displayedNodeVars[fixedNodeVar.Name] = displayNodeVar;
                 }
                 if (!_canAddNewVars)
                 {
-                    // If we cannot add new vars, then the Value dict
-                    // must only contain fixed node vars
+                    // If we cannot add new vars, then we can only show fixed vars, so we delete all other vars.
                     foreach (string key in Value.Keys)
                     {
                         if (_fixedNodeVarsDict.ContainsKey(key))
@@ -204,10 +192,6 @@ namespace Fractural.NodeVars
                     }
                 }
             }
-
-            _container.Visible = this.GetMeta<bool>("visible", true);   // Default to being visible if the meta tag doesn't exist.
-            _editButton.Pressed = _container.Visible;
-            _editButton.Text = EditButtonText;
 
             var sortedDisplayNodeVars = new List<NodeVarData>(displayedNodeVars.Values);
             sortedDisplayNodeVars.Sort((a, b) =>
@@ -254,7 +238,7 @@ namespace Fractural.NodeVars
             {
                 NodeVarEntry entry;
                 if (index >= childCount)
-                    entry = CreateDefaultEntry(nodeVar);
+                    entry = CreateNewEntry(nodeVar);
                 else
                     entry = _nodeVarEntriesVBox.GetChild<NodeVarEntry>(index);
                 if (!CanEntryHandleNodeVar(entry, nodeVar))
@@ -262,13 +246,12 @@ namespace Fractural.NodeVars
                     // If the Entry can't handle the NodeVar (because they are different types)
                     // then we free the entry and replace it with the correct one.
                     entry.QueueFree();
-                    entry = CreateDefaultEntry(nodeVar);
+                    entry = CreateNewEntry(nodeVar);
                     _nodeVarEntriesVBox.MoveChild(entry, index);
                 }
                 if (currFocusedEntry == null || entry != currFocusedEntry)
                     entry.SetData(nodeVar, _fixedNodeVarsDict?.GetValue(nodeVar.Name, null));
-                if (HasFixedNodeVars)
-                    entry.IsFixed = _fixedNodeVarsDict.ContainsKey(nodeVar.Name);
+                entry.IsFixed = HasFixedNodeVars && _fixedNodeVarsDict.ContainsKey(nodeVar.Name);
                 index++;
             }
             // Free extra entries
@@ -279,18 +262,27 @@ namespace Fractural.NodeVars
                     var entry = _nodeVarEntriesVBox.GetChild<NodeVarEntry>(i);
                     entry.NameChanged -= OnEntryNameChanged;
                     entry.DataChanged -= OnEntryDataChanged;
+                    entry.Deleted -= OnEntryDeleted;
                     entry.QueueFree();
                 }
             }
 
-            if (!IsInstanceValid(currFocusedEntry))
-                currFocusedEntry = null;
-
-            var nextKey = GetNextVarName();
-            _addElementButton.Disabled = !_canAddNewVars || (Value?.Contains(nextKey) ?? false);
+            _addElementButton.Disabled = !_canAddNewVars || CheckAllVarNamesTaken();
         }
 
-        private string GetNextVarName() => NodeVarUtils.GetNextVarName(Value?.Keys.Cast<string>());
+        private bool CheckAllVarNamesTaken()
+        {
+            var nextKey = GetNextVarName();
+            return Value.Contains(nextKey) || (_fixedNodeVarsDict?.ContainsKey(nextKey) ?? false);
+        }
+
+        private string GetNextVarName()
+        {
+            IEnumerable<string> keys = Value.Keys.Cast<string>();
+            if (HasFixedNodeVars)
+                keys = keys.Union(_fixedNodeVarsDict.Keys);
+            return NodeVarUtils.GetNextVarName(keys);
+        }
 
         private new ValueProperty CreateValueProperty(Type type)
         {
@@ -312,7 +304,7 @@ namespace Fractural.NodeVars
             return false;
         }
 
-        private NodeVarEntry CreateDefaultEntry(NodeVarData nodeVar)
+        private NodeVarEntry CreateNewEntry(NodeVarData nodeVar)
         {
             NodeVarEntry entry;
             if (nodeVar is DynamicNodeVarData)
@@ -346,15 +338,15 @@ namespace Fractural.NodeVars
 
         private void OnEntryDataChanged(string key, NodeVarData newValue)
         {
-            // Remove entry if it is the same as the default value (no point in storing redundant information)
-            if (HasFixedNodeVars && _fixedNodeVarsDict.TryGetValue(key, out NodeVarData existingDefaultValue) && existingDefaultValue.Equals(newValue))
+            // Remove entry if it is the same as the fixed value (no point in storing redundant information)
+            if (HasFixedNodeVars && _fixedNodeVarsDict.TryGetValue(key, out NodeVarData existingFixedValue) && existingFixedValue.Equals(newValue))
                 Value.Remove(key);
             else
                 Value[key] = newValue.ToGDDict();
             InvokeValueChanged(Value);
         }
 
-        private void OnEntryDeleted(object key)
+        private void OnEntryDeleted(string key)
         {
             Value.Remove(key);
             InvokeValueChanged(Value);
@@ -365,7 +357,7 @@ namespace Fractural.NodeVars
             // The adding is done in UpdateProperty
             // Note the edited a field in Value doesn't invoke ValueChanged, so we must do it manually
             //
-            // Use default types for the newly added element
+            // Use fixed types for the newly added element
             var nextKey = GetNextVarName();
             switch ((AddOptionIndex)_addOptionButton.Selected)
             {
@@ -381,7 +373,6 @@ namespace Fractural.NodeVars
                     Value[nextKey] = new ExpressionNodeVarData()
                     {
                         Name = nextKey,
-                        ValueType = typeof(int)
                     }.ToGDDict();
                     break;
                 default:
@@ -399,7 +390,6 @@ namespace Fractural.NodeVars
         public void OnBeforeSerialize()
         {
             _fixedNodeVarsDict = null;
-            _defaultNodeVarsDict = null;
         }
 
         public void OnAfterDeserialize() { }

@@ -22,13 +22,17 @@ namespace Fractural.NodeVars
 
     public interface IGetSetNodeVar : ISetNodeVar, IGetNodeVar { }
 
+    public interface ITypedNodeVar
+    {
+        Type ValueType { get; set; }
+    }
+
     /// <summary>
     /// Base class for NodeVars. Is used to serialize editor data, as well as hold runtime data.
     /// </summary>
     public abstract class NodeVarData : INodeVar
     {
         public string Name { get; set; }
-        public Type ValueType { get; set; }
 
         public virtual void Ready(Node node) { }
         public override bool Equals(object obj)
@@ -39,9 +43,16 @@ namespace Fractural.NodeVars
         }
         public override int GetHashCode() => GetHashCodeForData();
 
+        /// <summary>
+        /// Attempts to use another NodeVar's data to make changes to this NodeVar.
+        /// Returns the resulting NodeVar with the changes on success.
+        /// Returns null if the two NodeVars are incompatible.
+        /// </summary>
+        /// <param name="other"></param>
+        /// <returns></returns>
+        public abstract NodeVarData WithChanges(NodeVarData other);
         public abstract GDC.Dictionary ToGDDict();
         public abstract void FromGDDict(GDC.Dictionary dict, string key);
-        public abstract NodeVarData WithChanges(NodeVarData newData);
         public abstract NodeVarData Clone();
         public abstract bool Equals(NodeVarData data);
         public abstract int GetHashCodeForData();
@@ -49,7 +60,6 @@ namespace Fractural.NodeVars
 
     public abstract class NodeVarData<T> : NodeVarData, INodeVar where T : NodeVarData
     {
-        public override NodeVarData WithChanges(NodeVarData newData) => WithChanges((T)newData);
         public override NodeVarData Clone() => TypedClone();
         public override bool Equals(NodeVarData data)
         {
@@ -57,8 +67,8 @@ namespace Fractural.NodeVars
                 return Equals(newData);
             return false;
         }
-
-        public abstract T WithChanges(T newData);
+        public override NodeVarData WithChanges(NodeVarData other) => WithChanges((T)other);
+        public abstract T WithChanges(T other);
         public abstract T TypedClone();
         public abstract bool Equals(T data);
     }

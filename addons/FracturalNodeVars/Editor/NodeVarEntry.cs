@@ -1,4 +1,5 @@
-﻿using Fractural.Utils;
+﻿using Fractural.Plugin;
+using Fractural.Utils;
 using Godot;
 using System;
 using GDC = Godot.Collections;
@@ -51,6 +52,8 @@ namespace Fractural.NodeVars
 
         protected Button _resetInitialValueButton;
         protected Button _deleteButton;
+        protected StringValueProperty _nameProperty;
+        protected VBoxContainer _contentVBox;
 
         public NodeVarEntry()
         {
@@ -58,7 +61,22 @@ namespace Fractural.NodeVars
             _resetInitialValueButton.Connect("pressed", this, nameof(OnResetButtonPressed));
 
             _deleteButton = new Button();
-            _deleteButton.Connect("presesd", this, nameof(InvokeDeleted));
+            _deleteButton.Connect("pressed", this, nameof(InvokeDeleted));
+
+            _nameProperty = new StringValueProperty();
+            _nameProperty.ValueChanged += OnNameChanged;
+            _nameProperty.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
+
+            var control = new Control();
+            control.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
+            control.SizeFlagsStretchRatio = 0.1f;
+            control.RectSize = new Vector2(24, 0);
+            AddChild(control);
+
+            _contentVBox = new VBoxContainer();
+            _contentVBox.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
+            _contentVBox.SizeFlagsStretchRatio = 0.9f;
+            AddChild(_contentVBox);
         }
 
         public override void _Ready()
@@ -70,7 +88,20 @@ namespace Fractural.NodeVars
             _deleteButton.Icon = GetIcon("Remove", "EditorIcons");
             _resetInitialValueButton.Icon = GetIcon("Reload", "EditorIcons");
         }
-        public abstract void ResetName(string oldKey);
+
+        public override void _Notification(int what)
+        {
+            if (what == NotificationPredelete)
+            {
+                _nameProperty.ValueChanged -= OnNameChanged;
+            }
+        }
+
+        public virtual void ResetName(string oldName)
+        {
+            Data.Name = oldName;
+            _nameProperty.SetValue(oldName, false);
+        }
         protected virtual void UpdateDisabledAndFixedUI() { }
         protected virtual void InvokeDeleted() => Deleted?.Invoke(Data.Name);
         protected virtual void InvokeDataChanged() => DataChanged?.Invoke(Data.Name, Data);
@@ -79,7 +110,15 @@ namespace Fractural.NodeVars
         {
             Data = data.Clone();
             DefaultData = defaultData;
+            _nameProperty.Name = data.Name;
             UpdateResetButton();
+        }
+
+        protected void OnNameChanged(string newName)
+        {
+            var oldName = Data.Name;
+            Data.Name = newName;
+            InvokeNameChanged(oldName);
         }
 
         protected void OnResetButtonPressed()

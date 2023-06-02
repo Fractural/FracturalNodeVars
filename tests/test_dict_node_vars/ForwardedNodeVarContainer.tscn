@@ -24,6 +24,12 @@ _nodeVars = {
 "InitialValue": 0,
 "Operation": 0,
 "ValueType": "System.Int32"
+},
+"Var4": {
+"InitialValue": false,
+"Operation": 0,
+"Type": "DynamicNodeVarData",
+"ValueType": "System.Boolean"
 }
 }
 

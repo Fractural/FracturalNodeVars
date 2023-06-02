@@ -1,8 +1,11 @@
 ﻿using Fractural.Plugin;
 using Fractural.Plugin.AssetsRegistry;
+using Fractural.Utils;
 using Godot;
 using System.Collections.Generic;
+using System.Linq;
 using static Fractural.NodeVars.ExpressionNodeVarData;
+using GDC = Godot.Collections;
 
 #if TOOLS
 namespace Fractural.NodeVars
@@ -12,83 +15,81 @@ namespace Fractural.NodeVars
     public class ExpressionNodeVarEntry : NodeVarEntry<ExpressionNodeVarData>
     {
         private StringValueProperty _expressionProperty;
-        private StringValueProperty _nameProperty;
         private VBoxContainer _referenceEntriesVBox;
         private Button _addElementButton;
 
-        private IDictionary<string, NodeVarReference> _fixedNodeVarsDict => DefaultData?.NodeVarReferences;
-        private bool HasFixedNodeVars => DefaultData != null;
+        private IAssetsRegistry _assetsRegistry;
+        private Node _sceneRoot;
+        private Node _relativeToNode;
 
         public ExpressionNodeVarEntry() { }
         public ExpressionNodeVarEntry(IAssetsRegistry assetsRegistry, Node sceneRoot, Node relativeToNode) : base()
         {
-            _nameProperty = new StringValueProperty();
+            _assetsRegistry = assetsRegistry;
+            _sceneRoot = sceneRoot;
+            _relativeToNode = relativeToNode;
+
             _expressionProperty = new StringValueProperty();
             _referenceEntriesVBox = new VBoxContainer();
 
             _addElementButton = new Button();
-            _addElementButton.Text = "Add NodeVar Reference";
+            _addElementButton.Text = "Add Reference";
             _addElementButton.Connect("pressed", this, nameof(OnAddElementPressed));
             _addElementButton.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
             _addElementButton.RectMinSize = new Vector2(24 * 4, 0);
 
             var hbox = new HBoxContainer();
             hbox.AddChild(_nameProperty);
+            hbox.AddChild(_resetInitialValueButton);
             hbox.AddChild(_deleteButton);
 
-            var vbox = new VBoxContainer();
-            vbox.AddChild(hbox);
-            vbox.AddChild(_addElementButton);
-            vbox.AddChild(_expressionProperty);
-            vbox.AddChild(_referenceEntriesVBox);
-
-            AddChild(vbox);
+            _contentVBox.AddChild(hbox);
+            _contentVBox.AddChild(_addElementButton);
+            _contentVBox.AddChild(_expressionProperty);
+            _contentVBox.AddChild(_referenceEntriesVBox);
         }
 
-        public override void ResetName(string oldName)
+        public override void _Ready()
         {
-            Data.Name = oldName;
-            _nameProperty.SetValue(oldName, false);
+            base._Ready();
+#if TOOLS
+            if (NodeUtils.IsInEditorSceneTab(this))
+                return;
+#endif
+            _addElementButton.Icon = GetIcon("Add", "EditorIcons");
+            GetViewport().Connect("gui_focus_changed", this, nameof(OnFocusChanged));
         }
 
         public override void SetData(ExpressionNodeVarData value, ExpressionNodeVarData defaultData = null)
         {
             base.SetData(value, defaultData);
 
-            // TODO: FInish this
-            var displayedNodeVars = new Dictionary<string, NodeVarReference>();
-            foreach (string key in Value.Keys)
-            {
+            var displayedReferences = new Dictionary<string, NodeVarReference>();
+            foreach (string key in Data.NodeVarReferences.Keys)
+                displayedReferences.Add(key, Data.NodeVarReferences[key]);
 
-                displayedNodeVars.Add(key, NodeVarUtils.NodeVarDataFromGDDict(Value.Get<GDC.Dictionary>(key), key));
-            }
-
-            if (HasFixedNodeVars)
-            {
-                // Popupulate Value with any _fixedNodeVars that it is missing
-                foreach (var fixedNodeVar in _fixedNodeVarsDict.Values)
+            if (DefaultData != null)
+                foreach (var fixedReference in DefaultData.NodeVarReferences.Values)
                 {
-                    var displayNodeVar = fixedNodeVar;
-                    if (displayedNodeVars.TryGetValue(fixedNodeVar.Name, out NodeVarData existingNodeVar))
+                    var displayReference = fixedReference;
+                    if (displayedReferences.TryGetValue(fixedReference.Name, out NodeVarReference existingNodeVar))
                     {
-                        if (existingNodeVar.ValueType == fixedNodeVar.ValueType)
-                            displayNodeVar = fixedNodeVar.WithChanges(existingNodeVar);
+                        var referenceWithChanges = fixedReference.WithChanges(existingNodeVar);
+                        if (referenceWithChanges != null)
+                            displayReference = referenceWithChanges;
                         else
-                            // If the exiting entry's type is different from the fixed entry, then we must purge
-                            // the existing entry to ensure the saved entries are always consistent with the fixed entries
-                            Value.Remove(existingNodeVar.Name);
+                            Data.NodeVarReferences.Remove(existingNodeVar.Name);
                     }
-                    displayedNodeVars[fixedNodeVar.Name] = displayNodeVar;
+                    displayedReferences[fixedReference.Name] = displayReference;
                 }
-            }
 
-            var sortedDisplayNodeVars = new List<NodeVarData>(displayedNodeVars.Values);
-            sortedDisplayNodeVars.Sort((a, b) =>
+            var sortedReferences = new List<NodeVarReference>(displayedReferences.Values);
+            sortedReferences.Sort((a, b) =>
             {
-                if (_fixedNodeVarsDict != null)
+                if (DefaultData != null)
                 {
                     // Sort by whether it's fixed, and then by alphabetical order
-                    int fixedOrdering = _fixedNodeVarsDict.ContainsKey(b.Name).CompareTo(_fixedNodeVarsDict.ContainsKey(a.Name));
+                    int fixedOrdering = DefaultData.NodeVarReferences.ContainsKey(b.Name).CompareTo(DefaultData.NodeVarReferences.ContainsKey(a.Name));
                     if (fixedOrdering == 0)
                         return a.Name.CompareTo(b.Name);
                     return fixedOrdering;
@@ -96,75 +97,47 @@ namespace Fractural.NodeVars
                 return a.Name.CompareTo(b.Name);
             });
 
-            // Move the current focused entry into it's Value dict index inside the entries vBox.
-            // We don't want to just overwrite the current focused entry since that would
-            // cause the user to retain gui focus on the wrong entry.
-            var currFocusedEntry = _currentFocused?.GetAncestor<NodeVarEntry>();
+            var currFocusedEntry = _currentFocused?.GetAncestor<NodeVarReferenceEntry>();
             if (currFocusedEntry != null)
             {
-                // Find the new index of the current focused entry within the Value dictionary.
-                int keyIndex = sortedDisplayNodeVars.FindIndex(x => x.Name == currFocusedEntry.Data.Name);
+                int keyIndex = sortedReferences.FindIndex(x => x.Name == currFocusedEntry.Data.Name);
                 if (keyIndex < 0)
-                {
-                    // Set current focused entry back to null. We couldn't
-                    // find the current focused entry in the new dictionary, meaning
-                    // this entry must have been deleted, therefore we don't care about it
-                    // anymore.
                     currFocusedEntry = null;
-                }
                 else
                 {
-                    // Swap the entry that's currently in the focused entry's place with the focused entry.
-                    var targetEntry = _nodeVarEntriesVBox.GetChild<NodeVarEntry>(keyIndex);
-                    _nodeVarEntriesVBox.SwapChildren(targetEntry, currFocusedEntry);
+                    var targetEntry = _referenceEntriesVBox.GetChild(keyIndex);
+                    _referenceEntriesVBox.SwapChildren(targetEntry, currFocusedEntry);
                 }
             }
 
-            // Set the data of each entry with the corresponding values from the Value dictionary
             int index = 0;
-            int childCount = _nodeVarEntriesVBox.GetChildCount();
-            foreach (NodeVarData nodeVar in sortedDisplayNodeVars)
+            int childCount = _referenceEntriesVBox.GetChildCount();
+            foreach (NodeVarReference reference in sortedReferences)
             {
-                NodeVarEntry entry;
+                NodeVarReferenceEntry entry;
                 if (index >= childCount)
-                    entry = CreateDefaultEntry(nodeVar);
+                    entry = CreateNewEntry();
                 else
-                    entry = _nodeVarEntriesVBox.GetChild<NodeVarEntry>(index);
-                if (!CanEntryHandleNodeVar(entry, nodeVar))
-                {
-                    // If the Entry can't handle the NodeVar (because they are different types)
-                    // then we free the entry and replace it with the correct one.
-                    entry.QueueFree();
-                    entry = CreateDefaultEntry(nodeVar);
-                    _nodeVarEntriesVBox.MoveChild(entry, index);
-                }
+                    entry = _referenceEntriesVBox.GetChild<NodeVarReferenceEntry>(index);
                 if (currFocusedEntry == null || entry != currFocusedEntry)
-                    entry.SetData(nodeVar, _fixedNodeVarsDict?.GetValue(nodeVar.Name, null));
-                if (HasFixedNodeVars)
-                {
-                    var isFixed = _fixedNodeVarsDict.ContainsKey(nodeVar.Name);
-                    entry.SetFixed(isFixed);
-                }
+                    entry.SetData(reference, DefaultData?.NodeVarReferences.GetValue(reference.Name, null));
+                entry.IsFixed = DefaultData.NodeVarReferences.ContainsKey(reference.Name);
                 index++;
             }
-            // Free extra entries
+
             if (index < childCount)
             {
                 for (int i = childCount - 1; i >= index; i--)
                 {
-                    var entry = _nodeVarEntriesVBox.GetChild<NodeVarEntry>(i);
+                    var entry = _referenceEntriesVBox.GetChild<NodeVarReferenceEntry>(i);
                     entry.NameChanged -= OnEntryNameChanged;
                     entry.DataChanged -= OnEntryDataChanged;
+                    entry.Deleted -= OnEntryDeleted;
                     entry.QueueFree();
                 }
             }
-            GD.Print("3");
 
-            if (!IsInstanceValid(currFocusedEntry))
-                currFocusedEntry = null;
-
-            var nextKey = GetNextVarName();
-            _addElementButton.Disabled = Value?.Contains(nextKey) ?? false;
+            _addElementButton.Disabled = CheckAllVarNamesTaken();
         }
 
         protected override void UpdateDisabledAndFixedUI()
@@ -178,36 +151,77 @@ namespace Fractural.NodeVars
             }
         }
 
-        private string GetNextVarName() => NodeVarUtils.GetNextVarName();
+        private Control _currentFocused;
+        private void OnFocusChanged(Control control) => _currentFocused = control;
+
+        private bool CheckAllVarNamesTaken()
+        {
+            var nextKey = GetNextVarName();
+            return Data.NodeVarReferences.ContainsKey(nextKey) || (DefaultData?.NodeVarReferences.ContainsKey(nextKey) ?? false);
+        }
+
+        private string GetNextVarName()
+        {
+            IEnumerable<string> keys = Data.NodeVarReferences.Keys;
+            if (DefaultData != null)
+                keys = keys.Union(DefaultData.NodeVarReferences.Keys);
+            return NodeVarUtils.GetNextVarName(keys);
+        }
 
         private void OnAddElementPressed()
         {
-            // The adding is done in UpdateProperty
-            // Note the edited a field in Value doesn't invoke ValueChanged, so we must do it manually
-            //
-            // Use default types for the newly added element
             var nextKey = GetNextVarName();
-            switch ((AddOptionIndex)_addOptionButton.Selected)
+            Data.NodeVarReferences[nextKey] = new NodeVarReference()
             {
-                case AddOptionIndex.Dynamic:
-                    Value[nextKey] = new DynamicNodeVarData()
-                    {
-                        Name = nextKey,
-                        ValueType = typeof(int),
-                        InitialValue = DefaultValueUtils.GetDefault<int>()
-                    }.ToGDDict();
-                    break;
-                case AddOptionIndex.Expression:
-                    Value[nextKey] = new ExpressionNodeVarData()
-                    {
-                        Name = nextKey,
-                        ValueType = typeof(int)
-                    }.ToGDDict();
-                    break;
-                default:
-                    throw new Exception($"{nameof(DictNodeVarsValueProperty)}: Could not handle adding NodeVar with option \"{_addOptionButton.Selected}\".");
+                Name = nextKey,
+            };
+            InvokeDataChanged();
+        }
+
+        private NodeVarReferenceEntry CreateNewEntry()
+        {
+            var entry = new NodeVarReferenceEntry(
+                _assetsRegistry,
+                _sceneRoot,
+                _relativeToNode,
+                (data) => NodeVarUtils.CheckNodeVarCompatible(data, NodeVarOperation.Get)
+            );
+            entry.NameChanged += OnEntryNameChanged;
+            entry.DataChanged += OnEntryDataChanged;
+            entry.Deleted += OnEntryDeleted;
+            _referenceEntriesVBox.AddChild(entry);
+            return entry;
+        }
+
+        private void OnEntryNameChanged(string oldKey, NodeVarReferenceEntry entry)
+        {
+            var newKey = entry.Data.Name;
+            if (Data.NodeVarReferences.ContainsKey(newKey))
+            {
+                // Reject change since the newKey already exists
+                entry.ResetName(oldKey);
+                return;
             }
-            InvokeValueChanged(Value);
+            var currValue = Data.NodeVarReferences[oldKey];
+            Data.NodeVarReferences.Remove(oldKey);
+            Data.NodeVarReferences[newKey] = currValue;
+            InvokeDataChanged();
+        }
+
+        private void OnEntryDataChanged(string key, NodeVarReference newValue)
+        {
+            // Remove entry if it is the same as the fixed value (no point in storing redundant information)
+            if (DefaultData != null && DefaultData.NodeVarReferences.TryGetValue(key, out NodeVarReference existingReference) && existingReference.Equals(newValue))
+                Data.NodeVarReferences.Remove(key);
+            else
+                Data.NodeVarReferences[key] = newValue;
+            InvokeDataChanged();
+        }
+
+        private void OnEntryDeleted(string key)
+        {
+            Data.NodeVarReferences.Remove(key);
+            InvokeDataChanged();
         }
     }
 }

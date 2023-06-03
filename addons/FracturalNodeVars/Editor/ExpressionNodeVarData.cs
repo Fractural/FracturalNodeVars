@@ -40,6 +40,22 @@ namespace Fractural.NodeVars
                 return null;
             }
 
+            public override bool Equals(object obj)
+            {
+                return obj is NodeVarReference reference &&
+                    Equals(reference.ContainerPath, ContainerPath) &&
+                    Equals(reference.ContainerVarName, ContainerVarName) &&
+                    Equals(reference.Name, Name);
+            }
+
+            public override int GetHashCode()
+            {
+                int code = ContainerPath?.GetHashCode() ?? 0;
+                code = GeneralUtils.CombineHashCodes(code, ContainerVarName?.GetHashCode() ?? 0);
+                code = GeneralUtils.CombineHashCodes(code, Name.GetHashCode());
+                return code;
+            }
+
             public GDC.Dictionary ToGDDict()
             {
                 var dict = new GDC.Dictionary()
@@ -93,10 +109,10 @@ namespace Fractural.NodeVars
                 var inheritedData = TypedClone();
                 // Make sure old NodeVarReferences are always there.
                 // Inheriting a NodeVarExpression should never remove existing NodeVarReferences.
-                foreach (var reference in newData.NodeVarReferences)
+                foreach (var reference in newData.NodeVarReferences.Values)
                 {
-                    if (!inheritedData.NodeVarReferences.Any(x => x.Equals(reference)))
-                        inheritedData.NodeVarReferences.Add(reference);
+                    if (!inheritedData.NodeVarReferences.ContainsKey(reference.Name))
+                        inheritedData.NodeVarReferences[reference.Name] = reference;
                 }
                 if (!Equals(newData.Expression, Expression))
                     // If the newData's value is different from our value, then prefer the new data's value

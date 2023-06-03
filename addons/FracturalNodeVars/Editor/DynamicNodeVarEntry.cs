@@ -143,7 +143,6 @@ namespace Fractural.NodeVars
             _valueProperty.SetValue(Data.InitialValue, false);
             _isPointerButton.SetPressedNoSignal(Data.IsPointer);
             UpdatePointerSelectAndVisibility();
-            UpdateResetButton();
         }
 
         private void UpdatePointerSelectAndVisibility()

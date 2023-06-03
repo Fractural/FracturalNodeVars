@@ -42,6 +42,7 @@ namespace Fractural.NodeVars
         private NodeVarPointerSelect _nodeVarPointerSelect;
         private StringValueProperty _nameProperty;
         private Button _deleteButton;
+        private Button _resetInitialValueButton;
 
         public ExpressionNodeVarReferenceEntry() { }
         public ExpressionNodeVarReferenceEntry(IAssetsRegistry assetsRegistry, Node sceneRoot, Node relativeToNode, Func<NodeVarData, bool> conditionFunc = null)
@@ -68,8 +69,12 @@ namespace Fractural.NodeVars
             _deleteButton = new Button();
             _deleteButton.Connect("pressed", this, nameof(OnDeletePressed));
 
+            _resetInitialValueButton = new Button();
+            _resetInitialValueButton.Connect("pressed", this, nameof(OnResetButtonPressed));
+
             var hbox = new HBoxContainer();
             hbox.AddChild(_nameProperty);
+            hbox.AddChild(_resetInitialValueButton);
             hbox.AddChild(_deleteButton);
 
             contentVBox.AddChild(hbox);
@@ -82,8 +87,8 @@ namespace Fractural.NodeVars
             if (NodeUtils.IsInEditorSceneTab(this))
                 return;
 #endif
-
             _deleteButton.Icon = GetIcon("Remove", "EditorIcons");
+            _resetInitialValueButton.Icon = GetIcon("Reload", "EditorIcons");
         }
 
         public void SetData(NodeVarReference data, NodeVarReference defaultData)
@@ -92,6 +97,7 @@ namespace Fractural.NodeVars
             DefaultData = data;
             _nodeVarPointerSelect.SetValue(data.ContainerPath, data.ContainerVarName);
             _nameProperty.SetValue(data.Name, false);
+            UpdateResetButton();
         }
 
         public void ResetName(string oldName)
@@ -100,9 +106,21 @@ namespace Fractural.NodeVars
             _nameProperty.SetValue(oldName, false);
         }
 
+        private void UpdateResetButton()
+        {
+            _resetInitialValueButton.Visible = DefaultData != null && !Data.Equals(DefaultData);
+        }
+
+        private void OnResetButtonPressed()
+        {
+            SetData(DefaultData.Clone(), DefaultData);
+            InvokeDataChanged();
+        }
+
         private void UpdateDisabledAndFixedUI()
         {
-            _deleteButton.Disabled = IsFixed || Disabled;
+            _deleteButton.Visible = !IsFixed;
+            _deleteButton.Disabled = Disabled;
             _nameProperty.Disabled = IsFixed || Disabled;
             _nodeVarPointerSelect.Disabled = Disabled;
         }
@@ -127,7 +145,13 @@ namespace Fractural.NodeVars
         }
 
         private void OnDeletePressed() => InvokeDeleted();
-        private void InvokeDataChanged() => DataChanged?.Invoke(Data.Name, Data);
+
+        private void InvokeDataChanged()
+        {
+            UpdateResetButton();
+            DataChanged?.Invoke(Data.Name, Data);
+        }
+
         private void InvokeDeleted() => Deleted?.Invoke(Data.Name);
     }
 }

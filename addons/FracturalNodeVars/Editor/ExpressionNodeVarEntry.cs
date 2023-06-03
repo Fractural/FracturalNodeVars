@@ -12,7 +12,7 @@ namespace Fractural.NodeVars
 {
     // TODO: Add meta based collapsing
     [Tool]
-    public class ExpressionNodeVarEntry : NodeVarEntry<ExpressionNodeVarData>
+    public class ExpressionNodeVarEntry : NodeVarEntry<ExpressionNodeVarData>, ISerializationListener
     {
         private StringValueProperty _expressionProperty;
         private VBoxContainer _referenceEntriesVBox;
@@ -65,6 +65,9 @@ namespace Fractural.NodeVars
             if (NodeUtils.IsInEditorSceneTab(this))
                 return;
 #endif
+            _expressionProperty.Font = (Font)GetFont("source", "EditorFonts").Duplicate();
+            var dynamicFont = _expressionProperty.Font as DynamicFont;
+            dynamicFont.Size = (int)(16 * _assetsRegistry.Scale);
             _expressionIconRect.Texture = GetIcon("SceneUniqueName", "EditorIcons");
             _addElementButton.Icon = GetIcon("Add", "EditorIcons");
             GetViewport().Connect("gui_focus_changed", this, nameof(OnFocusChanged));
@@ -74,7 +77,8 @@ namespace Fractural.NodeVars
         {
             base.SetData(value, defaultData);
 
-            UpdateUI();
+            _expressionProperty.SetValue(value.Expression, false);
+            UpdateReferencesUI();
         }
 
         protected override void UpdateDisabledAndFixedUI()
@@ -84,15 +88,36 @@ namespace Fractural.NodeVars
             foreach (ExpressionNodeVarReferenceEntry entry in _referenceEntriesVBox.GetChildren())
             {
                 entry.Disabled = Disabled;
-                entry.IsFixed = DefaultData?.NodeVarReferences.ContainsKey(entry.Name) ?? false;
+                entry.IsFixed = DefaultData?.NodeVarReferences.ContainsKey(entry.Data.Name) ?? false;
             }
         }
 
-        private void UpdateUI()
+        private bool CheckReferencesSameAsFixed()
         {
+            if (Data.NodeVarReferences.Count == 0)
+                return true;
+            if (DefaultData == null)
+                return false;
+            if (Data.NodeVarReferences.Count > DefaultData.NodeVarReferences.Count)
+                return false;
+            foreach (var reference in Data.NodeVarReferences.Values)
+            {
+                if (!DefaultData.NodeVarReferences.TryGetValue(reference.Name, out NodeVarReference fixedReference))
+                    return false;
+                if (!reference.Equals(fixedReference))
+                    return false;
+            }
+            return true;
+        }
+
+        private void UpdateReferencesUI()
+        {
+            if (Data.NodeVarReferences.Count > 0 && CheckReferencesSameAsFixed())
+                Data.NodeVarReferences.Clear();
+
             var displayedReferences = new Dictionary<string, NodeVarReference>();
-            foreach (string key in Data.NodeVarReferences.Keys)
-                displayedReferences.Add(key, Data.NodeVarReferences[key]);
+            foreach (var reference in Data.NodeVarReferences.Values)
+                displayedReferences.Add(reference.Name, reference);
 
             if (DefaultData != null)
                 foreach (var fixedReference in DefaultData.NodeVarReferences.Values)
@@ -169,7 +194,7 @@ namespace Fractural.NodeVars
         protected override void InvokeDataChanged()
         {
             base.InvokeDataChanged();
-            UpdateUI();
+            UpdateReferencesUI();
         }
 
         private Control _currentFocused;
@@ -238,8 +263,12 @@ namespace Fractural.NodeVars
         private void OnEntryDataChanged(string key, NodeVarReference newValue)
         {
             // Remove entry if it is the same as the fixed value (no point in storing redundant information)
+            GD.Print("Entry changed, ", key);
             if (DefaultData != null && DefaultData.NodeVarReferences.TryGetValue(key, out NodeVarReference existingReference) && existingReference.Equals(newValue))
+            {
+                GD.Print("\tSame as old, so removing");
                 Data.NodeVarReferences.Remove(key);
+            }
             else
                 Data.NodeVarReferences[key] = newValue;
             InvokeDataChanged();
@@ -250,6 +279,14 @@ namespace Fractural.NodeVars
             Data.NodeVarReferences.Remove(key);
             InvokeDataChanged();
         }
+
+        public void OnBeforeSerialize()
+        {
+            Data = null;
+            DefaultData = null;
+        }
+
+        public void OnAfterDeserialize() { }
     }
 }
 #endif

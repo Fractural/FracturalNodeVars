@@ -1,0 +1,37 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://addons/FracturalNodeVars/Editor/NodeVarContainer.cs" type="Script" id=1]
+
+[node name="ManualTests" type="Node"]
+
+[node name="NodeVarContainer" type="Node" parent="."]
+script = ExtResource( 1 )
+__meta__ = {
+"_nodeVars/visible": true
+}
+_nodeVars = {
+"Var1": {
+"InitialValue": 0,
+"Operation": 0,
+"Type": "DynamicNodeVarData",
+"ValueType": "System.Int32"
+},
+"Var2": {
+"Expression": "helicopter",
+"NodeVarReferences": {
+},
+"Type": "ExpressionNodeVarData"
+},
+"Var3": {
+"Expression": "joe mama",
+"NodeVarReferences": {
+},
+"Type": "ExpressionNodeVarData"
+},
+"Var4": {
+"Expression": "",
+"NodeVarReferences": {
+},
+"Type": "ExpressionNodeVarData"
+}
+}

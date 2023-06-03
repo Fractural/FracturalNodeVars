@@ -76,56 +76,6 @@ _nodeVars = {
 }
 }
 
-[node name="new" type="Node" parent="."]
-script = ExtResource( 4 )
-__meta__ = {
-"_nodeVars/visible": true
-}
-_nodeVars = {
-"SettableVar": {
-"InitialValue": Vector2( 0, 0 ),
-"Operation": 2,
-"Type": "DynamicNodeVarData",
-"ValueType": "Godot.Vector2"
-},
-"SomeString": {
-"InitialValue": "This is from another container!",
-"Operation": 0,
-"Type": "DynamicNodeVarData",
-"ValueType": "System.String"
-},
-"Var1": {
-"InitialValue": 0,
-"Operation": 0,
-"Type": "DynamicNodeVarData",
-"ValueType": "System.Int32"
-},
-"aVar2": {
-"Expression": "a + b = c",
-"NodeVarReferences": {
-"Var2": {
-"ContainerPath": null,
-"ContainerVarName": null
-},
-"joemama": {
-"ContainerPath": NodePath(""),
-"ContainerVarName": null
-}
-},
-"Type": "ExpressionNodeVarData"
-},
-"sdf": {
-"Expression": null,
-"NodeVarReference": {
-"Var1": {
-"ContainerPath": null,
-"ContainerVarName": null
-}
-},
-"Type": "ExpressionNodeVarData"
-}
-}
-
 [node name="Forwarded" parent="." instance=ExtResource( 5 )]
 _nodeVars = {
 "Var2": {
@@ -139,5 +89,13 @@ _nodeVars = {
 "InitialValue": 0,
 "Operation": 0,
 "ValueType": "System.Int32"
+},
+"Var4": {
+"ContainerPath": NodePath("../AnotherContainer"),
+"ContainerVarName": "SettableVar",
+"InitialValue": Vector2( 0, 0 ),
+"Operation": 1,
+"Type": "DynamicNodeVarData",
+"ValueType": "Godot.Vector2"
 }
 }

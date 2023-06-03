@@ -26,10 +26,10 @@ _nodeVars = {
 "ValueType": "System.Int32"
 },
 "Var4": {
-"InitialValue": false,
-"Operation": 0,
+"InitialValue": Vector2( 0, 0 ),
+"Operation": 1,
 "Type": "DynamicNodeVarData",
-"ValueType": "System.Boolean"
+"ValueType": "Godot.Vector2"
 }
 }
 

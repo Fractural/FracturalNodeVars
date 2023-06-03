@@ -1,4 +1,6 @@
-﻿using Godot;
+﻿using Fractural.Utils;
+using Godot;
+using System;
 using System.Collections.Generic;
 
 namespace Fractural.NodeVars
@@ -22,14 +24,28 @@ namespace Fractural.NodeVars
         {
             public object Value { get; set; }
             public TokenType TokenType { get; set; }
+
+            public override bool Equals(object obj)
+            {
+                return obj is Token token &&
+                    Equals(token.Value, Value) &&
+                    Equals(token.TokenType, TokenType);
+            }
+
+            public override int GetHashCode()
+            {
+                int code = Value?.GetHashCode() ?? 0;
+                code = GeneralUtils.CombineHashCodes(code, TokenType.GetHashCode());
+                return code;
+            }
         }
 
         private int _index;
         private string _text;
         private List<Token> _tokens;
-        private char _eofCharacter = default;
         private string[] _keywords;
         private string[] _punctuation;
+        private IDictionary<char, string> _escapeSequences;
         private string[] DefaultKeywords => new string[] {
             "true",
             "false",
@@ -52,6 +68,17 @@ namespace Fractural.NodeVars
             "&&",
             "||",
             ","
+        };
+        private IDictionary<char, string> DefaultEscapeSequences => new Dictionary<char, string>()
+        {
+            {'t', "\t" },
+            {'n', "\n" },
+            {'"', "\"" },
+            {'\'', "'" },
+            {'\\', "\\" },
+            {'0', "\0" },
+            {'b', "\b" },
+            {'v', "\v" },
         };
 
         public bool IsEOF()
@@ -91,11 +118,16 @@ namespace Fractural.NodeVars
                 NextChar();
         }
 
-        public bool ExpectString(string keyword)
+        public bool ExpectString(string expected)
         {
-            if (_index + keyword.Length >= _text.Length)
+            if (_index + expected.Length > _text.Length)
                 return false;
-            return _text.Substring(_index, keyword.Length).Equals(keyword);
+            if (_text.Substring(_index, expected.Length).Equals(expected))
+            {
+                _index += expected.Length;
+                return true;
+            }
+            return false;
         }
 
         public Token ExpectIdentifier()
@@ -110,9 +142,9 @@ namespace Fractural.NodeVars
 
         public Token ExpectPunctuation()
         {
-            foreach (string punctuation in _keywords)
+            foreach (string punctuation in _punctuation)
                 if (ExpectString(punctuation))
-                    return new Token() { TokenType = TokenType.Keyword, Value = punctuation };
+                    return new Token() { TokenType = TokenType.Punctuation, Value = punctuation };
             return null;
         }
 
@@ -161,7 +193,21 @@ namespace Fractural.NodeVars
             string resultString = "";
             while (PeekChar() != '"')
             {
-                resultString += NextChar();
+                var nextChar = NextChar();
+                if (nextChar == '\\')
+                {
+                    if (IsEOF())
+                        // Unterminated string
+                        return null;
+                    var escapeSequenceChar = NextChar();
+                    if (_escapeSequences.TryGetValue(escapeSequenceChar, out string escapedValue))
+                        resultString += escapedValue;
+                    else
+                        // Unknown escape sequence
+                        return null;
+                }
+                else
+                    resultString += nextChar;
                 if (IsEOF())
                     // Unterminated string
                     return null;
@@ -187,18 +233,19 @@ namespace Fractural.NodeVars
         public string PeekString(int amount)
         {
             int substringLength = amount;
-            if (_text.Length - _index > substringLength)
+            if (_text.Length - _index < substringLength)
                 substringLength = _text.Length - _index;
             return _text.Substring(_index, substringLength);
         }
 
-        public IList<Token> Tokenize(string text, string[] keywords = null, string[] punctuation = null)
+        public IList<Token> Tokenize(string text, string[] keywords = null, string[] punctuation = null, IDictionary<char, string> escapeSequences = null)
         {
             _text = text;
             _tokens = new List<Token>();
 
             _keywords = keywords ?? DefaultKeywords;
             _punctuation = punctuation ?? DefaultPunctuation;
+            _escapeSequences = escapeSequences ?? DefaultEscapeSequences;
 
             while (!IsEOF())
             {
@@ -208,6 +255,7 @@ namespace Fractural.NodeVars
                     GD.PushError($"{nameof(ExpressionLexer)}: Unknown token \"{PeekString(10)}\".");
                     return null;
                 }
+                _tokens.Add(token);
                 ConsumeWhitespace();
             }
             return _tokens;

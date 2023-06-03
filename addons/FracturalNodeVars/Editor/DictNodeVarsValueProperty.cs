@@ -141,7 +141,7 @@ namespace Fractural.NodeVars
         private Control _currentFocused;
         private void OnFocusChanged(Control control) => _currentFocused = control;
 
-        private bool IsValueFixed()
+        private bool CheckValueSameAsFixed()
         {
             if (Value.Count == 0)
                 return true;
@@ -162,7 +162,7 @@ namespace Fractural.NodeVars
 
         public override void UpdateProperty()
         {
-            if (Value == null || (Value.Count > 0 && IsValueFixed()))
+            if (Value == null || (Value.Count > 0 && CheckValueSameAsFixed()))
                 Value = new GDC.Dictionary();
 
             _container.Visible = this.GetMeta<bool>("visible", true);   // Fixed to being visible if the meta tag doesn't exist.

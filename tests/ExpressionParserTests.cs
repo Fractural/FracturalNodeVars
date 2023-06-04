@@ -20,6 +20,22 @@ namespace Tests
             Assert.IsEqual(ast, expectedAST, "Should create the correct AST");
         }
 
+        [Test("&&")]
+        [Test("-")]
+        [Test("!var1 var2")]
+        public void TestUnparsableExpression(string expression)
+        {
+            Describe($"When parsing \"{expression}\"");
+            ExpressionLexer lexer = new ExpressionLexer();
+            var tokens = lexer.Tokenize(expression);
+            Assert.IsNotNull(tokens, "Should succesfully tokenize");
+            if (tokens == null)
+                return;
+            ExpressionParser parser = new ExpressionParser();
+            var ast = parser.Parse(tokens, null, null);
+            Assert.IsNull(ast, "Should fail on parsing");
+        }
+
         [Test]
         public void TestInt() => TestParse(
            "324",

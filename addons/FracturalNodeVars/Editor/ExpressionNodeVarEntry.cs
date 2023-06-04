@@ -263,12 +263,8 @@ namespace Fractural.NodeVars
         private void OnEntryDataChanged(string key, NodeVarReference newValue)
         {
             // Remove entry if it is the same as the fixed value (no point in storing redundant information)
-            GD.Print("Entry changed, ", key);
             if (DefaultData != null && DefaultData.NodeVarReferences.TryGetValue(key, out NodeVarReference existingReference) && existingReference.Equals(newValue))
-            {
-                GD.Print("\tSame as old, so removing");
                 Data.NodeVarReferences.Remove(key);
-            }
             else
                 Data.NodeVarReferences[key] = newValue;
             InvokeDataChanged();

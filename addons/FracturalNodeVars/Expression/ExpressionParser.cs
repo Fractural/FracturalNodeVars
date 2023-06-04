@@ -868,7 +868,11 @@ namespace Fractural.NodeVars
             _fetchVariableFunc = fetchVariableFunc;
             _callFunctionFunc = callFunctionFunc;
 
-            return ExpectExpression();
+            var expression = ExpectExpression();
+            if (!IsEOF())
+                // There are multiple expressions, which are not allowed
+                return null;
+            return expression;
         }
     }
 }

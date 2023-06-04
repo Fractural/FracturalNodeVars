@@ -149,7 +149,7 @@ namespace Fractural.NodeVars
             });
 
             var currFocusedEntry = _currentFocused?.GetAncestor<ExpressionNodeVarReferenceEntry>();
-            if (currFocusedEntry != null)
+            if (currFocusedEntry != null && currFocusedEntry.HasParent(this))
             {
                 int keyIndex = sortedReferences.FindIndex(x => x.Name == currFocusedEntry.Data.Name);
                 if (keyIndex < 0)

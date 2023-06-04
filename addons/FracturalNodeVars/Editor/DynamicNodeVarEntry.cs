@@ -9,7 +9,7 @@ using System.Linq;
 namespace Fractural.NodeVars
 {
     [Tool]
-    public class DynamicNodeVarEntry : NodeVarEntry<DynamicNodeVarData>
+    public class DynamicNodeVarEntry : NodeVarEntry<DynamicNodeVarData>, ISerializationListener
     {
         private class ValueTypeData
         {
@@ -290,6 +290,14 @@ namespace Fractural.NodeVars
             UpdatePointerSelectAndVisibility();
             InvokeDataChanged();
         }
+
+        public void OnBeforeSerialize()
+        {
+            Data = null;
+            DefaultData = null;
+        }
+
+        public void OnAfterDeserialize() { }
     }
 }
 #endif

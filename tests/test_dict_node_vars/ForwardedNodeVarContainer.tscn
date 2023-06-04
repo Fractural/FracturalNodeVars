@@ -8,6 +8,32 @@ __meta__ = {
 "_nodeVars/visible": true
 }
 _nodeVars = {
+"ExpressionVar": {
+"Expression": "dummy + Var3",
+"NodeVarReferences": {
+"Var3": {
+"ContainerPath": NodePath(".")
+},
+"dummy": {
+"ContainerPath": NodePath("ChildNodeVarContainer")
+}
+},
+"Type": "ExpressionNodeVarData"
+},
+"ExpressionVarForwarded": {
+"Expression": "dummy + Var3",
+"NodeVarReferences": {
+"var": {
+"ContainerPath": null,
+"ContainerVarName": null
+},
+"zdummy": {
+"ContainerPath": NodePath("ChildNodeVarContainer"),
+"ContainerVarName": "dummy"
+}
+},
+"Type": "ExpressionNodeVarData"
+},
 "Var1": {
 "ContainerPath": NodePath("ChildNodeVarContainer"),
 "ContainerVarName": "dummy",

@@ -8,7 +8,7 @@ using static Fractural.NodeVars.ExpressionNodeVarData;
 #if TOOLS
 namespace Fractural.NodeVars
 {
-    public class ExpressionNodeVarReferenceEntry : HBoxContainer
+    public class ExpressionNodeVarReferenceEntry : HBoxContainer, ISerializationListener
     {
         public event Action<string, ExpressionNodeVarReferenceEntry> NameChanged;
         public event Action<string, NodeVarReference> DataChanged;
@@ -153,6 +153,14 @@ namespace Fractural.NodeVars
         }
 
         private void InvokeDeleted() => Deleted?.Invoke(Data.Name);
+
+        public void OnBeforeSerialize()
+        {
+            Data = null;
+            DefaultData = null;
+        }
+
+        public void OnAfterDeserialize() { }
     }
 }
 #endif

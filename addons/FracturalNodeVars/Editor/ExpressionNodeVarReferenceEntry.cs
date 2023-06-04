@@ -93,8 +93,8 @@ namespace Fractural.NodeVars
 
         public void SetData(NodeVarReference data, NodeVarReference defaultData)
         {
-            Data = data;
-            DefaultData = data;
+            Data = data.Clone();
+            DefaultData = defaultData;
             _nodeVarPointerSelect.SetValue(data.ContainerPath, data.ContainerVarName);
             _nameProperty.SetValue(data.Name, false);
             UpdateResetButton();

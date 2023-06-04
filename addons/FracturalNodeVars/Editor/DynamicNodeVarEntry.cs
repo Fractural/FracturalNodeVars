@@ -99,14 +99,12 @@ namespace Fractural.NodeVars
 
         protected override void UpdateDisabledAndFixedUI()
         {
-            _nameProperty.Disabled = Disabled || IsFixed;
+            base.UpdateDisabledAndFixedUI();
             _valueTypeButton.Disabled = Disabled || IsFixed;
             _operationButton.Disabled = Disabled || IsFixed;
             if (_valueProperty != null)
                 _valueProperty.Disabled = Disabled;
-            _deleteButton.Visible = !IsFixed;
             _nodeVarPointerSelect.Disabled = Disabled;
-            _deleteButton.Disabled = Disabled;
         }
 
         private void OnContainerVarNameSelected(string name)

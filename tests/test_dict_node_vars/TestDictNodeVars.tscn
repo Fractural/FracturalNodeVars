@@ -73,19 +73,23 @@ _nodeVars = {
 "Operation": 0,
 "Type": "DynamicNodeVarData",
 "ValueType": "System.String"
-},
-"Var1": {
-"ContainerPath": NodePath("../Forwarded/ChildNodeVarContainer"),
-"ContainerVarName": "dummy",
-"InitialValue": 0,
-"Operation": 0,
-"Type": "DynamicNodeVarData",
-"ValueType": "System.Int32"
 }
 }
 
 [node name="Forwarded" parent="." instance=ExtResource( 5 )]
 _nodeVars = {
+"ExpressionVar": {
+"Expression": "dummy + Var3",
+"NodeVarReferences": {
+},
+"Type": "ExpressionNodeVarData"
+},
+"ExpressionVarForwarded": {
+"Expression": "dummy2 + Var",
+"NodeVarReferences": {
+},
+"Type": "ExpressionNodeVarData"
+},
 "Var2": {
 "ContainerPath": NodePath("../AnotherContainer"),
 "ContainerVarName": "SomeString",

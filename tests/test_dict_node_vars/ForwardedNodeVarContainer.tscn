@@ -21,13 +21,13 @@ _nodeVars = {
 "Type": "ExpressionNodeVarData"
 },
 "ExpressionVarForwarded": {
-"Expression": "dummy + Var3",
+"Expression": "dummy2 + Var",
 "NodeVarReferences": {
-"var": {
-"ContainerPath": null,
-"ContainerVarName": null
+"dummy2": {
+"ContainerPath": NodePath("ChildNodeVarContainer"),
+"ContainerVarName": "dummy"
 },
-"zdummy": {
+"var": {
 "ContainerPath": NodePath("ChildNodeVarContainer"),
 "ContainerVarName": "dummy"
 }

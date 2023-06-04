@@ -94,7 +94,12 @@ namespace Fractural.NodeVars
             Data.Name = oldName;
             _nameProperty.SetValue(oldName, false);
         }
-        protected virtual void UpdateDisabledAndFixedUI() { }
+        protected virtual void UpdateDisabledAndFixedUI()
+        {
+            _nameProperty.Disabled = IsFixed || Disabled;
+            _deleteButton.Visible = !IsFixed;
+            _deleteButton.Disabled = Disabled;
+        }
         protected virtual void InvokeDeleted() => Deleted?.Invoke(Data.Name);
         protected virtual void InvokeDataChanged() => DataChanged?.Invoke(Data.Name, Data);
         protected virtual void InvokeNameChanged(string oldName) => NameChanged?.Invoke(oldName, this);

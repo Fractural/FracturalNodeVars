@@ -83,8 +83,8 @@ namespace Fractural.NodeVars
 
         protected override void UpdateDisabledAndFixedUI()
         {
+            base.UpdateDisabledAndFixedUI();
             _expressionProperty.Disabled = Disabled;
-            _nameProperty.Disabled = Disabled;
             foreach (ExpressionNodeVarReferenceEntry entry in _referenceEntriesVBox.GetChildren())
             {
                 entry.Disabled = Disabled;
@@ -113,11 +113,15 @@ namespace Fractural.NodeVars
         private void UpdateReferencesUI()
         {
             if (Data.NodeVarReferences.Count > 0 && CheckReferencesSameAsFixed())
+            {
                 Data.NodeVarReferences.Clear();
+            }
 
             var displayedReferences = new Dictionary<string, NodeVarReference>();
             foreach (var reference in Data.NodeVarReferences.Values)
+            {
                 displayedReferences.Add(reference.Name, reference);
+            }
 
             if (DefaultData != null)
                 foreach (var fixedReference in DefaultData.NodeVarReferences.Values)
@@ -254,9 +258,8 @@ namespace Fractural.NodeVars
                 entry.ResetName(oldKey);
                 return;
             }
-            var currValue = Data.NodeVarReferences[oldKey];
             Data.NodeVarReferences.Remove(oldKey);
-            Data.NodeVarReferences[newKey] = currValue;
+            Data.NodeVarReferences[newKey] = entry.Data.Clone();
             InvokeDataChanged();
         }
 
@@ -264,9 +267,13 @@ namespace Fractural.NodeVars
         {
             // Remove entry if it is the same as the fixed value (no point in storing redundant information)
             if (DefaultData != null && DefaultData.NodeVarReferences.TryGetValue(key, out NodeVarReference existingReference) && existingReference.Equals(newValue))
+            {
                 Data.NodeVarReferences.Remove(key);
+            }
             else
+            {
                 Data.NodeVarReferences[key] = newValue;
+            }
             InvokeDataChanged();
         }
 

@@ -255,15 +255,19 @@ namespace Fractural.NodeVars
                 {
                     // If the Entry can't handle the NodeVar (because they are different types)
                     // then we free the entry and replace it with the correct one.
+                    _nodeVarEntriesVBox.RemoveChild(entry);
                     entry.QueueFree();
                     entry = CreateNewEntry(nodeVar);
                     _nodeVarEntriesVBox.MoveChild(entry, index);
                 }
                 if (currFocusedEntry == null || entry != currFocusedEntry)
+                {
                     entry.SetData(nodeVar, _fixedNodeVarsDict?.GetValue(nodeVar.Name, null));
+                }
                 entry.IsFixed = HasFixedNodeVars && _fixedNodeVarsDict.ContainsKey(nodeVar.Name);
                 index++;
             }
+
             // Free extra entries
             if (index < childCount)
             {

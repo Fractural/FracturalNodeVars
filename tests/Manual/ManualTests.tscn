@@ -1,11 +1,50 @@
-[gd_scene load_steps=2 format=2]
+[gd_scene load_steps=3 format=2]
 
-[ext_resource path="res://addons/FracturalNodeVars/Editor/NodeVarContainer.cs" type="Script" id=1]
+[ext_resource path="res://tests/Manual/TestExpressionContainer.tscn" type="PackedScene" id=1]
+[ext_resource path="res://addons/FracturalNodeVars/Editor/NodeVarContainer.cs" type="Script" id=2]
 
 [node name="ManualTests" type="Node"]
 
+[node name="TestExpressionContainer2" parent="." instance=ExtResource( 1 )]
+_nodeVars = {
+"Var11": {
+"Expression": "",
+"NodeVarReferences": {
+"Var1": {
+"ContainerPath": NodePath(""),
+"ContainerVarName": null
+}
+},
+"Type": "ExpressionNodeVarData"
+},
+"Var17": {
+"InitialValue": 0,
+"Operation": 0,
+"Type": "DynamicNodeVarData",
+"ValueType": "System.Int32"
+},
+"Var21": {
+"InitialValue": 0,
+"Operation": 0,
+"Type": "DynamicNodeVarData",
+"ValueType": "System.Int32"
+},
+"Var25": {
+"InitialValue": 0,
+"Operation": 0,
+"Type": "DynamicNodeVarData",
+"ValueType": "System.Int32"
+},
+"Var26": {
+"InitialValue": 0,
+"Operation": 0,
+"Type": "DynamicNodeVarData",
+"ValueType": "System.Int32"
+}
+}
+
 [node name="NodeVarContainer" type="Node" parent="."]
-script = ExtResource( 1 )
+script = ExtResource( 2 )
 __meta__ = {
 "_nodeVars/visible": true
 }
@@ -16,22 +55,10 @@ _nodeVars = {
 "Type": "DynamicNodeVarData",
 "ValueType": "System.Int32"
 },
-"Var2": {
-"Expression": "helicopter",
-"NodeVarReferences": {
-},
-"Type": "ExpressionNodeVarData"
-},
-"Var3": {
-"Expression": "joe mama",
-"NodeVarReferences": {
-},
-"Type": "ExpressionNodeVarData"
-},
 "Var4": {
-"Expression": "",
-"NodeVarReferences": {
-},
-"Type": "ExpressionNodeVarData"
+"InitialValue": 0,
+"Operation": 0,
+"Type": "DynamicNodeVarData",
+"ValueType": "System.Int32"
 }
 }

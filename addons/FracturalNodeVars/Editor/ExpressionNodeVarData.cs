@@ -96,6 +96,8 @@ namespace Fractural.NodeVars
         public override void Ready(Node node)
         {
             AST = ExpressionUtils.ParseFromText(Expression, GetVariable);
+            foreach (var reference in NodeVarReferences.Values)
+                reference.Ready(node);
         }
 
         public object GetVariable(string name) => NodeVarReferences[name].Value;
@@ -107,13 +109,11 @@ namespace Fractural.NodeVars
             if (newData.Name == Name)
             {
                 var inheritedData = TypedClone();
+                inheritedData.NodeVarReferences.Clear();
                 // Make sure old NodeVarReferences are always there.
                 // Inheriting a NodeVarExpression should never remove existing NodeVarReferences.
                 foreach (var reference in newData.NodeVarReferences.Values)
-                {
-                    if (!inheritedData.NodeVarReferences.ContainsKey(reference.Name))
-                        inheritedData.NodeVarReferences[reference.Name] = reference;
-                }
+                    inheritedData.NodeVarReferences[reference.Name] = reference.Clone();
                 if (!Equals(newData.Expression, Expression))
                     // If the newData's value is different from our value, then prefer the new data's value
                     inheritedData.Expression = newData.Expression;

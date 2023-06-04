@@ -55,16 +55,16 @@ _nodeVars = {
 "Type": "DynamicNodeVarData",
 "ValueType": "System.Int32"
 },
-"Var4": {
-"InitialValue": 0,
-"Operation": 0,
-"Type": "DynamicNodeVarData",
-"ValueType": "System.Int32"
-},
-"Var5": {
+"joe": {
 "Expression": "",
 "NodeVarReferences": {
 },
 "Type": "ExpressionNodeVarData"
+},
+"var2834": {
+"InitialValue": 0,
+"Operation": 0,
+"Type": "DynamicNodeVarData",
+"ValueType": "System.Int32"
 }
 }

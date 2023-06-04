@@ -61,6 +61,7 @@ namespace Fractural.NodeVars
             _nameProperty = new StringValueProperty();
             _nameProperty.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
             _nameProperty.ValueChanged += OnNameChanged;
+            _nameProperty.Validate = (name) => name != "" && name != null && !char.IsDigit(name[0]) && !name.Contains(" ");
 
             _nodeVarPointerSelect = new NodeVarPointerSelect(assetsRegistry, sceneRoot, relativeToNode, conditionFunc);
             _nodeVarPointerSelect.NodePathChanged += OnContainerPathChanged;

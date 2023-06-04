@@ -66,6 +66,7 @@ namespace Fractural.NodeVars
             _nameProperty = new StringValueProperty();
             _nameProperty.ValueChanged += OnNameChanged;
             _nameProperty.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
+            _nameProperty.Validate = (name) => name != "" && name != null && !char.IsDigit(name[0]) && !name.Contains(" ");
 
             var control = new Control();
             control.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;

@@ -73,6 +73,14 @@ _nodeVars = {
 "Operation": 0,
 "Type": "DynamicNodeVarData",
 "ValueType": "System.String"
+},
+"Var1": {
+"ContainerPath": NodePath("../Forwarded/ChildNodeVarContainer"),
+"ContainerVarName": "dummy",
+"InitialValue": 0,
+"Operation": 0,
+"Type": "DynamicNodeVarData",
+"ValueType": "System.Int32"
 }
 }
 

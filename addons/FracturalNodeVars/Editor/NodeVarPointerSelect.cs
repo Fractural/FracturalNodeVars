@@ -9,7 +9,7 @@ using System.Linq;
 namespace Fractural.NodeVars
 {
     [Tool]
-    public class NodeVarPointerSelect : HBoxContainer
+    public class NodeVarPointerSelect : HBoxContainer, ISerializationListener
     {
         public event Action<NodePath> NodePathChanged;
         public event Action<string> VarNameChanged;
@@ -33,7 +33,7 @@ namespace Fractural.NodeVars
 
         public NodePath ContainerPath { get; private set; }
         public string VarName { get; private set; }
-        public Func<NodeVarData, bool> NodeVarConditionFunc { get; set; } = (var) => true;
+        public Func<NodeVarData, bool> NodeVarConditionFunc { get; set; }
 
         public NodeVarPointerSelect() { }
         public NodeVarPointerSelect(IAssetsRegistry assetsRegistry, Node sceneRoot, Node relativeToNode, Func<NodeVarData, bool> conditionFunc = null)
@@ -44,6 +44,8 @@ namespace Fractural.NodeVars
 
             if (conditionFunc != null)
                 NodeVarConditionFunc = conditionFunc;
+            else
+                NodeVarConditionFunc = (var) => true;
 
             _containerVarSelectButton = new Button();
             _containerVarSelectButton.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
@@ -106,6 +108,13 @@ namespace Fractural.NodeVars
             _containerVarPopupSearch.SearchEntries = container.GetNodeVarsList().Where(x => NodeVarConditionFunc(x)).Select(x => x.Name).ToArray();
             _containerVarPopupSearch.Popup_(_containerVarSelectButton.GetGlobalRect());
         }
+
+        public void OnBeforeSerialize()
+        {
+            NodeVarConditionFunc = null;
+        }
+
+        public void OnAfterDeserialize() { }
     }
 }
 #endif

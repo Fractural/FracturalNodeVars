@@ -285,6 +285,7 @@ namespace Fractural.NodeVars
 
         public void OnBeforeSerialize()
         {
+            _assetsRegistry = null;
             Data = null;
             DefaultData = null;
         }

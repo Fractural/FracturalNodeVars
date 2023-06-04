@@ -60,5 +60,11 @@ _nodeVars = {
 "Operation": 0,
 "Type": "DynamicNodeVarData",
 "ValueType": "System.Int32"
+},
+"Var5": {
+"Expression": "",
+"NodeVarReferences": {
+},
+"Type": "ExpressionNodeVarData"
 }
 }

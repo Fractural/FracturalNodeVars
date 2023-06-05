@@ -4,13 +4,12 @@ using Fractural.Utils;
 using Godot;
 using System;
 using System.Linq;
-using GDC = Godot.Collections;
 
 #if TOOLS
 namespace Fractural.NodeVars
 {
     [Tool]
-    public class DictNodeVarsValuePropertyEntry : HBoxContainer
+    public class DynamicNodeVarEntry : NodeVarEntry<DynamicNodeVarData>, ISerializationListener
     {
         private class ValueTypeData
         {
@@ -28,136 +27,30 @@ namespace Fractural.NodeVars
             public int Index { get; set; }
         }
 
-        /// <summary>
-        /// NameChanged(string oldName, Entry entry)
-        /// </summary>
-        public event Action<string, DictNodeVarsValuePropertyEntry> NameChanged;
-        /// <summary>
-        /// DataChanged(string name, NodeVarData newValue)
-        /// </summary>
-        public event Action<string, NodeVarData> DataChanged;
-        /// <summary>
-        /// Deleted(string name)
-        /// </summary>
-        public event Action<string> Deleted;
-
-        private bool _disabled = false;
-        public bool Disabled
-        {
-            get => _disabled;
-            set
-            {
-                _disabled = value;
-                if (IsInsideTree())
-                    UpdateDisabledUI();
-            }
-        }
-        private bool _nameEditable = true;
-        public bool NameEditable
-        {
-            get => _nameEditable;
-            set
-            {
-                _nameEditable = value;
-                if (IsInsideTree())
-                    UpdateDisabledUI();
-            }
-        }
-        private bool _valueTypeEditable = true;
-        public bool ValueTypeEditable
-        {
-            get => _valueTypeEditable;
-            set
-            {
-                _valueTypeEditable = value;
-                if (IsInsideTree())
-                    UpdateDisabledUI();
-            }
-        }
-        private bool _operationEditable = true;
-        public bool OperationEditable
-        {
-            get => _operationEditable;
-            set
-            {
-                _operationEditable = value;
-                if (IsInsideTree())
-                    UpdateDisabledUI();
-            }
-        }
-        private bool _deletable = true;
-        public bool Deletable
-        {
-            get => _deletable;
-            set
-            {
-                _deletable = value;
-                if (IsInsideTree())
-                    UpdateDisabledUI();
-            }
-        }
-
-        public StringValueProperty NameProperty { get; set; }
-        public NodeVarData Data { get; set; }
-        public NodeVarData DefaultData { get; set; }
-
-        private PopupSearch _containerVarPopupSearch;
-        private Button _containerVarSelectButton;
-        private NodePathValueProperty _containerPathProperty;
         private OptionButton _valueTypeButton;
         private OptionButton _operationButton;
         private Button _isPointerButton;
         private MarginContainer _valuePropertyContainer;
         private ValueProperty _valueProperty;
-        private Button _deleteButton;
         private ValueTypeData[] _valueTypes;
         private OperationTypeData[] _operationTypes;
         private Node _relativeToNode;
         private IAssetsRegistry _assetsRegistry;
-        private Button _resetInitalValueButton;
+        private NodeVarPointerSelect _nodeVarPointerSelect;
 
-        public DictNodeVarsValuePropertyEntry() { }
-        public DictNodeVarsValuePropertyEntry(IAssetsRegistry assetsRegistry, Node sceneRoot, Node relativeToNode)
+        public DynamicNodeVarEntry() { }
+        public DynamicNodeVarEntry(IAssetsRegistry assetsRegistry, PackedSceneDefaultValuesRegistry defaultValuesRegistry, Node sceneRoot, Node relativeToNode) : base()
         {
             _assetsRegistry = assetsRegistry;
             _relativeToNode = relativeToNode;
 
-            var control = new Control();
-            control.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
-            control.SizeFlagsStretchRatio = 0.1f;
-            control.RectSize = new Vector2(24, 0);
-            AddChild(control);
-
-            var vBox = new VBoxContainer();
-            vBox.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
-            vBox.SizeFlagsStretchRatio = 0.9f;
-            AddChild(vBox);
-
             var firstRowHBox = new HBoxContainer();
             var secondRowHBox = new HBoxContainer();
-            vBox.AddChild(firstRowHBox);
-            vBox.AddChild(secondRowHBox);
-
-            NameProperty = new StringValueProperty();
-            NameProperty.ValueChanged += OnNameChanged;
-            NameProperty.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
-
-            _containerVarSelectButton = new Button();
-            _containerVarSelectButton.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
-            _containerVarSelectButton.ClipText = true;
-            _containerVarSelectButton.Connect("pressed", this, nameof(OnContainerVarSelectPressed));
-
-            _containerVarPopupSearch = new PopupSearch();
-            _containerVarPopupSearch.ItemListLineHeight = (int)(_containerVarPopupSearch.ItemListLineHeight * _assetsRegistry.Scale);
-            _containerVarPopupSearch.Connect(nameof(PopupSearch.EntrySelected), this, nameof(OnContainerVarNameSelected));
+            _contentVBox.AddChild(firstRowHBox);
+            _contentVBox.AddChild(secondRowHBox);
 
             _valuePropertyContainer = new MarginContainer();
             _valuePropertyContainer.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
-
-            _containerPathProperty = new NodePathValueProperty(sceneRoot, (node) => node is INodeVarContainer);
-            _containerPathProperty.ValueChanged += OnNodePathChanged;
-            _containerPathProperty.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
-            _containerPathProperty.RelativeToNode = relativeToNode;
 
             _valueTypeButton = new OptionButton();
             _valueTypeButton.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
@@ -174,79 +67,49 @@ namespace Fractural.NodeVars
             _isPointerButton.ToggleMode = true;
             _isPointerButton.Connect("toggled", this, nameof(OnIsPointerToggled));
 
-            _deleteButton = new Button();
-            _deleteButton.Connect("pressed", this, nameof(OnDeletePressed));
+            _nodeVarPointerSelect = new NodeVarPointerSelect(assetsRegistry, defaultValuesRegistry, sceneRoot, relativeToNode, (nodeVar) => NodeVarUtils.CheckNodeVarCompatible(nodeVar, Data.Operation, Data.ValueType));
+            _nodeVarPointerSelect.VarNameChanged += OnContainerVarNameSelected;
+            _nodeVarPointerSelect.NodePathChanged += OnNodePathChanged;
 
-            _resetInitalValueButton = new Button();
-            _resetInitalValueButton.Connect("pressed", this, nameof(OnResetButtonPressed));
-
-            AddChild(_containerVarPopupSearch);
-
-            firstRowHBox.AddChild(NameProperty);
+            firstRowHBox.AddChild(_nameProperty);
             firstRowHBox.AddChild(_valueTypeButton);
             firstRowHBox.AddChild(_operationButton);
 
-            //control = new Control();
-            //control.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
-            //control.SizeFlagsStretchRatio = 0.1f;
-            //control.RectSize = new Vector2(24, 0);
-            //secondRowHBox.AddChild(control);
             secondRowHBox.AddChild(_isPointerButton);
-            secondRowHBox.AddChild(_containerPathProperty);
-            secondRowHBox.AddChild(_containerVarSelectButton);
+            secondRowHBox.AddChild(_nodeVarPointerSelect);
             secondRowHBox.AddChild(_valuePropertyContainer);
-            secondRowHBox.AddChild(_resetInitalValueButton);
+            secondRowHBox.AddChild(_resetInitialValueButton);
             secondRowHBox.AddChild(_deleteButton);
         }
 
         public override void _Ready()
         {
+            base._Ready();
+
 #if TOOLS
             if (NodeUtils.IsInEditorSceneTab(this))
                 return;
 #endif
-            _deleteButton.Icon = GetIcon("Remove", "EditorIcons");
             _isPointerButton.Icon = GetIcon("GuiScrollArrowRightHl", "EditorIcons");
-            _resetInitalValueButton.Icon = GetIcon("Reload", "EditorIcons");
 
             InitValueTypes();
             InitOperationTypes();
-            UpdateDisabledUI();
+            UpdateDisabledAndFixedUI();
         }
 
-        public override void _Notification(int what)
+        protected override void UpdateDisabledAndFixedUI()
         {
-            if (what == NotificationPredelete)
-            {
-                NameProperty.ValueChanged -= OnNameChanged;
-                _containerPathProperty.ValueChanged -= OnNodePathChanged;
-            }
-        }
-
-        private void UpdateDisabledUI()
-        {
-            NameProperty.Disabled = _disabled || !NameEditable;
-            _valueTypeButton.Disabled = _disabled || !ValueTypeEditable;
-            _operationButton.Disabled = _disabled || !OperationEditable;
-            _deleteButton.Visible = Deletable;
-            _containerPathProperty.Disabled = _disabled;
-            _containerVarSelectButton.Disabled = _disabled;
-            _deleteButton.Disabled = _disabled;
-        }
-
-        private void OnResetButtonPressed()
-        {
-            Data = DefaultData.Clone();
-            _valueProperty.SetValue(Data.InitialValue, false);
-            _containerPathProperty.SetValue(Data.ContainerPath, false);
-            UpdateIsPointerVisibility();
-            InvokeDataChanged();
+            base.UpdateDisabledAndFixedUI();
+            _valueTypeButton.Disabled = Disabled || IsFixed;
+            _operationButton.Disabled = Disabled || IsFixed;
+            if (_valueProperty != null)
+                _valueProperty.Disabled = Disabled;
+            _nodeVarPointerSelect.Disabled = Disabled;
         }
 
         private void OnContainerVarNameSelected(string name)
         {
             Data.ContainerVarName = name;
-            _containerVarSelectButton.Text = name;
             InvokeDataChanged();
         }
 
@@ -265,33 +128,25 @@ namespace Fractural.NodeVars
             _operationButton.Select(operationTypeData.Index);
         }
 
-        public void SetData(NodeVarData value, NodeVarData defaultData = null)
+        public override void SetData(DynamicNodeVarData value, DynamicNodeVarData defaultData = null)
         {
             var oldData = Data;
-            // Clone the data
-            Data = value.Clone();
-            DefaultData = defaultData;
+            base.SetData(value, defaultData);
 
             if ((oldData == null && Data != null) || (oldData != null && oldData.ValueType != Data.ValueType))
                 UpdateValuePropertyType();
 
             SetValueTypeValueDisplay(Data.ValueType);
             SetOperationsValueDisplay(Data.Operation);
-            NameProperty.SetValue(Data.Name);
             _valueProperty.SetValue(Data.InitialValue, false);
-            _containerPathProperty.SetValue(Data.ContainerPath, false);
-            _containerVarSelectButton.Text = Data.ContainerVarName ?? "[Empty]";
             _isPointerButton.SetPressedNoSignal(Data.IsPointer);
-            UpdateIsPointerVisibility();
-            UpdateResetButton();
+            UpdatePointerSelectAndVisibility();
         }
 
-        private void UpdateIsPointerVisibility()
+        private void UpdatePointerSelectAndVisibility()
         {
-            var containerNode = _relativeToNode.GetNodeOrNull(Data?.ContainerPath ?? new NodePath()) as INodeVarContainer;
-            _containerPathProperty.Visible = Data.IsPointer;
-            _containerVarSelectButton.Visible = Data.IsPointer;
-            _containerVarSelectButton.Disabled = containerNode == null;
+            _nodeVarPointerSelect.SetValue(Data.ContainerPath, Data.ContainerVarName);
+            _nodeVarPointerSelect.Visible = Data.IsPointer;
             _valuePropertyContainer.Visible = !Data.IsPointer;
         }
 
@@ -310,11 +165,6 @@ namespace Fractural.NodeVars
             };
             _valueProperty.SetValue(Data.InitialValue, false);
             _valuePropertyContainer.AddChild(_valueProperty);
-        }
-
-        private void UpdateResetButton()
-        {
-            _resetInitalValueButton.Visible = DefaultData != null && !Data.Equals(DefaultData);
         }
 
         private void InitOperationTypes()
@@ -390,23 +240,9 @@ namespace Fractural.NodeVars
             }
         }
 
-        private void InvokeDataChanged()
-        {
-            UpdateResetButton();
-            DataChanged?.Invoke(Data.Name, Data);
-        }
-
-        private void OnNameChanged(string newName)
-        {
-            var oldName = Data.Name;
-            Data.Name = newName;
-            NameChanged?.Invoke(oldName, this);
-        }
-
         private void OnNodePathChanged(NodePath newValue)
         {
             Data.ContainerPath = newValue;
-            UpdateIsPointerVisibility();
             InvokeDataChanged();
         }
 
@@ -440,31 +276,20 @@ namespace Fractural.NodeVars
             }
             else
             {
-                _containerPathProperty.SetValue(null, false);
                 Data.ContainerPath = null;
                 Data.ContainerVarName = null;
             }
-            UpdateIsPointerVisibility();
+            UpdatePointerSelectAndVisibility();
             InvokeDataChanged();
         }
 
-        private void OnContainerVarSelectPressed()
+        public void OnBeforeSerialize()
         {
-            var container = _relativeToNode.GetNode<INodeVarContainer>(Data.ContainerPath);
-            _containerVarPopupSearch.SearchEntries = container.GetNodeVarsList()
-                .Where(x =>
-                {
-                    if (x.ValueType != Data.ValueType) return false;
-                    if (x.Operation == Data.Operation
-                        || Data.Operation == NodeVarOperation.Get && x.Operation == NodeVarOperation.GetSet
-                        || Data.Operation == NodeVarOperation.Set && x.Operation == NodeVarOperation.GetSet) return true;
-                    return false;
-                })
-                .Select(x => x.Name).ToArray();
-            _containerVarPopupSearch.Popup_(_containerVarSelectButton.GetGlobalRect());
+            Data = null;
+            DefaultData = null;
         }
 
-        private void OnDeletePressed() => Deleted?.Invoke(Data.Name);
+        public void OnAfterDeserialize() { }
     }
 }
 #endif

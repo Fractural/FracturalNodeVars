@@ -52,8 +52,7 @@ namespace Fractural.NodeVars
             if (parser.TryGetArgs(nameof(HintString.DictNodeVars), out string modeString))
             {
                 var objectType = node.GetCSharpType();
-                NodeVarData[] localFixedNodeVars = null;
-                NodeVarData[] defaultNodeVars = null;
+                List<NodeVarData> fixedNodeVars = new List<NodeVarData>();
                 bool canAddNewVars = false;
 
                 var sceneRoot = _plugin.GetEditorInterface().GetEditedSceneRoot();
@@ -66,26 +65,24 @@ namespace Fractural.NodeVars
                     var defaultNodeVarDict = GetDefaultNodeVarDict(node, path);
                     if (defaultNodeVarDict != null)
                     {
-                        defaultNodeVars = new NodeVarData[defaultNodeVarDict.Count];
-                        int index = 0;
                         foreach (string key in defaultNodeVarDict.Keys)
-                            defaultNodeVars[index++] = NodeVarData.FromGDDict(defaultNodeVarDict.Get<GDC.Dictionary>(key), key);
+                            fixedNodeVars.Add(NodeVarUtils.NodeVarDataFromGDDict(defaultNodeVarDict.Get<GDC.Dictionary>(key), key));
                     }
                 }
 
                 var mode = (HintString.DictNodeVarsMode)Enum.Parse(typeof(HintString.DictNodeVarsMode), modeString);
                 if (mode == HintString.DictNodeVarsMode.Attributes || mode == HintString.DictNodeVarsMode.LocalAttributes)
-                    localFixedNodeVars = NodeVarUtils.GetNodeVarsFromAttributes(objectType);
+                    fixedNodeVars.AddRange(NodeVarUtils.GetNodeVarsFromAttributes(objectType));
                 if (mode == HintString.DictNodeVarsMode.Local || mode == HintString.DictNodeVarsMode.LocalAttributes)
                     canAddNewVars = true;
 
                 AddPropertyEditor(path, new ValueEditorProperty(
                     new DictNodeVarsValueProperty(
                         _plugin.AssetsRegistry,
+                        _packedSceneDefaultValuesRegistry,
                         _plugin.GetEditorInterface().GetEditedSceneRoot(),
                         @object as Node,
-                        localFixedNodeVars,
-                        defaultNodeVars,
+                        fixedNodeVars.Count() > 0 ? fixedNodeVars.ToArray() : null,
                         canAddNewVars)
                     )
                 );

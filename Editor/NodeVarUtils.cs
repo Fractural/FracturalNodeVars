@@ -162,5 +162,66 @@ namespace Fractural.NodeVars
             else
                 return nodeVarContainer.GetNodeVarsList();
         }
+
+        public static ValueTypeData[] GetValueTypes(Control node)
+        {
+            return new[] {
+                new ValueTypeData() {
+                    Name = "int",
+                    Type = typeof(int),
+                    Icon = node.GetIcon("int", "EditorIcons"),
+                    UseIconOnly = true
+                },
+                new ValueTypeData() {
+                    Name = "float",
+                    Type = typeof(float),
+                    Icon = node.GetIcon("float", "EditorIcons"),
+                    UseIconOnly = true
+                },
+                new ValueTypeData() {
+                    Name = "bool",
+                    Type = typeof(bool),
+                    Icon = node.GetIcon("bool", "EditorIcons"),
+                    UseIconOnly = true
+                },
+                new ValueTypeData() {
+                    Name = "string",
+                    Type = typeof(string),
+                    Icon = node.GetIcon("String", "EditorIcons"),
+                    UseIconOnly = true
+                },
+                new ValueTypeData() {
+                    Name = "Vector2",
+                    Type = typeof(Vector2),
+                    Icon = node.GetIcon("Vector2", "EditorIcons"),
+                    UseIconOnly = true
+                },
+                new ValueTypeData() {
+                    Name = "Vector3",
+                    Type = typeof(Vector3),
+                    Icon = node.GetIcon("Vector3", "EditorIcons"),
+                    UseIconOnly = true
+                }
+            };
+        }
+
+        public static OperationTypeData[] GetOperationTypes()
+        {
+            return new[] {
+                new OperationTypeData()
+                {
+                    Name = "Get/Set",
+                    Operation = NodeVarOperation.GetSet
+                },
+                new OperationTypeData() {
+                    Name = "Get",
+                    Operation = NodeVarOperation.Get
+                },
+                new OperationTypeData() {
+                    Name = "Set",
+                    Operation = NodeVarOperation.Set
+                },
+            };
+        }
     }
 }

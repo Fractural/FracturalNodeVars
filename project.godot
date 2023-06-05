@@ -26,10 +26,10 @@ _global_script_class_icons={
 
 [FracturalCommons]
 
-Main/GenerateVersionPreprocessorDefines=false
 "C# Resource Registry/ClassPrefix"=""
 "C# Resource Registry/SearchType"=0
 "C# Resource Registry/ResourceScriptDirectories"=[ "res://" ]
+Main/GenerateVersionPreprocessorDefines=true
 
 [MonoCustomResourceRegistry]
 

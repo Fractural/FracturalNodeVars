@@ -59,11 +59,15 @@ config/icon="res://icon.png"
 
 [editor_plugins]
 
-enabled=PoolStringArray( "res://addons/FracturalCommons/plugin.cfg", "res://addons/FracturalNodeVars/plugin.cfg", "res://addons/WAT/plugin.cfg", "res://addons/editor_icon_previewer/plugin.cfg" )
+enabled=PoolStringArray( "res://addons/FracturalCommons/plugin.cfg", "res://addons/FracturalInject/plugin.cfg", "res://addons/FracturalNodeVars/plugin.cfg", "res://addons/WAT/plugin.cfg", "res://addons/editor_icon_previewer/plugin.cfg", "res://addons/explore-editor-theme/plugin.cfg" )
 
 [mono]
 
 project/assembly_name="FracturalNodeVars"
+
+[network]
+
+limits/debugger_stdout/max_chars_per_second=16384
 
 [physics]
 

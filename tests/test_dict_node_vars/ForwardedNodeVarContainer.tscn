@@ -8,6 +8,33 @@ __meta__ = {
 "_nodeVars/visible": true
 }
 _nodeVars = {
+"ExpressionVar": {
+"Expression": "dummy + Var3",
+"NodeVarReferences": {
+"Var3": {
+"ContainerPath": NodePath("ChildNodeVarContainer"),
+"ContainerVarName": "dummy2"
+},
+"dummy": {
+"ContainerPath": NodePath("ChildNodeVarContainer")
+}
+},
+"Type": "ExpressionNodeVarData"
+},
+"ExpressionVarForwarded": {
+"Expression": "dummy2 + var",
+"NodeVarReferences": {
+"dummy2": {
+"ContainerPath": NodePath("ChildNodeVarContainer"),
+"ContainerVarName": "dummy"
+},
+"var": {
+"ContainerPath": NodePath("ChildNodeVarContainer"),
+"ContainerVarName": "dummy2"
+}
+},
+"Type": "ExpressionNodeVarData"
+},
 "Var1": {
 "ContainerPath": NodePath("ChildNodeVarContainer"),
 "ContainerVarName": "dummy",
@@ -24,6 +51,12 @@ _nodeVars = {
 "InitialValue": 0,
 "Operation": 0,
 "ValueType": "System.Int32"
+},
+"Var4": {
+"InitialValue": Vector2( 0, 0 ),
+"Operation": 1,
+"Type": "DynamicNodeVarData",
+"ValueType": "Godot.Vector2"
 }
 }
 
@@ -40,6 +73,12 @@ _nodeVars = {
 "dummy": {
 "InitialValue": 235,
 "Operation": 0,
+"ValueType": "System.Int32"
+},
+"dummy2": {
+"InitialValue": 43,
+"Operation": 0,
+"Type": "DynamicNodeVarData",
 "ValueType": "System.Int32"
 }
 }

@@ -1,10 +1,11 @@
-[gd_scene load_steps=6 format=2]
+[gd_scene load_steps=7 format=2]
 
 [ext_resource path="res://tests/test_dict_node_vars/DoubleInhertiNodeVarContainer.tscn" type="PackedScene" id=1]
 [ext_resource path="res://tests/test_dict_node_vars/RegularNodeVarContainer.tscn" type="PackedScene" id=2]
 [ext_resource path="res://tests/test_dict_node_vars/TripleInheritNodeVarContainer.tscn" type="PackedScene" id=3]
 [ext_resource path="res://addons/FracturalNodeVars/Editor/NodeVarContainer.cs" type="Script" id=4]
 [ext_resource path="res://tests/test_dict_node_vars/ForwardedNodeVarContainer.tscn" type="PackedScene" id=5]
+[ext_resource path="res://tests/test_dict_node_vars/InheritedNodeVarContainer.cs" type="Script" id=6]
 
 [node name="TestDictNodeVars" type="Node"]
 __meta__ = {
@@ -21,6 +22,7 @@ _nodeVars = {
 "MyAttributeGetVar": {
 "InitialValue": true,
 "Operation": 0,
+"Type": "DynamicNodeVarData",
 "ValueType": "System.Boolean"
 },
 "MyFloatVar": {
@@ -53,7 +55,7 @@ _nodeVars = {
 _nodeVars = {
 }
 
-[node name="Node" type="Node" parent="."]
+[node name="DummyNode" type="Node" parent="."]
 
 [node name="AnotherContainer" type="Node" parent="."]
 script = ExtResource( 4 )
@@ -64,17 +66,35 @@ _nodeVars = {
 "SettableVar": {
 "InitialValue": Vector2( 0, 0 ),
 "Operation": 2,
+"Type": "DynamicNodeVarData",
 "ValueType": "Godot.Vector2"
+},
+"SomeInt": {
+"InitialValue": 34,
+"Operation": 0,
+"Type": "DynamicNodeVarData",
+"ValueType": "System.Int32"
 },
 "SomeString": {
 "InitialValue": "This is from another container!",
 "Operation": 0,
+"Type": "DynamicNodeVarData",
 "ValueType": "System.String"
 }
 }
 
 [node name="Forwarded" parent="." instance=ExtResource( 5 )]
 _nodeVars = {
+"ExpressionVarForwarded": {
+"Expression": "(dummy2 + var) * 2",
+"NodeVarReferences": {
+"dummy2": {
+"ContainerPath": NodePath("../AnotherContainer"),
+"ContainerVarName": "SomeInt"
+}
+},
+"Type": "ExpressionNodeVarData"
+},
 "Var2": {
 "ContainerPath": NodePath("../AnotherContainer"),
 "ContainerVarName": "SomeString",
@@ -92,6 +112,34 @@ _nodeVars = {
 "ContainerVarName": "SettableVar",
 "InitialValue": Vector2( 0, 0 ),
 "Operation": 1,
+"Type": "DynamicNodeVarData",
 "ValueType": "Godot.Vector2"
+}
+}
+
+[node name="FunctionCall" type="Node" parent="."]
+script = ExtResource( 6 )
+__meta__ = {
+"_nodeVars/visible": true
+}
+SomeDictionary = {
+}
+SomeArray = [  ]
+_nodeVars = {
+"FuncExpression": {
+"Expression": "MyPow(10, Var1)",
+"NodeVarReferences": {
+"Var1": {
+"ContainerPath": NodePath("."),
+"ContainerVarName": "MyInt"
+}
+},
+"Type": "ExpressionNodeVarData"
+},
+"MyInt": {
+"InitialValue": 5,
+"Operation": 0,
+"Type": "DynamicNodeVarData",
+"ValueType": "System.Int32"
 }
 }

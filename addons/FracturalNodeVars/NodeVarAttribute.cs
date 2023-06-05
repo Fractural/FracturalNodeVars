@@ -5,8 +5,8 @@ namespace Fractural.NodeVars
     /// <summary>
     /// Attribute to mark a property as a DictNodeVar that's settable from the inspector. Used within State nodes.
     /// </summary>
-    [AttributeUsage(System.AttributeTargets.Field | System.AttributeTargets.Property | System.AttributeTargets.Method | System.AttributeTargets.Class, AllowMultiple = false)]
-    public class NodeVarAttribute : System.Attribute
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Method | AttributeTargets.Class, AllowMultiple = false)]
+    public class NodeVarAttribute : Attribute
     {
         public NodeVarOperation? Operation { get; set; }
         public NodeVarAttribute() { }

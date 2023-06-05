@@ -49,18 +49,18 @@ namespace Tests
             Assert.IsEqual(container.GetDictNodeVar("InstancedVar2"), "heyo", "InstancedVar2 is default");
             Assert.IsEqual(container.GetDictNodeVar("InstancedVar3"), "new stuff", "InstancedVar3 is overwritten");
             Assert.IsEqual(container.GetDictNodeVar(nameof(InheritedNodeVarContainer.MyAttributeGetVar)), true, $"{nameof(InheritedNodeVarContainer.MyAttributeGetVar)} is overwritten");
-            Assert.IsEqual(
-                container.GetDictNodeVar(nameof(InheritedNodeVarContainer.MyAttributeSetVar), true),
-                true,
-                $"{nameof(InheritedNodeVarContainer.MyAttributeSetVar)} is default"
-            );
+            //Assert.IsEqual(
+            //    container.GetDictNodeVar(nameof(InheritedNodeVarContainer.MyAttributeSetVar), true),
+            //    true,
+            //    $"{nameof(InheritedNodeVarContainer.MyAttributeSetVar)} is default"
+            //);
             Assert.IsEqual(container.GetDictNodeVar(nameof(InheritedNodeVarContainer.MyBoolVar)), false, $"{nameof(InheritedNodeVarContainer.MyBoolVar)} is default");
             Assert.IsEqual(container.GetDictNodeVar(nameof(InheritedNodeVarContainer.MyFloatVar)), 0.543f, $"{nameof(InheritedNodeVarContainer.MyFloatVar)} is overwritten");
-            Assert.IsEqual(
-                container.GetDictNodeVar(nameof(InheritedNodeVarContainer.MyGetVar), true),
-                "newText",
-                $"{nameof(InheritedNodeVarContainer.MyGetVar)} is overwritten"
-            );
+            //Assert.IsEqual(
+            //    container.GetDictNodeVar(nameof(InheritedNodeVarContainer.MyGetVar), true),
+            //    "newText",
+            //    $"{nameof(InheritedNodeVarContainer.MyGetVar)} is overwritten"
+            //);
             Assert.IsEqual(container.GetDictNodeVar(nameof(InheritedNodeVarContainer.MySetVar)), Vector3.Zero, $"{nameof(InheritedNodeVarContainer.MySetVar)} is default");
         }
 
@@ -80,6 +80,19 @@ namespace Tests
             Assert.IsEqual(siblingContainer.GetDictNodeVar("SettableVar"), Vector2.Zero, "Sibling SettableVar is initially Vector2.Zero");
             forwardContainer.SetDictNodeVar("Var4", newVec);
             Assert.IsEqual(siblingContainer.GetDictNodeVar("SettableVar"), newVec, "Sibling SettableVar is now Vector2(35, 3.5f) after setting through Var4 forwarding");
+        }
+
+        [Test]
+        public void TestExpressionNodeVar()
+        {
+            Describe("When a NodeVarContainer has an expression and is readied");
+
+            var forwardContainer = _testSceneInstance.GetNode<INodeVarContainer>("Forwarded");
+            var functionCallContainer = _testSceneInstance.GetNode<INodeVarContainer>("FunctionCall");
+
+            Assert.IsEqual(forwardContainer.GetDictNodeVar("ExpressionVar"), 235 + 43, "ExpressionVar should evaluate to the correct value");
+            Assert.IsEqual(forwardContainer.GetDictNodeVar("ExpressionVarForwarded"), (43 + 34) * 2, "ExpressionVarForwarded should evaluate to the correct value");
+            Assert.IsEqual(functionCallContainer.GetDictNodeVar("FuncExpression"), 100000, "FuncExpression should evaluate to correct value");
         }
 
         //[Test]

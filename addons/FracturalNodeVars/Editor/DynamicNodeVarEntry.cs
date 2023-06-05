@@ -8,25 +8,25 @@ using System.Linq;
 #if TOOLS
 namespace Fractural.NodeVars
 {
+    public class ValueTypeData
+    {
+        public string Name { get; set; }
+        public Type Type { get; set; }
+        public Texture Icon { get; set; }
+        public int Index { get; set; }
+        public bool UseIconOnly { get; set; }
+    }
+
+    public class OperationTypeData
+    {
+        public string Name { get; set; }
+        public NodeVarOperation Operation { get; set; }
+        public int Index { get; set; }
+    }
+
     [Tool]
     public class DynamicNodeVarEntry : NodeVarEntry<DynamicNodeVarData>, ISerializationListener
     {
-        private class ValueTypeData
-        {
-            public string Name { get; set; }
-            public Type Type { get; set; }
-            public Texture Icon { get; set; }
-            public int Index { get; set; }
-            public bool UseIconOnly { get; set; }
-        }
-
-        private class OperationTypeData
-        {
-            public string Name { get; set; }
-            public NodeVarOperation Operation { get; set; }
-            public int Index { get; set; }
-        }
-
         private OptionButton _valueTypeButton;
         private OptionButton _operationButton;
         private Button _isPointerButton;
@@ -169,21 +169,7 @@ namespace Fractural.NodeVars
 
         private void InitOperationTypes()
         {
-            _operationTypes = new[] {
-                new OperationTypeData()
-                {
-                    Name = "Get/Set",
-                    Operation = NodeVarOperation.GetSet
-                },
-                new OperationTypeData() {
-                    Name = "Get",
-                    Operation = NodeVarOperation.Get
-                },
-                new OperationTypeData() {
-                    Name = "Set",
-                    Operation = NodeVarOperation.Set
-                },
-            };
+            _operationTypes = NodeVarUtils.GetOperationTypes();
             foreach (var type in _operationTypes)
             {
                 var index = _operationButton.GetItemCount();
@@ -194,44 +180,7 @@ namespace Fractural.NodeVars
 
         private void InitValueTypes()
         {
-            _valueTypes = new[] {
-                new ValueTypeData() {
-                    Name = "int",
-                    Type = typeof(int),
-                    Icon = GetIcon("int", "EditorIcons"),
-                    UseIconOnly = true
-                },
-                new ValueTypeData() {
-                    Name = "float",
-                    Type = typeof(float),
-                    Icon = GetIcon("float", "EditorIcons"),
-                    UseIconOnly = true
-                },
-                new ValueTypeData() {
-                    Name = "bool",
-                    Type = typeof(bool),
-                    Icon = GetIcon("bool", "EditorIcons"),
-                    UseIconOnly = true
-                },
-                new ValueTypeData() {
-                    Name = "string",
-                    Type = typeof(string),
-                    Icon = GetIcon("String", "EditorIcons"),
-                    UseIconOnly = true
-                },
-                new ValueTypeData() {
-                    Name = "Vector2",
-                    Type = typeof(Vector2),
-                    Icon = GetIcon("Vector2", "EditorIcons"),
-                    UseIconOnly = true
-                },
-                new ValueTypeData() {
-                    Name = "Vector3",
-                    Type = typeof(Vector3),
-                    Icon = GetIcon("Vector3", "EditorIcons"),
-                    UseIconOnly = true
-                }
-            };
+            _valueTypes = NodeVarUtils.GetValueTypes(this);
             foreach (var type in _valueTypes)
             {
                 int currIndex = _valueTypeButton.GetItemCount();

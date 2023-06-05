@@ -22,19 +22,21 @@ namespace Fractural.NodeVars
             {
                 _disabled = value;
                 if (IsInsideTree())
-                    UpdateDisabledUI();
+                    UpdateDisabledAndSelectUI();
             }
         }
+
+        public NodePath ContainerPath { get; private set; }
+        public string VarName { get; private set; }
+        public Func<NodeVarData, bool> NodeVarConditionFunc { get; set; }
 
         private PopupSearch _containerVarPopupSearch;
         private Button _containerVarSelectButton;
         private NodePathValueProperty _containerPathProperty;
         private Node _relativeToNode;
         private PackedSceneDefaultValuesRegistry _defaultValuesRegistry;
-
-        public NodePath ContainerPath { get; private set; }
-        public string VarName { get; private set; }
-        public Func<NodeVarData, bool> NodeVarConditionFunc { get; set; }
+        private ValueTypeData[] _valueTypes;
+        private Texture _expressionIcon;
 
         public NodeVarPointerSelect() { }
         public NodeVarPointerSelect(IAssetsRegistry assetsRegistry, PackedSceneDefaultValuesRegistry defaultValuesRegistry, Node sceneRoot, Node relativeToNode, Func<NodeVarData, bool> conditionFunc = null)
@@ -68,23 +70,51 @@ namespace Fractural.NodeVars
             AddChild(_containerVarSelectButton);
         }
 
+        public override void _Ready()
+        {
+            _valueTypes = NodeVarUtils.GetValueTypes(this);
+            _expressionIcon = GetIcon("SceneUniqueName", "EditorIcons");
+        }
+
         public void SetValue(NodePath containerPath, string varName)
         {
             ContainerPath = containerPath;
             VarName = varName;
 
             _containerPathProperty.SetValue(containerPath, false);
-            UpdateDisabledUI();
+
+            UpdateSearchEntries();
+            UpdateDisabledAndSelectUI();
         }
 
-        private void UpdateDisabledUI()
+        private void UpdateDisabledAndSelectUI()
         {
             _containerPathProperty.Disabled = _disabled;
             _containerVarSelectButton.Disabled = _disabled;
 
             _containerVarSelectButton.Text = VarName ?? "[Empty]";
+            _containerVarSelectButton.Icon = _containerVarPopupSearch.SearchEntries.FirstOrDefault(x => x.Text == VarName).Icon;
             var containerNode = _relativeToNode.GetNodeOrNull(ContainerPath ?? new NodePath()) as INodeVarContainer;
             _containerVarSelectButton.Disabled = _disabled || containerNode == null;
+        }
+
+        private void UpdateSearchEntries()
+        {
+            if (ContainerPath == null) return;
+            var container = _relativeToNode.GetNodeOrNull<INodeVarContainer>(ContainerPath);
+            if (container == null) return;
+            _containerVarPopupSearch.SearchEntries = container.GetNodeVarsList(_defaultValuesRegistry)
+                .Where(x => NodeVarConditionFunc(x))
+                .Select(x =>
+                {
+                    var entry = new SearchEntry(x.Name);
+                    if (x is ITypedNodeVar typedVar)
+                        entry.Icon = _valueTypes.FirstOrDefault(v => v.Type == typedVar.ValueType)?.Icon;
+                    else if (x is ExpressionNodeVarData)
+                        entry.Icon = _expressionIcon;
+                    return entry;
+                })
+                .ToArray();
         }
 
         private void OnContainerPathChanged(NodePath path)
@@ -93,23 +123,18 @@ namespace Fractural.NodeVars
             if (ContainerPath == null || ContainerPath.IsEmpty())
                 OnContainerVarNameSelected(null);
             else
-                UpdateDisabledUI();
+                UpdateDisabledAndSelectUI();
             NodePathChanged?.Invoke(path);
         }
 
         private void OnContainerVarNameSelected(string name)
         {
             VarName = name;
-            UpdateDisabledUI();
+            UpdateDisabledAndSelectUI();
             VarNameChanged?.Invoke(name);
         }
 
-        private void OnContainerVarSelectPressed()
-        {
-            var container = _relativeToNode.GetNode<INodeVarContainer>(ContainerPath);
-            _containerVarPopupSearch.SearchEntries = container.GetNodeVarsList(_defaultValuesRegistry).Where(x => NodeVarConditionFunc(x)).Select(x => x.Name).ToArray();
-            _containerVarPopupSearch.Popup_(_containerVarSelectButton.GetGlobalRect());
-        }
+        private void OnContainerVarSelectPressed() => _containerVarPopupSearch.Popup_(_containerVarSelectButton.GetGlobalRect());
 
         public void OnBeforeSerialize()
         {

@@ -1,4 +1,5 @@
 ﻿using Fractural.Plugin;
+using Fractural.Plugin.AssetsRegistry;
 using Godot;
 
 #if TOOLS
@@ -11,7 +12,13 @@ namespace Fractural.NodeVars
 
         protected override void Load()
         {
+            AssetsRegistry = new EditorAssetsRegistry(this);
             AddManagedInspectorPlugin(new DictNodeVarsInspectorPlugin(this));
+        }
+
+        protected override void Unload()
+        {
+            AssetsRegistry = null;
         }
     }
 }

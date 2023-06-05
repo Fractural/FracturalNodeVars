@@ -12,7 +12,8 @@ _nodeVars = {
 "Expression": "dummy + Var3",
 "NodeVarReferences": {
 "Var3": {
-"ContainerPath": NodePath(".")
+"ContainerPath": NodePath("ChildNodeVarContainer"),
+"ContainerVarName": "dummy2"
 },
 "dummy": {
 "ContainerPath": NodePath("ChildNodeVarContainer")
@@ -21,7 +22,7 @@ _nodeVars = {
 "Type": "ExpressionNodeVarData"
 },
 "ExpressionVarForwarded": {
-"Expression": "dummy2 + Var",
+"Expression": "dummy2 + var",
 "NodeVarReferences": {
 "dummy2": {
 "ContainerPath": NodePath("ChildNodeVarContainer"),
@@ -29,7 +30,7 @@ _nodeVars = {
 },
 "var": {
 "ContainerPath": NodePath("ChildNodeVarContainer"),
-"ContainerVarName": "dummy"
+"ContainerVarName": "dummy2"
 }
 },
 "Type": "ExpressionNodeVarData"
@@ -72,6 +73,12 @@ _nodeVars = {
 "dummy": {
 "InitialValue": 235,
 "Operation": 0,
+"ValueType": "System.Int32"
+},
+"dummy2": {
+"InitialValue": 43,
+"Operation": 0,
+"Type": "DynamicNodeVarData",
 "ValueType": "System.Int32"
 }
 }

@@ -15,9 +15,9 @@ namespace Fractural.NodeVars
         /// </summary>
         public event Action<string, NodeVarEntry> NameChanged;
         /// <summary>
-        /// DataChanged(string name, NodeVarData newValue)
+        /// DataChanged(string name, NodeVarData newValue, bool isDefault)
         /// </summary>
-        public event Action<string, NodeVarData> DataChanged;
+        public event Action<string, NodeVarData, bool> DataChanged;
         /// <summary>
         /// Deleted(string name)
         /// </summary>
@@ -102,7 +102,12 @@ namespace Fractural.NodeVars
             _deleteButton.Disabled = Disabled;
         }
         protected virtual void InvokeDeleted() => Deleted?.Invoke(Data.Name);
-        protected virtual void InvokeDataChanged() => DataChanged?.Invoke(Data.Name, Data);
+        protected virtual void InvokeDataChanged()
+        {
+            UpdateResetButton();
+            DataChanged?.Invoke(Data.Name, Data, CheckIsSameAsDefault());
+        }
+        protected virtual bool CheckIsSameAsDefault() => DefaultData != null && Data.Equals(DefaultData);
         protected virtual void InvokeNameChanged(string oldName) => NameChanged?.Invoke(oldName, this);
         public virtual void SetData(NodeVarData data, NodeVarData defaultData = null)
         {
@@ -125,7 +130,7 @@ namespace Fractural.NodeVars
             InvokeDataChanged();
         }
 
-        protected void UpdateResetButton()
+        protected virtual void UpdateResetButton()
         {
             _resetInitialValueButton.Visible = DefaultData != null && !Data.Equals(DefaultData);
         }

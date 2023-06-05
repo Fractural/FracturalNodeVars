@@ -30,16 +30,18 @@ namespace Fractural.NodeVars
         private Button _containerVarSelectButton;
         private NodePathValueProperty _containerPathProperty;
         private Node _relativeToNode;
+        private PackedSceneDefaultValuesRegistry _defaultValuesRegistry;
 
         public NodePath ContainerPath { get; private set; }
         public string VarName { get; private set; }
         public Func<NodeVarData, bool> NodeVarConditionFunc { get; set; }
 
         public NodeVarPointerSelect() { }
-        public NodeVarPointerSelect(IAssetsRegistry assetsRegistry, Node sceneRoot, Node relativeToNode, Func<NodeVarData, bool> conditionFunc = null)
+        public NodeVarPointerSelect(IAssetsRegistry assetsRegistry, PackedSceneDefaultValuesRegistry defaultValuesRegistry, Node sceneRoot, Node relativeToNode, Func<NodeVarData, bool> conditionFunc = null)
         {
             SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
 
+            _defaultValuesRegistry = defaultValuesRegistry;
             _relativeToNode = relativeToNode;
 
             if (conditionFunc != null)
@@ -105,7 +107,7 @@ namespace Fractural.NodeVars
         private void OnContainerVarSelectPressed()
         {
             var container = _relativeToNode.GetNode<INodeVarContainer>(ContainerPath);
-            _containerVarPopupSearch.SearchEntries = container.GetNodeVarsList().Where(x => NodeVarConditionFunc(x)).Select(x => x.Name).ToArray();
+            _containerVarPopupSearch.SearchEntries = container.GetNodeVarsList(_defaultValuesRegistry).Where(x => NodeVarConditionFunc(x)).Select(x => x.Name).ToArray();
             _containerVarPopupSearch.Popup_(_containerVarSelectButton.GetGlobalRect());
         }
 

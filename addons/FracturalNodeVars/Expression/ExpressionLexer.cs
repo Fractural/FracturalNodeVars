@@ -241,6 +241,7 @@ namespace Fractural.NodeVars
         public IList<Token> Tokenize(string text, string[] keywords = null, string[] punctuation = null, IDictionary<char, string> escapeSequences = null)
         {
             _text = text;
+            _index = 0;
             _tokens = new List<Token>();
 
             _keywords = keywords ?? DefaultKeywords;

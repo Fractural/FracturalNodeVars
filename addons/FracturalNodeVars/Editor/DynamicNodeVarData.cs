@@ -56,7 +56,7 @@ namespace Fractural.NodeVars
         /// </summary>
         public bool IsPointer => ContainerPath != null;
 
-        public override DynamicNodeVarData WithChanges(DynamicNodeVarData newData)
+        public override DynamicNodeVarData WithChanges(DynamicNodeVarData newData, bool forEditorSerialization = false)
         {
             if (newData.Name == Name && newData.ValueType == ValueType)
             {

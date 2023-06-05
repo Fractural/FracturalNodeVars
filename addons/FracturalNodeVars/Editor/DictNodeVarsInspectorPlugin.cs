@@ -79,6 +79,7 @@ namespace Fractural.NodeVars
                 AddPropertyEditor(path, new ValueEditorProperty(
                     new DictNodeVarsValueProperty(
                         _plugin.AssetsRegistry,
+                        _packedSceneDefaultValuesRegistry,
                         _plugin.GetEditorInterface().GetEditedSceneRoot(),
                         @object as Node,
                         fixedNodeVars.Count() > 0 ? fixedNodeVars.ToArray() : null,

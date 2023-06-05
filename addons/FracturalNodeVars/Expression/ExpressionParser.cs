@@ -157,8 +157,8 @@ namespace Fractural.NodeVars
 
         public class Variable : Expression
         {
-            public delegate object FetchVariableDelegate(string name);
-            public FetchVariableDelegate FetchVariable { get; set; }
+            public delegate object GetVariableDelegate(string name);
+            public GetVariableDelegate FetchVariable { get; set; }
             public string Name { get; set; }
             public override object Evaluate()
             {
@@ -509,7 +509,7 @@ namespace Fractural.NodeVars
 
         private int _index;
         private IList<ExpressionLexer.Token> _tokens;
-        private Variable.FetchVariableDelegate _fetchVariableFunc;
+        private Variable.GetVariableDelegate _fetchVariableFunc;
         private FunctionCall.CallFunctionDelegate _callFunctionFunc;
         private char _eofCharacter = default;
 
@@ -747,10 +747,7 @@ namespace Fractural.NodeVars
                 }
             }
             else
-            {
                 return BuildBinaryOperator(operatorString, leftOperand, rightOperand);
-            }
-            return null;
         }
 
         public PreUnaryOperator ExpectPreUnaryOperator()
@@ -861,10 +858,10 @@ namespace Fractural.NodeVars
             return null;
         }
 
-        public Expression Parse(IList<ExpressionLexer.Token> tokens, Variable.FetchVariableDelegate fetchVariableFunc, FunctionCall.CallFunctionDelegate callFunctionFunc)
+        public Expression Parse(IList<ExpressionLexer.Token> tokens, Variable.GetVariableDelegate fetchVariableFunc, FunctionCall.CallFunctionDelegate callFunctionFunc)
         {
-            _index = 0;
             _tokens = tokens;
+            _index = 0;
             _fetchVariableFunc = fetchVariableFunc;
             _callFunctionFunc = callFunctionFunc;
 

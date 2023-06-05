@@ -8,7 +8,6 @@
 [node name="TestExpressionContainer2" parent="." instance=ExtResource( 1 )]
 _nodeVars = {
 "Var11": {
-"Expression": "",
 "NodeVarReferences": {
 "Var1": {
 "ContainerPath": NodePath(""),

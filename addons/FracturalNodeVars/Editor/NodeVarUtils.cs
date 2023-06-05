@@ -113,5 +113,54 @@ namespace Fractural.NodeVars
             }
             return "Var" + highestNumber.ToString();
         }
+
+        public static NodeVarData[] GetNodeVarsList(this INodeVarContainer nodeVarContainer, PackedSceneDefaultValuesRegistry packedSceneDefaultValuesRegistry)
+        {
+            if (nodeVarContainer is NodeVarContainer container)
+            {
+                var nodeVars = container.RawNodeVarsGDDict;
+                var nodeVarsDict = new Dictionary<string, NodeVarData>();
+
+                foreach (string key in nodeVars.Keys)
+                {
+                    var nodeVar = NodeVarDataFromGDDict(nodeVars.Get<GDC.Dictionary>(key), key);
+                    nodeVarsDict.Add(key, nodeVar);
+                }
+
+                var defaultNodeVars = new Dictionary<string, NodeVarData>();
+                if (container.Filename != "")
+                {
+                    var defaultInheritedNodeVars = packedSceneDefaultValuesRegistry.GetDefaultValue<GDC.Dictionary>(container.Filename, "_nodeVars");
+                    foreach (string key in defaultInheritedNodeVars.Keys)
+                        defaultNodeVars.Add(key, NodeVarDataFromGDDict(defaultInheritedNodeVars.Get<GDC.Dictionary>(key), key));
+                }
+                var defaultAttributes = GetNodeVarsFromAttributes(container.GetType());
+                foreach (var nodeVar in defaultAttributes)
+                    if (!defaultNodeVars.ContainsKey(nodeVar.Name))
+                        defaultNodeVars.Add(nodeVar.Name, nodeVar);
+
+                foreach (var defaultNodeVar in defaultNodeVars.Values)
+                {
+                    if (nodeVarsDict.TryGetValue(defaultNodeVar.Name, out NodeVarData localVar))
+                    {
+                        // Update the NodeVar based off of the existing NodeVar
+                        var nodeVarWithChanges = defaultNodeVar.WithChanges(localVar);
+                        if (nodeVarWithChanges == null)
+                        {
+                            GD.PushWarning($"{nameof(NodeVarContainer)}: NodeVar of name \"{defaultNodeVar.Name}\" could not be merged with its default value, therefore reverting back to default.");
+                            nodeVarsDict[defaultNodeVar.Name] = defaultNodeVar;
+                        }
+                        else
+                            nodeVarsDict[defaultNodeVar.Name] = nodeVarWithChanges;
+                    }
+                    else
+                        nodeVarsDict[defaultNodeVar.Name] = defaultNodeVar;
+                }
+
+                return nodeVarsDict.Values.ToArray();
+            }
+            else
+                return nodeVarContainer.GetNodeVarsList();
+        }
     }
 }

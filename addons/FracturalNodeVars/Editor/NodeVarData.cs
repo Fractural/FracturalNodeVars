@@ -45,12 +45,11 @@ namespace Fractural.NodeVars
 
         /// <summary>
         /// Attempts to use another NodeVar's data to make changes to this NodeVar.
-        /// Returns the resulting NodeVar with the changes on success.
-        /// Returns null if the two NodeVars are incompatible.
         /// </summary>
-        /// <param name="other"></param>
-        /// <returns></returns>
-        public abstract NodeVarData WithChanges(NodeVarData other);
+        /// <param name="other">Data to use as changed</param>
+        /// <param name="forEditorSerialization">Is the returned data for editor use?</param>
+        /// <returns>Returns the resulting NodeVar with the changes on success. Returns null if the two NodeVars are incompatible.</returns>
+        public abstract NodeVarData WithChanges(NodeVarData other, bool forEditorSerialization = false);
         public abstract GDC.Dictionary ToGDDict();
         public abstract void FromGDDict(GDC.Dictionary dict, string key);
         public abstract NodeVarData Clone();
@@ -67,8 +66,8 @@ namespace Fractural.NodeVars
                 return Equals(newData);
             return false;
         }
-        public override NodeVarData WithChanges(NodeVarData other) => WithChanges((T)other);
-        public abstract T WithChanges(T other);
+        public override NodeVarData WithChanges(NodeVarData other, bool forEditorSerialization = false) => WithChanges((T)other, forEditorSerialization);
+        public abstract T WithChanges(T other, bool forEditorSerialization = false);
         public abstract T TypedClone();
         public abstract bool Equals(T data);
     }

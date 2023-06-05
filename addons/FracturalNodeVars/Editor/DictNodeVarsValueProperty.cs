@@ -46,6 +46,7 @@ namespace Fractural.NodeVars
         private Node _sceneRoot;
         private Node _relativeToNode;
         private Dictionary<string, NodeVarData> _fixedNodeVarsDict;
+        private PackedSceneDefaultValuesRegistry _defaultValuesRegistry;
 
         private string EditButtonText => $"DictNodeVars [{Value.Count}]";
         private bool HasFixedNodeVars => _fixedNodeVarsDict != null;
@@ -55,6 +56,7 @@ namespace Fractural.NodeVars
         public DictNodeVarsValueProperty() { }
         public DictNodeVarsValueProperty(
             IAssetsRegistry assetsRegistry,
+            PackedSceneDefaultValuesRegistry defaultValuesRegistry,
             Node sceneRoot,
             Node relativeToNode,
             NodeVarData[] fixedNodeVars = null,
@@ -62,6 +64,7 @@ namespace Fractural.NodeVars
         ) : base()
         {
             _assetsRegistry = assetsRegistry;
+            _defaultValuesRegistry = defaultValuesRegistry;
             _sceneRoot = sceneRoot;
             _relativeToNode = relativeToNode;
             if (fixedNodeVars != null && fixedNodeVars.Length > 0)
@@ -181,7 +184,7 @@ namespace Fractural.NodeVars
                     var displayNodeVar = fixedNodeVar;
                     if (displayedNodeVars.TryGetValue(fixedNodeVar.Name, out NodeVarData existingNodeVar))
                     {
-                        var nodeVarWithChanges = fixedNodeVar.WithChanges(existingNodeVar);
+                        var nodeVarWithChanges = fixedNodeVar.WithChanges(existingNodeVar, true);
                         if (nodeVarWithChanges != null)
                             displayNodeVar = nodeVarWithChanges; // Changes were compatible
                         else
@@ -322,9 +325,9 @@ namespace Fractural.NodeVars
         {
             NodeVarEntry entry;
             if (nodeVar is DynamicNodeVarData)
-                entry = new DynamicNodeVarEntry(_assetsRegistry, _sceneRoot, _relativeToNode);
+                entry = new DynamicNodeVarEntry(_assetsRegistry, _defaultValuesRegistry, _sceneRoot, _relativeToNode);
             else if (nodeVar is ExpressionNodeVarData)
-                entry = new ExpressionNodeVarEntry(_assetsRegistry, _sceneRoot, _relativeToNode);
+                entry = new ExpressionNodeVarEntry(_assetsRegistry, _defaultValuesRegistry, _sceneRoot, _relativeToNode);
             else
                 throw new Exception($"{nameof(DictNodeVarsValueProperty)}: No suitable entry type foudn for {nodeVar.GetType()}.");
 
@@ -350,10 +353,10 @@ namespace Fractural.NodeVars
             InvokeValueChanged(Value);
         }
 
-        private void OnEntryDataChanged(string key, NodeVarData newValue)
+        private void OnEntryDataChanged(string key, NodeVarData newValue, bool isDefault)
         {
-            // Remove entry if it is the same as the fixed value (no point in storing redundant information)
-            if (HasFixedNodeVars && _fixedNodeVarsDict.TryGetValue(key, out NodeVarData existingFixedValue) && existingFixedValue.Equals(newValue))
+            // Remove entry if it is the same as the default value (no point in storing redundant information)
+            if (isDefault)
                 Value.Remove(key);
             else
                 Value[key] = newValue.ToGDDict();

@@ -53,5 +53,11 @@ namespace Tests
             get => GetDictNodeVar<bool>(nameof(MyAttributeGetVar));
             set => SetDictNodeVar(nameof(MyAttributeGetVar), value);
         }
+
+        [NodeVarFunc]
+        public int MyPow(int num, int amount)
+        {
+            return (int)Mathf.Pow(num, amount);
+        }
     }
 }

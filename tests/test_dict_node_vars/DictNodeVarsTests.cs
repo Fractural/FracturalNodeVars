@@ -82,6 +82,19 @@ namespace Tests
             Assert.IsEqual(siblingContainer.GetDictNodeVar("SettableVar"), newVec, "Sibling SettableVar is now Vector2(35, 3.5f) after setting through Var4 forwarding");
         }
 
+        [Test]
+        public void TestExpressionNodeVar()
+        {
+            Describe("When a NodeVarContainer has an expression and is readied");
+
+            var forwardContainer = _testSceneInstance.GetNode<INodeVarContainer>("Forwarded");
+            var functionCallContainer = _testSceneInstance.GetNode<INodeVarContainer>("FunctionCall");
+
+            Assert.IsEqual(forwardContainer.GetDictNodeVar("ExpressionVar"), 235 + 43, "ExpressionVar should evaluate to the correct value");
+            Assert.IsEqual(forwardContainer.GetDictNodeVar("ExpressionVarForwarded"), (43 + 34) * 2, "ExpressionVarForwarded should evaluate to the correct value");
+            Assert.IsEqual(functionCallContainer.GetDictNodeVar("FuncExpression"), 100000, "FuncExpression should evaluate to correct value");
+        }
+
         //[Test]
         //public void TestDoubleDefaultInheritance()
         //{

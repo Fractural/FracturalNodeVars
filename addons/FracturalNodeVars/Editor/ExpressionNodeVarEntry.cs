@@ -17,31 +17,34 @@ namespace Fractural.NodeVars
         private StringValueProperty _expressionProperty;
         private VBoxContainer _referenceEntriesVBox;
         private Button _addElementButton;
-        private TextureRect _expressionIconRect;
+        private Button _resetExpressionButton;
 
         private IAssetsRegistry _assetsRegistry;
         private Node _sceneRoot;
         private Node _relativeToNode;
+        private PackedSceneDefaultValuesRegistry _defaultValuesRegistry;
 
         public ExpressionNodeVarEntry() { }
-        public ExpressionNodeVarEntry(IAssetsRegistry assetsRegistry, Node sceneRoot, Node relativeToNode) : base()
+        public ExpressionNodeVarEntry(IAssetsRegistry assetsRegistry, PackedSceneDefaultValuesRegistry defaultValuesRegistry, Node sceneRoot, Node relativeToNode) : base()
         {
+            _defaultValuesRegistry = defaultValuesRegistry;
             _assetsRegistry = assetsRegistry;
             _sceneRoot = sceneRoot;
             _relativeToNode = relativeToNode;
 
             _expressionProperty = new StringValueProperty();
             _expressionProperty.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
+            _expressionProperty.RectMinSize = Vector2.Zero;
             _expressionProperty.PlaceholderText = "Expression";
             _expressionProperty.ValueChanged += OnExpressionChanged;
 
             _referenceEntriesVBox = new VBoxContainer();
 
+            _resetExpressionButton = new Button();
+            _resetExpressionButton.Connect("pressed", this, nameof(OnResetExpressionButtonPressed));
+
             _addElementButton = new Button();
             _addElementButton.Connect("pressed", this, nameof(OnAddElementPressed));
-
-            _expressionIconRect = new TextureRect();
-            _expressionIconRect.SizeFlagsVertical = (int)SizeFlags.ShrinkCenter;
 
             var topHBox = new HBoxContainer();
             topHBox.AddChild(_nameProperty);
@@ -49,8 +52,8 @@ namespace Fractural.NodeVars
             topHBox.AddChild(_deleteButton);
 
             var midHBox = new HBoxContainer();
-            midHBox.AddChild(_expressionIconRect);
             midHBox.AddChild(_expressionProperty);
+            midHBox.AddChild(_resetExpressionButton);
             midHBox.AddChild(_addElementButton);
 
             _contentVBox.AddChild(topHBox);
@@ -68,8 +71,8 @@ namespace Fractural.NodeVars
             _expressionProperty.Font = (Font)GetFont("source", "EditorFonts").Duplicate();
             var dynamicFont = _expressionProperty.Font as DynamicFont;
             dynamicFont.Size = (int)(16 * _assetsRegistry.Scale);
-            _expressionIconRect.Texture = GetIcon("SceneUniqueName", "EditorIcons");
             _addElementButton.Icon = GetIcon("Add", "EditorIcons");
+            _resetExpressionButton.Icon = GetIcon("Reload", "EditorIcons");
             GetViewport().Connect("gui_focus_changed", this, nameof(OnFocusChanged));
         }
 
@@ -77,7 +80,10 @@ namespace Fractural.NodeVars
         {
             base.SetData(value, defaultData);
 
-            _expressionProperty.SetValue(value.Expression, false);
+            if (defaultData != null && value.Expression == "")
+                _expressionProperty.SetValue(defaultData.Expression, false);
+            else
+                _expressionProperty.SetValue(value.Expression, false);
             UpdateReferencesUI();
         }
 
@@ -92,7 +98,27 @@ namespace Fractural.NodeVars
             }
         }
 
-        private bool CheckReferencesSameAsFixed()
+        protected override void UpdateResetButton()
+        {
+            _resetInitialValueButton.Visible = DefaultData != null && !CheckIsSameAsDefault();
+            _resetExpressionButton.Visible = DefaultData != null && !CheckExpressionSameAsDefault();
+        }
+
+        protected override bool CheckIsSameAsDefault()
+        {
+            if (DefaultData == null)
+                return false;
+            return CheckReferencesSameAsDefault() &&
+                Equals(Data.Name, DefaultData.Name) &&
+                CheckExpressionSameAsDefault();
+        }
+
+        private bool CheckExpressionSameAsDefault()
+        {
+            return Data.Expression == DefaultData.Expression || Data.Expression == "";
+        }
+
+        private bool CheckReferencesSameAsDefault()
         {
             if (Data.NodeVarReferences.Count == 0)
                 return true;
@@ -112,7 +138,7 @@ namespace Fractural.NodeVars
 
         private void UpdateReferencesUI()
         {
-            if (Data.NodeVarReferences.Count > 0 && CheckReferencesSameAsFixed())
+            if (Data.NodeVarReferences.Count > 0 && CheckReferencesSameAsDefault())
             {
                 Data.NodeVarReferences.Clear();
             }
@@ -195,18 +221,22 @@ namespace Fractural.NodeVars
             _addElementButton.Disabled = CheckAllVarNamesTaken();
         }
 
-        protected override void InvokeDataChanged()
-        {
-            base.InvokeDataChanged();
-            UpdateReferencesUI();
-        }
-
         private Control _currentFocused;
         private void OnFocusChanged(Control control) => _currentFocused = control;
 
         private void OnExpressionChanged(string newExpression)
         {
-            Data.Expression = newExpression;
+            if (DefaultData != null && newExpression == DefaultData.Expression)
+                Data.Expression = "";
+            else
+                Data.Expression = newExpression;
+            InvokeDataChanged();
+        }
+
+        private void OnResetExpressionButtonPressed()
+        {
+            Data.Expression = "";
+            _expressionProperty.SetValue(DefaultData.Expression, false);
             InvokeDataChanged();
         }
 
@@ -232,12 +262,14 @@ namespace Fractural.NodeVars
                 Name = nextKey,
             };
             InvokeDataChanged();
+            UpdateReferencesUI();
         }
 
         private ExpressionNodeVarReferenceEntry CreateNewEntry()
         {
             var entry = new ExpressionNodeVarReferenceEntry(
                 _assetsRegistry,
+                _defaultValuesRegistry,
                 _sceneRoot,
                 _relativeToNode,
                 (data) => NodeVarUtils.CheckNodeVarCompatible(data, NodeVarOperation.Get)
@@ -261,6 +293,7 @@ namespace Fractural.NodeVars
             Data.NodeVarReferences.Remove(oldKey);
             Data.NodeVarReferences[newKey] = entry.Data.Clone();
             InvokeDataChanged();
+            UpdateReferencesUI();
         }
 
         private void OnEntryDataChanged(string key, NodeVarReference newValue)
@@ -275,12 +308,14 @@ namespace Fractural.NodeVars
                 Data.NodeVarReferences[key] = newValue;
             }
             InvokeDataChanged();
+            UpdateReferencesUI();
         }
 
         private void OnEntryDeleted(string key)
         {
             Data.NodeVarReferences.Remove(key);
             InvokeDataChanged();
+            UpdateReferencesUI();
         }
 
         public void OnBeforeSerialize()

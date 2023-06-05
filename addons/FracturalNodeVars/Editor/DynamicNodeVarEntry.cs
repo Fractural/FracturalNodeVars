@@ -39,7 +39,7 @@ namespace Fractural.NodeVars
         private NodeVarPointerSelect _nodeVarPointerSelect;
 
         public DynamicNodeVarEntry() { }
-        public DynamicNodeVarEntry(IAssetsRegistry assetsRegistry, Node sceneRoot, Node relativeToNode) : base()
+        public DynamicNodeVarEntry(IAssetsRegistry assetsRegistry, PackedSceneDefaultValuesRegistry defaultValuesRegistry, Node sceneRoot, Node relativeToNode) : base()
         {
             _assetsRegistry = assetsRegistry;
             _relativeToNode = relativeToNode;
@@ -67,7 +67,7 @@ namespace Fractural.NodeVars
             _isPointerButton.ToggleMode = true;
             _isPointerButton.Connect("toggled", this, nameof(OnIsPointerToggled));
 
-            _nodeVarPointerSelect = new NodeVarPointerSelect(assetsRegistry, sceneRoot, relativeToNode, (nodeVar) => NodeVarUtils.CheckNodeVarCompatible(nodeVar, Data.Operation, Data.ValueType));
+            _nodeVarPointerSelect = new NodeVarPointerSelect(assetsRegistry, defaultValuesRegistry, sceneRoot, relativeToNode, (nodeVar) => NodeVarUtils.CheckNodeVarCompatible(nodeVar, Data.Operation, Data.ValueType));
             _nodeVarPointerSelect.VarNameChanged += OnContainerVarNameSelected;
             _nodeVarPointerSelect.NodePathChanged += OnNodePathChanged;
 
@@ -238,12 +238,6 @@ namespace Fractural.NodeVars
                 type.Index = currIndex;
                 _valueTypeButton.AddIconItem(type.Icon, type.Name);
             }
-        }
-
-        protected override void InvokeDataChanged()
-        {
-            UpdateResetButton();
-            base.InvokeDataChanged();
         }
 
         private void OnNodePathChanged(NodePath newValue)

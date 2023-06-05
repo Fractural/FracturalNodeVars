@@ -55,6 +55,7 @@ namespace Fractural.NodeVars
                 PropertyListChangedNotify();
             }
         }
+        public GDC.Dictionary RawNodeVarsGDDict => _nodeVars;
         private PackedSceneDefaultValuesRegistry _packedSceneDefaultValuesRegistry;
 
         public void Construct(DIContainer container)
@@ -69,21 +70,8 @@ namespace Fractural.NodeVars
                 return;
 #endif
             DictNodeVars = new Dictionary<string, NodeVarData>();
-            foreach (string key in _nodeVars.Keys)
-                AddNodeVar(NodeVarUtils.NodeVarDataFromGDDict(_nodeVars.Get<GDC.Dictionary>(key), key));
-
-            if (Filename != "")
-            {
-                var defaultNodeVars = _packedSceneDefaultValuesRegistry.GetDefaultValue<GDC.Dictionary>(Filename, nameof(_nodeVars));
-                foreach (string key in defaultNodeVars.Keys)
-                    if (!DictNodeVars.ContainsKey(key))
-                        AddNodeVar(NodeVarUtils.NodeVarDataFromGDDict(defaultNodeVars.Get<GDC.Dictionary>(key), key));
-            }
-
-            var defaultAttributes = NodeVarUtils.GetNodeVarsFromAttributes(GetType());
-            foreach (var nodeVar in defaultAttributes)
-                if (!DictNodeVars.ContainsKey(nodeVar.Name))
-                    AddNodeVar(nodeVar);
+            foreach (var nodeVar in GetNodeVarsList())
+                AddNodeVar(nodeVar);
         }
 
         /// <summary>
@@ -137,17 +125,7 @@ namespace Fractural.NodeVars
         /// Gets a list of all DictNodeVars for this <see cref="INodeVarContainer"/>
         /// </summary>
         /// <returns></returns>
-        public NodeVarData[] GetNodeVarsList()
-        {
-            int index = 0;
-            NodeVarData[] result = new NodeVarData[_nodeVars.Count];
-            foreach (string key in _nodeVars.Keys)
-            {
-                result[index] = NodeVarUtils.NodeVarDataFromGDDict(_nodeVars.Get<GDC.Dictionary>(key), key);
-                index++;
-            }
-            return result;
-        }
+        public NodeVarData[] GetNodeVarsList() => NodeVarUtils.GetNodeVarsList(this, _packedSceneDefaultValuesRegistry);
 
         public override GDC.Array _GetPropertyList()
         {

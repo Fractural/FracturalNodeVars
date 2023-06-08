@@ -17,13 +17,19 @@ jobs:
       - name: Update Submodules
         run: git submodule update --init
 
+      - name: Install Python Dependencies
+        run: |
+          apt-get update
+          apt-get -y install python3
+          apt-get -y install python3-pip
+          python3 -m pip install --upgrade pip
+          python3 -m pip install -r requirements.txt
+
       - name: Install Dependencies
         run: |
           nuget restore
           mkdir -p .mono/assemblies/Debug
           cp /usr/local/bin/GodotSharp/Api/Release/* .mono/assemblies/Debug
-          python3 -m pip install --upgrade pip
-          python3 -m pip install -r requirements.txt
 
       - name: Compile
         run: msbuild

@@ -1,8 +1,9 @@
 import subprocess
 import sys
 import time
-from colorama import init as colorama_init
+
 from colorama import Fore
+from colorama import init as colorama_init
 
 colorama_init()
 
@@ -32,7 +33,7 @@ public class CrashTest
 
 DIVIDER = f"{Fore.LIGHTBLACK_EX}---------------------------------{Fore.RESET}"
 
-begin_test_delay = 10;
+begin_test_delay = 20;
 delay = 0;
 build_type = "dotnet"
 if len(sys.argv) > 1 and sys.argv[1]:

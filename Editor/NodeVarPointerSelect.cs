@@ -138,6 +138,7 @@ namespace Fractural.NodeVars
 
         public void OnBeforeSerialize()
         {
+            _valueTypes = null;
             NodeVarConditionFunc = null;
         }
 

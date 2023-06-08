@@ -22,6 +22,8 @@ jobs:
           nuget restore
           mkdir -p .mono/assemblies/Debug
           cp /usr/local/bin/GodotSharp/Api/Release/* .mono/assemblies/Debug
+          python3 -m pip install --upgrade pip
+          python3 -m pip install -r requirements.txt
 
       - name: Compile
         run: msbuild
@@ -29,8 +31,11 @@ jobs:
       - name: Reimport Assets
         run: timeout $IMPORT_TIME godot --editor || code=$?; if [[ $code -ne 124 && $code -ne 0 ]]; then exit $code; fi
 
-      - name: Run
+      - name: Run Unit Tests
         run: godot addons/WAT/cli.tscn run=all
+
+      - name: Run Solution Crash Test
+        run: python3 solution_crash_tester.py 0 msbuild
 
       - name: Upload Test Results
         if: always()

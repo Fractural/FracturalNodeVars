@@ -15,30 +15,6 @@ _nodeVars = {
 }
 },
 "Type": "ExpressionNodeVarData"
-},
-"Var17": {
-"InitialValue": 0,
-"Operation": 0,
-"Type": "DynamicNodeVarData",
-"ValueType": "System.Int32"
-},
-"Var21": {
-"InitialValue": 0,
-"Operation": 0,
-"Type": "DynamicNodeVarData",
-"ValueType": "System.Int32"
-},
-"Var25": {
-"InitialValue": 0,
-"Operation": 0,
-"Type": "DynamicNodeVarData",
-"ValueType": "System.Int32"
-},
-"Var26": {
-"InitialValue": 0,
-"Operation": 0,
-"Type": "DynamicNodeVarData",
-"ValueType": "System.Int32"
 }
 }
 
@@ -49,21 +25,12 @@ __meta__ = {
 }
 _nodeVars = {
 "Var1": {
-"InitialValue": 0,
-"Operation": 0,
-"Type": "DynamicNodeVarData",
-"ValueType": "System.Int32"
-},
-"joe": {
-"Expression": "",
 "NodeVarReferences": {
+"Var1": {
+"ContainerPath": NodePath("../TestExpressionContainer2"),
+"ContainerVarName": "Var11"
+}
 },
 "Type": "ExpressionNodeVarData"
-},
-"var2834": {
-"InitialValue": 0,
-"Operation": 0,
-"Type": "DynamicNodeVarData",
-"ValueType": "System.Int32"
 }
 }

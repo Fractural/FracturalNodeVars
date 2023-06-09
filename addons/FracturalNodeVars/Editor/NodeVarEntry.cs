@@ -2,7 +2,6 @@
 using Fractural.Utils;
 using Godot;
 using System;
-using GDC = Godot.Collections;
 
 #if TOOLS
 namespace Fractural.NodeVars

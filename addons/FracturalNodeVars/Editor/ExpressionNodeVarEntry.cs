@@ -1,18 +1,17 @@
-﻿using Fractural.Plugin;
+﻿using System.Collections.Generic;
+using System.Linq;
+using Fractural.Plugin;
 using Fractural.Plugin.AssetsRegistry;
 using Fractural.Utils;
 using Godot;
-using System.Collections.Generic;
-using System.Linq;
 using static Fractural.NodeVars.ExpressionNodeVarData;
-using GDC = Godot.Collections;
 
 #if TOOLS
 namespace Fractural.NodeVars
 {
     // TODO: Add meta based collapsing
     [Tool]
-    public class ExpressionNodeVarEntry : NodeVarEntry<ExpressionNodeVarData>, ISerializationListener
+    public class ExpressionNodeVarEntry : NodeVarEntry<ExpressionNodeVarData>
     {
         private StringValueProperty _expressionProperty;
         private VBoxContainer _referenceEntriesVBox;

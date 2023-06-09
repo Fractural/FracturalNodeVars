@@ -43,7 +43,7 @@ if len(sys.argv) > 2 and sys.argv[2]:
    build_type = sys.argv[2]
 
 godot_process = subprocess.Popen(['godot', '--editor', '.'], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
-required_success_count = 30;
+required_success_count = 50;
 success_count = 0
 
 print(f"{Fore.LIGHTGREEN_EX}Solution Crash Tester(Delay: {delay} ms, Required Successes: {required_success_count}):{Fore.RESET}, Build CLI {build_type}")

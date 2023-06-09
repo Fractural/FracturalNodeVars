@@ -52,14 +52,14 @@ Display=8
 [application]
 
 config/name="FracturalNodeVars"
-run/main_scene="res://addons/WAT/gui.tscn"
+run/main_scene="res://tests/test_dict_node_vars/TestDictNodeVars.tscn"
 boot_splash/image="res://bootsplash.png"
 boot_splash/bg_color=Color( 0, 0, 0, 1 )
 config/icon="res://icon.png"
 
 [editor_plugins]
 
-enabled=PoolStringArray( "res://addons/FracturalCommons/plugin.cfg", "res://addons/FracturalInject/plugin.cfg", "res://addons/FracturalNodeVars/plugin.cfg", "res://addons/WAT/plugin.cfg", "res://addons/editor_icon_previewer/plugin.cfg", "res://addons/explore-editor-theme/plugin.cfg" )
+enabled=PoolStringArray( "res://addons/FracturalCommons/plugin.cfg", "res://addons/FracturalInject/plugin.cfg", "res://addons/FracturalNodeVars/plugin.cfg" )
 
 [mono]
 

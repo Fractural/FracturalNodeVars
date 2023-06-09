@@ -4,7 +4,6 @@ using Fractural.Utils;
 using Godot;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using GDC = Godot.Collections;
 
 namespace Fractural.NodeVars
@@ -37,10 +36,9 @@ namespace Fractural.NodeVars
 
     [RegisteredType(nameof(NodeVarContainer), "res://addons/FracturalNodeVars/Assets/dependency-container.svg")]
     [Tool]
-    public class NodeVarContainer : Node, INodeVarContainer, IInjectDIContainer
+    public class NodeVarContainer : Node, INodeVarContainer, IInjectDIContainer, ISerializationListener
     {
         // Native C# Dictionary is around x9 faster than Godot Dictionary
-        private IDictionary<string, NodeVarData> _dictNodeVars;
         public IDictionary<string, NodeVarData> DictNodeVars { get; private set; }
 
         private GDC.Dictionary _nodeVars;
@@ -136,5 +134,12 @@ namespace Fractural.NodeVars
             );
             return builder.Build();
         }
+
+        public void OnBeforeSerialize()
+        {
+            DictNodeVars = null;
+        }
+
+        public void OnAfterDeserialize() { }
     }
 }

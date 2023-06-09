@@ -11,7 +11,7 @@ namespace Fractural.NodeVars
     /// It gets the default values by instancing the PackedScene, and then caches the values for future lookups.
     /// </summary>
     [Tool]
-    public class PackedSceneDefaultValuesRegistry : Node
+    public class PackedSceneDefaultValuesRegistry : Node, ISerializationListener
     {
         public PackedScene[] PackedScenes { get; set; }
         public string[] DirectoryBlacklist { get; set; }
@@ -173,5 +173,12 @@ namespace Fractural.NodeVars
             );
             return builder.Build();
         }
+
+        public void OnBeforeSerialize()
+        {
+            PackedSceneToDefaultValuesDict = null;
+        }
+
+        public void OnAfterDeserialize() { }
     }
 }

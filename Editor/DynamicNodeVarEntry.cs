@@ -25,7 +25,7 @@ namespace Fractural.NodeVars
     }
 
     [Tool]
-    public class DynamicNodeVarEntry : NodeVarEntry<DynamicNodeVarData>, ISerializationListener
+    public class DynamicNodeVarEntry : NodeVarEntry<DynamicNodeVarData>
     {
         private OptionButton _valueTypeButton;
         private OptionButton _operationButton;
@@ -231,14 +231,6 @@ namespace Fractural.NodeVars
             UpdatePointerSelectAndVisibility();
             InvokeDataChanged();
         }
-
-        public void OnBeforeSerialize()
-        {
-            Data = null;
-            DefaultData = null;
-        }
-
-        public void OnAfterDeserialize() { }
     }
 }
 #endif

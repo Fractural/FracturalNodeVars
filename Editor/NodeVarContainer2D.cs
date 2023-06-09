@@ -15,7 +15,7 @@ namespace Fractural.NodeVars
         // Native C# Dictionary is around x9 faster than Godot Dictionary
         public IDictionary<string, NodeVarData> DictNodeVars { get; private set; }
 
-        private GDC.Dictionary _nodeVars;
+        protected GDC.Dictionary _nodeVars;
         private HintString.DictNodeVarsMode _mode = HintString.DictNodeVarsMode.LocalAttributes;
         [Export]
         public virtual HintString.DictNodeVarsMode Mode
@@ -28,7 +28,7 @@ namespace Fractural.NodeVars
             }
         }
         public GDC.Dictionary RawNodeVarsGDDict => _nodeVars;
-        private PackedSceneDefaultValuesRegistry _packedSceneDefaultValuesRegistry;
+        protected PackedSceneDefaultValuesRegistry _packedSceneDefaultValuesRegistry;
 
         public void Construct(DIContainer container)
         {

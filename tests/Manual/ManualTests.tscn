@@ -1,7 +1,10 @@
-[gd_scene load_steps=3 format=2]
+[gd_scene load_steps=6 format=2]
 
 [ext_resource path="res://tests/Manual/TestExpressionContainer.tscn" type="PackedScene" id=1]
 [ext_resource path="res://addons/FracturalNodeVars/Editor/NodeVarContainer.cs" type="Script" id=2]
+[ext_resource path="res://addons/FracturalNodeVars/Editor/NodeVarContainer2D.cs" type="Script" id=3]
+[ext_resource path="res://addons/FracturalNodeVars/Editor/NodeVarContainerControl.cs" type="Script" id=4]
+[ext_resource path="res://addons/FracturalNodeVars/Editor/NodeVarContainer3D.cs" type="Script" id=5]
 
 [node name="ManualTests" type="Node"]
 
@@ -33,4 +36,21 @@ _nodeVars = {
 },
 "Type": "ExpressionNodeVarData"
 }
+}
+
+[node name="NodeVarContainerControl" type="Control" parent="."]
+margin_right = 40.0
+margin_bottom = 40.0
+script = ExtResource( 4 )
+_nodeVars = {
+}
+
+[node name="NodeVarContainer2D" type="Node2D" parent="."]
+script = ExtResource( 3 )
+_nodeVars = {
+}
+
+[node name="NodeVarContainer3D" type="Spatial" parent="."]
+script = ExtResource( 5 )
+_nodeVars = {
 }

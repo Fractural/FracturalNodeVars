@@ -44,7 +44,7 @@ namespace Fractural.NodeVars
         private GDC.Dictionary _nodeVars;
         private HintString.DictNodeVarsMode _mode = HintString.DictNodeVarsMode.LocalAttributes;
         [Export]
-        public HintString.DictNodeVarsMode Mode
+        public virtual HintString.DictNodeVarsMode Mode
         {
             get => _mode;
             set

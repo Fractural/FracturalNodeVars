@@ -8,35 +8,9 @@ using GDC = Godot.Collections;
 
 namespace Fractural.NodeVars
 {
-    public static class DictNodeVarsContainerExtensions
-    {
-        public static T GetDictNodeVar<T>(this INodeVarContainer container, string key) => (T)container.GetDictNodeVar(key);
-    }
-
-    public interface INodeVarContainer
-    {
-        /// <summary>
-        /// Gets a list of all DictNodeVars for this <see cref="INodeVarContainer"/>
-        /// </summary>
-        /// <returns></returns>
-        NodeVarData[] GetNodeVarsList();
-        /// <summary>
-        /// Gets a NodeVar value at runtime. Does nothing when called from the editor.
-        /// </summary>
-        /// <param name="key"></param>
-        /// <returns></returns>
-        object GetDictNodeVar(string key);
-        /// <summary>
-        /// Sets a NodeVar value at runtime. Does nothing when called from the editor.
-        /// </summary>
-        /// <param name="key"></param>
-        /// <param name="value"></param>
-        void SetDictNodeVar(string key, object value);
-    }
-
-    [RegisteredType(nameof(NodeVarContainer), "res://addons/FracturalNodeVars/Assets/dependency-container.svg", nameof(Node))]
+    [RegisteredType(nameof(NodeVarContainerControl), "res://addons/FracturalNodeVars/Assets/dependency-container-control.svg", nameof(Control))]
     [Tool]
-    public class NodeVarContainer : Node, INodeVarContainer, IInjectDIContainer, ISerializationListener
+    public class NodeVarContainerControl : Control, INodeVarContainer, IInjectDIContainer, ISerializationListener
     {
         // Native C# Dictionary is around x9 faster than Godot Dictionary
         public IDictionary<string, NodeVarData> DictNodeVars { get; private set; }

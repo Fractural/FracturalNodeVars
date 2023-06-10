@@ -57,7 +57,7 @@ namespace Fractural.NodeVars
         public static DynamicNodeVarData[] GetNodeVarsFromAttributes(Type objectType)
         {
             var fixedDictNodeVars = new List<DynamicNodeVarData>();
-            foreach (var property in objectType.GetProperties())
+            foreach (var property in objectType.GetProperties(BindingFlags.Public).Union(objectType.GetProperties(BindingFlags.NonPublic)))
             {
                 var attribute = property.GetCustomAttribute<NodeVarAttribute>();
                 if (attribute == null)
@@ -69,8 +69,11 @@ namespace Fractural.NodeVars
                 else
                 {
                     // We scan the property for getters and setters to determien the operation
-                    bool hasGetter = property.GetGetMethod() != null;
-                    bool hasSetter = property.GetSetMethod() != null;
+                    var getMethod = property.GetGetMethod();
+                    var setMethod = property.GetSetMethod();
+
+                    bool hasGetter = getMethod != null && getMethod.IsPublic;
+                    bool hasSetter = setMethod != null && setMethod.IsPublic;
 
                     if (hasGetter && hasSetter)
                         operation = NodeVarOperation.GetSet;

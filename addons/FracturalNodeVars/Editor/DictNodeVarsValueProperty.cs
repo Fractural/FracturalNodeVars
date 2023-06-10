@@ -112,6 +112,7 @@ namespace Fractural.NodeVars
             _data._addOptionButton.AddItem("Expression", (int)AddOptionIndex.Expression);
             _data._addOptionButton.Select((int)AddOptionIndex.Dynamic);
             _data._addOptionButton.ClipText = true;
+            _data._addOptionButton.Visible = _data._canAddNewVars;
 
             var hbox = new HBoxContainer();
             hbox.AddChild(_data._addElementButton);

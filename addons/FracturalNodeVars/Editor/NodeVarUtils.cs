@@ -57,7 +57,7 @@ namespace Fractural.NodeVars
         public static DynamicNodeVarData[] GetNodeVarsFromAttributes(Type objectType)
         {
             var fixedDictNodeVars = new List<DynamicNodeVarData>();
-            foreach (var property in objectType.GetProperties(BindingFlags.Public).Concat(objectType.GetProperties(BindingFlags.NonPublic)))
+            foreach (var property in objectType.GetProperties(BindingFlags.Instance | BindingFlags.Public).Concat(BindingFlags.Instance | objectType.GetProperties(BindingFlags.NonPublic)))
             {
                 var attribute = property.GetCustomAttribute<NodeVarAttribute>();
                 if (attribute == null)

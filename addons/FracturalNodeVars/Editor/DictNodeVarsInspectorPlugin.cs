@@ -75,8 +75,13 @@ namespace Fractural.NodeVars
                 if (mode == HintString.DictNodeVarsMode.Local || mode == HintString.DictNodeVarsMode.LocalAttributes)
                     canAddNewVars = true;
 
+                INodeVarContainer propagationSource = null;
+                if (@object is IPropagatedNodeVarContainer propagatedContainer)
+                    propagationSource = propagatedContainer.Source;
+
                 AddPropertyEditor(path, new ValueEditorProperty(
                     new DictNodeVarsValueProperty(
+                        propagationSource,
                         _plugin.AssetsRegistry,
                         _packedSceneDefaultValuesRegistry,
                         _plugin.GetEditorInterface().GetEditedSceneRoot(),

@@ -27,7 +27,7 @@ namespace Fractural.NodeVars
                 if (Operation != NodeVarOperation.Get && Operation != NodeVarOperation.GetSet)
                     throw new Exception($"{nameof(DynamicNodeVarData)}: Attempted to get a non-getttable NodeVar \"{Name}\".");
                 if (IsPointer)
-                    return Container.GetDictNodeVar(ContainerVarName);
+                    return Container.GetNodeVar(ContainerVarName);
                 return _value;
             }
             set
@@ -35,7 +35,7 @@ namespace Fractural.NodeVars
                 if (Operation != NodeVarOperation.Set && Operation != NodeVarOperation.GetSet)
                     throw new Exception($"{nameof(DynamicNodeVarData)}: Attempted to set a non-setttable NodeVar \"{Name}\".");
                 if (IsPointer)
-                    Container.SetDictNodeVar(ContainerVarName, value);
+                    Container.SetNodeVar(ContainerVarName, value);
                 else
                     _value = value;
             }

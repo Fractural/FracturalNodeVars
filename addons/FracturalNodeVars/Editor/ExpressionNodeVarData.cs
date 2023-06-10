@@ -67,7 +67,7 @@ namespace Fractural.NodeVars
 
             // Runtime
             public INodeVarContainer Container { get; set; }
-            public object Value => Container.GetDictNodeVar(ContainerVarName);
+            public object Value => Container.GetNodeVar(ContainerVarName);
 
             public void Ready(Node node)
             {

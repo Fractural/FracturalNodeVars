@@ -18,20 +18,20 @@ namespace Tests
         public float MyFloatVar
         {
             get => GetDictNodeVar<float>(nameof(MyFloatVar));
-            set => SetDictNodeVar(nameof(MyFloatVar), value);
+            set => SetNodeVar(nameof(MyFloatVar), value);
         }
 
         [NodeVar]
         public bool MyBoolVar
         {
             get => GetDictNodeVar<bool>(nameof(MyBoolVar));
-            set => SetDictNodeVar(nameof(MyBoolVar), value);
+            set => SetNodeVar(nameof(MyBoolVar), value);
         }
 
         [NodeVar]
         public Vector3 MySetVar
         {
-            set => SetDictNodeVar(nameof(MySetVar), value);
+            set => SetNodeVar(nameof(MySetVar), value);
         }
 
         [NodeVar]
@@ -44,14 +44,14 @@ namespace Tests
         public bool MyAttributeSetVar
         {
             get => GetDictNodeVar<bool>(nameof(MyAttributeSetVar));
-            set => SetDictNodeVar(nameof(MyAttributeSetVar), value);
+            set => SetNodeVar(nameof(MyAttributeSetVar), value);
         }
 
         [NodeVar(NodeVarOperation.Get)]
         public bool MyAttributeGetVar
         {
             get => GetDictNodeVar<bool>(nameof(MyAttributeGetVar));
-            set => SetDictNodeVar(nameof(MyAttributeGetVar), value);
+            set => SetNodeVar(nameof(MyAttributeGetVar), value);
         }
 
         [NodeVarFunc]

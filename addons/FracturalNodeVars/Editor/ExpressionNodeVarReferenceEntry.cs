@@ -45,7 +45,7 @@ namespace Fractural.NodeVars
         private Button _resetInitialValueButton;
 
         public ExpressionNodeVarReferenceEntry() { }
-        public ExpressionNodeVarReferenceEntry(IAssetsRegistry assetsRegistry, PackedSceneDefaultValuesRegistry defaultValuesRegistry, Node sceneRoot, Node relativeToNode, Func<NodeVarData, bool> conditionFunc = null)
+        public ExpressionNodeVarReferenceEntry(INodeVarContainer _nodeVarContainer, IAssetsRegistry assetsRegistry, PackedSceneDefaultValuesRegistry defaultValuesRegistry, Node sceneRoot, Node relativeToNode, Func<NodeVarData, bool> conditionFunc = null)
         {
             var control = new Control();
             control.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
@@ -63,7 +63,7 @@ namespace Fractural.NodeVars
             _nameProperty.ValueChanged += OnNameChanged;
             _nameProperty.Validate = (name) => name != "" && name != null && !char.IsDigit(name[0]) && !name.Contains(" ");
 
-            _nodeVarPointerSelect = new NodeVarPointerSelect(assetsRegistry, defaultValuesRegistry, sceneRoot, relativeToNode, conditionFunc);
+            _nodeVarPointerSelect = new NodeVarPointerSelect(_nodeVarContainer, assetsRegistry, defaultValuesRegistry, sceneRoot, relativeToNode, conditionFunc);
             _nodeVarPointerSelect.NodePathChanged += OnContainerPathChanged;
             _nodeVarPointerSelect.VarNameChanged += OnContainerVarNameChanged;
 

@@ -37,12 +37,14 @@ namespace Fractural.NodeVars
         private PackedSceneDefaultValuesRegistry _defaultValuesRegistry;
         private ValueTypeData[] _valueTypes;
         private Texture _expressionIcon;
+        private INodeVarContainer _propagationSource;
 
         public NodeVarPointerSelect() { }
-        public NodeVarPointerSelect(IAssetsRegistry assetsRegistry, PackedSceneDefaultValuesRegistry defaultValuesRegistry, Node sceneRoot, Node relativeToNode, Func<NodeVarData, bool> conditionFunc = null)
+        public NodeVarPointerSelect(INodeVarContainer propagationSource, IAssetsRegistry assetsRegistry, PackedSceneDefaultValuesRegistry defaultValuesRegistry, Node sceneRoot, Node relativeToNode, Func<NodeVarData, bool> conditionFunc = null)
         {
             SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
 
+            _propagationSource = propagationSource;
             _defaultValuesRegistry = defaultValuesRegistry;
             _relativeToNode = relativeToNode;
 
@@ -64,6 +66,7 @@ namespace Fractural.NodeVars
             _containerPathProperty.ValueChanged += OnContainerPathChanged;
             _containerPathProperty.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
             _containerPathProperty.RelativeToNode = relativeToNode;
+            _containerPathProperty.Visible = _propagationSource == null;
 
             AddChild(_containerVarPopupSearch);
             AddChild(_containerPathProperty);
@@ -82,6 +85,15 @@ namespace Fractural.NodeVars
             VarName = varName;
 
             _containerPathProperty.SetValue(containerPath, false);
+            if (containerPath != null && _propagationSource != null)
+            {
+                var propagationSourcePath = _relativeToNode.GetPathTo(_propagationSource as Node);
+                if (!Equals(containerPath, propagationSourcePath))
+                {
+                    _containerPathProperty.SetValue(propagationSourcePath, false);
+                    OnContainerPathChanged(propagationSourcePath);
+                }
+            }
 
             UpdateSearchEntries();
             UpdateDisabledAndSelectUI();

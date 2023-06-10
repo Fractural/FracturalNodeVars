@@ -119,7 +119,7 @@ namespace Fractural.NodeVars
 
         public static NodeVarData[] GetNodeVarsList(this INodeVarContainer nodeVarContainer, PackedSceneDefaultValuesRegistry packedSceneDefaultValuesRegistry)
         {
-            if (nodeVarContainer is NodeVarContainer container)
+            if (nodeVarContainer is IDictNodeVarContainer container && nodeVarContainer is Node containerNode)
             {
                 var nodeVars = container.RawNodeVarsGDDict;
                 var nodeVarsDict = new Dictionary<string, NodeVarData>();
@@ -131,9 +131,9 @@ namespace Fractural.NodeVars
                 }
 
                 var defaultNodeVars = new Dictionary<string, NodeVarData>();
-                if (container.Filename != "")
+                if (containerNode.Filename != "")
                 {
-                    var defaultInheritedNodeVars = packedSceneDefaultValuesRegistry.GetDefaultValue<GDC.Dictionary>(container.Filename, "_nodeVars");
+                    var defaultInheritedNodeVars = packedSceneDefaultValuesRegistry.GetDefaultValue<GDC.Dictionary>(containerNode.Filename, "_nodeVars");
                     foreach (string key in defaultInheritedNodeVars.Keys)
                         defaultNodeVars.Add(key, NodeVarDataFromGDDict(defaultInheritedNodeVars.Get<GDC.Dictionary>(key), key));
                 }

@@ -18,14 +18,16 @@ namespace Fractural.NodeVars
         private Button _addElementButton;
         private Button _resetExpressionButton;
 
+        private INodeVarContainer _nodeVarContainer;
         private IAssetsRegistry _assetsRegistry;
         private Node _sceneRoot;
         private Node _relativeToNode;
         private PackedSceneDefaultValuesRegistry _defaultValuesRegistry;
 
         public ExpressionNodeVarEntry() { }
-        public ExpressionNodeVarEntry(IAssetsRegistry assetsRegistry, PackedSceneDefaultValuesRegistry defaultValuesRegistry, Node sceneRoot, Node relativeToNode) : base()
+        public ExpressionNodeVarEntry(INodeVarContainer nodeVarContainer, IAssetsRegistry assetsRegistry, PackedSceneDefaultValuesRegistry defaultValuesRegistry, Node sceneRoot, Node relativeToNode) : base()
         {
+            _nodeVarContainer = nodeVarContainer;
             _defaultValuesRegistry = defaultValuesRegistry;
             _assetsRegistry = assetsRegistry;
             _sceneRoot = sceneRoot;
@@ -267,6 +269,7 @@ namespace Fractural.NodeVars
         private ExpressionNodeVarReferenceEntry CreateNewEntry()
         {
             var entry = new ExpressionNodeVarReferenceEntry(
+                _nodeVarContainer,
                 _assetsRegistry,
                 _defaultValuesRegistry,
                 _sceneRoot,

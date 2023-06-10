@@ -40,6 +40,7 @@ namespace Fractural.NodeVars
                 _source = source;
             }
 
+            public INodeVarContainer _propagationSource;
             public Button _editButton;
             public Control _container;
             public Button _addElementButton;
@@ -67,6 +68,7 @@ namespace Fractural.NodeVars
 
         public DictNodeVarsValueProperty() { }
         public DictNodeVarsValueProperty(
+            INodeVarContainer propagationSource,
             IAssetsRegistry assetsRegistry,
             PackedSceneDefaultValuesRegistry defaultValuesRegistry,
             Node sceneRoot,
@@ -76,6 +78,7 @@ namespace Fractural.NodeVars
         ) : base()
         {
             _data = new CSharpData(this);
+            _data._propagationSource = propagationSource;
             _data._assetsRegistry = assetsRegistry;
             _data._defaultValuesRegistry = defaultValuesRegistry;
             _data._sceneRoot = sceneRoot;
@@ -95,12 +98,12 @@ namespace Fractural.NodeVars
             _data._editButton = new Button();
             _data._editButton.ToggleMode = true;
             _data._editButton.ClipText = true;
-            // _data._editButton.Connect("toggled", this, nameof(OnEditToggled));
+            _data._editButton.Connect("toggled", this, nameof(OnEditToggled));
             AddChild(_data._editButton);
 
             _data._addElementButton = new Button();
             _data._addElementButton.Text = "Add NodeVar";
-            // _data._addElementButton.Connect("pressed", this, nameof(OnAddElementPressed));
+            _data._addElementButton.Connect("pressed", this, nameof(OnAddElementPressed));
             _data._addElementButton.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
             _data._addElementButton.RectMinSize = new Vector2(24 * 4, 0);
             _data._addElementButton.Visible = _data._canAddNewVars;
@@ -338,9 +341,9 @@ namespace Fractural.NodeVars
         {
             NodeVarEntry entry;
             if (nodeVar is DynamicNodeVarData)
-                entry = new DynamicNodeVarEntry(_data._assetsRegistry, _data._defaultValuesRegistry, _data._sceneRoot, _data._relativeToNode);
+                entry = new DynamicNodeVarEntry(_data._propagationSource, _data._assetsRegistry, _data._defaultValuesRegistry, _data._sceneRoot, _data._relativeToNode);
             else if (nodeVar is ExpressionNodeVarData)
-                entry = new ExpressionNodeVarEntry(_data._assetsRegistry, _data._defaultValuesRegistry, _data._sceneRoot, _data._relativeToNode);
+                entry = new ExpressionNodeVarEntry(_data._propagationSource, _data._assetsRegistry, _data._defaultValuesRegistry, _data._sceneRoot, _data._relativeToNode);
             else
                 throw new Exception($"{nameof(DictNodeVarsValueProperty)}: No suitable entry type foudn for {nodeVar.GetType()}.");
 

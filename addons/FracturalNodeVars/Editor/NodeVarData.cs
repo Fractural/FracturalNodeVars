@@ -1,10 +1,14 @@
-﻿using Fractural.Utils;
-using Godot;
+﻿using Godot;
 using System;
 using GDC = Godot.Collections;
 
 namespace Fractural.NodeVars
 {
+    public interface IResetNodeVar
+    {
+        void Reset();
+    }
+
     public interface INodeVar
     {
         string Name { get; set; }

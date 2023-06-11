@@ -8,7 +8,7 @@ namespace Fractural.NodeVars
     /// <summary>
     /// NodeVar that can change it's behaviour. It can change it's operation, and also change whether it's a pointer or not.
     /// </summary>
-    public class DynamicNodeVarData : NodeVarData<DynamicNodeVarData>, IGetSetNodeVar, ITypedNodeVar
+    public class DynamicNodeVarData : NodeVarData<DynamicNodeVarData>, IGetSetNodeVar, ITypedNodeVar, IResetNodeVar
     {
         // Serialized
         public Type ValueType { get; set; }

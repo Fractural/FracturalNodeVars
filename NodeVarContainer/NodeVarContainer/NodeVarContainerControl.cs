@@ -13,7 +13,7 @@ namespace Fractural.NodeVars
     public class NodeVarContainerControl : Control, IDictNodeVarContainer, IInjectDIContainer, ISerializationListener
     {
         // Native C# Dictionary is around x9 faster than Godot Dictionary
-        public IDictionary<string, NodeVarData> DictNodeVars { get; private set; }
+        public IDictionary<string, NodeVarData> NodeVars { get; private set; }
 
         protected GDC.Dictionary _nodeVars;
         private HintString.DictNodeVarsMode _mode = HintString.DictNodeVarsMode.LocalAttributes;
@@ -41,7 +41,7 @@ namespace Fractural.NodeVars
             if (NodeUtils.IsInEditorSceneTab(this))
                 return;
 #endif
-            DictNodeVars = new Dictionary<string, NodeVarData>();
+            NodeVars = new Dictionary<string, NodeVarData>();
             foreach (var nodeVar in GetNodeVarsList())
                 AddNodeVar(nodeVar);
         }
@@ -53,7 +53,7 @@ namespace Fractural.NodeVars
         public void AddNodeVar(NodeVarData nodeVar)
         {
             nodeVar.Ready(this);
-            DictNodeVars.Add(nodeVar.Name, nodeVar);
+            NodeVars.Add(nodeVar.Name, nodeVar);
         }
 
         /// <summary>
@@ -71,7 +71,7 @@ namespace Fractural.NodeVars
         /// <returns></returns>
         public object GetNodeVar(string key)
         {
-            var data = DictNodeVars[key];
+            var data = NodeVars[key];
             if (data is IGetNodeVar getNodeVar)
                 return getNodeVar.Value;
             throw new Exception($"{nameof(NodeVarContainer)}: Could not get NodeVar of \"{key}\".");
@@ -84,7 +84,7 @@ namespace Fractural.NodeVars
         /// <param name="value"></param>
         public void SetNodeVar(string key, object value)
         {
-            var data = DictNodeVars[key];
+            var data = NodeVars[key];
             if (data is ISetNodeVar setNodeVar)
             {
                 setNodeVar.Value = value;
@@ -111,7 +111,7 @@ namespace Fractural.NodeVars
 
         public void OnBeforeSerialize()
         {
-            DictNodeVars = null;
+            NodeVars = null;
         }
 
         public void OnAfterDeserialize() { }

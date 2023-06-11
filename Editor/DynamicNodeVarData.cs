@@ -8,7 +8,7 @@ namespace Fractural.NodeVars
     /// <summary>
     /// NodeVar that can change it's behaviour. It can change it's operation, and also change whether it's a pointer or not.
     /// </summary>
-    public class DynamicNodeVarData : NodeVarData<DynamicNodeVarData>, IGetSetNodeVar, ITypedNodeVar, IResetNodeVar
+    public class DynamicNodeVarData : NodeVarData<DynamicNodeVarData>, IGetSetNodeVar, ITypedNodeVar, IResetNodeVar, ISerializableNodeVar
     {
         // Serialized
         public Type ValueType { get; set; }
@@ -136,6 +136,18 @@ namespace Fractural.NodeVars
             ContainerVarName = dict.Get<string>(nameof(ContainerVarName), null);
             InitialValue = dict.Get<object>(nameof(InitialValue), null);
             Name = name;
+        }
+
+        public object Save()
+        {
+            if (IsPointer)
+                return null;
+            return Value;
+        }
+
+        public void Load(object any)
+        {
+            Value = any;
         }
     }
 }

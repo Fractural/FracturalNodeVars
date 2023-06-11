@@ -4,6 +4,12 @@ using GDC = Godot.Collections;
 
 namespace Fractural.NodeVars
 {
+    public interface ISerializableNodeVar
+    {
+        object Save();
+        void Load(object any);
+    }
+
     public interface IResetNodeVar
     {
         void Reset();

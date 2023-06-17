@@ -16,19 +16,30 @@ namespace Fractural.NodeVars
     public enum NodeVarOperation
     {
         /// <summary>
+        /// public get;
         /// DictNodeVar can be fetched from the outside
         /// </summary>
         Get,
         /// <summary>
-        /// DictNodeVar can be set from the outside
+        /// public set; private get;
+        /// DictNodeVar can be set from the outside. Can also be read privately.
         /// </summary>
         Set,
         /// <summary>
-        /// DictNodeVar can get fetched and set from the outside
+        /// public get; public set;
+        /// DictNodeVar can be fetched and set from the outside
         /// </summary>
-        GetSet
+        GetSet,
+        /// <summary>
+        /// private get; private set;
+        /// DictNodeVar that can only be fetched and set privately.
+        /// </summary>
+        Private,
     }
 
+    // TODO NOW: Add Private NodeVarOperation
+    // TODO NOW: Add an PrivateGetNodeVar and PrivateSetNodeVar to NodeVarContainer that lets you
+    //           get and set a node var even if it's operation doesn't permit it.
     [Tool]
     public class DictNodeVarsValueProperty : ValueProperty<GDC.Dictionary>
     {

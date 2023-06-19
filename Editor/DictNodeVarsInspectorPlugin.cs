@@ -72,7 +72,7 @@ namespace Fractural.NodeVars
                 var mode = (HintString.DictNodeVarsMode)Enum.Parse(typeof(HintString.DictNodeVarsMode), modeString);
                 if (mode == HintString.DictNodeVarsMode.Attributes || mode == HintString.DictNodeVarsMode.LocalAttributes)
                     fixedNodeVars.AddRange(NodeVarUtils.GetNodeVarsFromAttributes(objectType));
-                if (mode == HintString.DictNodeVarsMode.Local || mode == HintString.DictNodeVarsMode.LocalAttributes)
+                if (!NodeVarUtils.IsInstancedScene(node, _plugin.GetEditorInterface().GetEditedSceneRoot()) && (mode == HintString.DictNodeVarsMode.Local || mode == HintString.DictNodeVarsMode.LocalAttributes))
                     canAddNewVars = true;
 
                 INodeVarContainer propagationSource = null;
@@ -85,7 +85,7 @@ namespace Fractural.NodeVars
                         _plugin.AssetsRegistry,
                         _packedSceneDefaultValuesRegistry,
                         _plugin.GetEditorInterface().GetEditedSceneRoot(),
-                        @object as Node,
+                        node,
                         fixedNodeVars.Count() > 0 ? fixedNodeVars.ToArray() : null,
                         canAddNewVars)
                     )

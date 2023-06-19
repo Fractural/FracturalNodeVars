@@ -17,21 +17,17 @@ namespace Fractural.NodeVars
         private VBoxContainer _referenceEntriesVBox;
         private Button _addElementButton;
         private Button _resetExpressionButton;
+        private TextureRect _expressionIconTextureRect;
 
-        private INodeVarContainer _nodeVarContainer;
-        private IAssetsRegistry _assetsRegistry;
-        private Node _sceneRoot;
-        private Node _relativeToNode;
+        private INodeVarContainer _propagationSource;
         private PackedSceneDefaultValuesRegistry _defaultValuesRegistry;
+        private HBoxContainer _midHBox;
 
         public ExpressionNodeVarEntry() { }
-        public ExpressionNodeVarEntry(INodeVarContainer nodeVarContainer, IAssetsRegistry assetsRegistry, PackedSceneDefaultValuesRegistry defaultValuesRegistry, Node sceneRoot, Node relativeToNode) : base()
+        public ExpressionNodeVarEntry(INodeVarContainer propagationSource, IAssetsRegistry assetsRegistry, PackedSceneDefaultValuesRegistry defaultValuesRegistry, Node sceneRoot, Node relativeToNode) : base(sceneRoot, relativeToNode, assetsRegistry)
         {
-            _nodeVarContainer = nodeVarContainer;
+            _propagationSource = propagationSource;
             _defaultValuesRegistry = defaultValuesRegistry;
-            _assetsRegistry = assetsRegistry;
-            _sceneRoot = sceneRoot;
-            _relativeToNode = relativeToNode;
 
             _expressionProperty = new StringValueProperty();
             _expressionProperty.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
@@ -47,18 +43,24 @@ namespace Fractural.NodeVars
             _addElementButton = new Button();
             _addElementButton.Connect("pressed", this, nameof(OnAddElementPressed));
 
+            _expressionIconTextureRect = new TextureRect();
+            _expressionIconTextureRect.RectMinSize = new Vector2(44 * _assetsRegistry.Scale, 0);
+            _expressionIconTextureRect.SizeFlagsVertical = (int)SizeFlags.ShrinkCenter;
+
             var topHBox = new HBoxContainer();
             topHBox.AddChild(_nameProperty);
+            topHBox.AddChild(_expressionIconTextureRect);
+            topHBox.AddChild(_operationButton);
             topHBox.AddChild(_resetInitialValueButton);
-            topHBox.AddChild(_deleteButton);
 
-            var midHBox = new HBoxContainer();
-            midHBox.AddChild(_expressionProperty);
-            midHBox.AddChild(_resetExpressionButton);
-            midHBox.AddChild(_addElementButton);
+            _midHBox = new HBoxContainer();
+            _midHBox.AddChild(_expressionProperty);
+            _midHBox.AddChild(_resetExpressionButton);
+            _midHBox.AddChild(_addElementButton);
+            _midHBox.AddChild(_deleteButton);
 
             _contentVBox.AddChild(topHBox);
-            _contentVBox.AddChild(midHBox);
+            _contentVBox.AddChild(_midHBox);
             _contentVBox.AddChild(_referenceEntriesVBox);
         }
 
@@ -69,6 +71,7 @@ namespace Fractural.NodeVars
             if (NodeUtils.IsInEditorSceneTab(this))
                 return;
 #endif
+            _expressionIconTextureRect.Texture = GetIcon("SceneUniqueName", "EditorIcons");
             _expressionProperty.Font = (Font)GetFont("source", "EditorFonts").Duplicate();
             var dynamicFont = _expressionProperty.Font as DynamicFont;
             dynamicFont.Size = (int)(16 * _assetsRegistry.Scale);
@@ -88,13 +91,28 @@ namespace Fractural.NodeVars
             UpdateReferencesUI();
         }
 
+        protected override OperationTypeData[] FetchOperationTypes => new[]
+        {
+            new OperationTypeData() {
+                Name = "Get",
+                Operation = NodeVarOperation.Get
+            },
+            new OperationTypeData() {
+                Name = "Private",
+                Operation = NodeVarOperation.Private
+            }
+        };
+
         protected override void UpdateDisabledAndFixedUI()
         {
             base.UpdateDisabledAndFixedUI();
-            _expressionProperty.Disabled = Disabled;
+
+            _midHBox.Visible = !NonSetDisabled;
+            _referenceEntriesVBox.Visible = !NonSetDisabled;
+            _expressionProperty.Disabled = Disabled || PrivateDisabled || NonSetDisabled;
             foreach (ExpressionNodeVarReferenceEntry entry in _referenceEntriesVBox.GetChildren())
             {
-                entry.Disabled = Disabled;
+                entry.Disabled = Disabled || PrivateDisabled || NonSetDisabled;
                 entry.IsFixed = DefaultData?.NodeVarReferences.ContainsKey(entry.Data.Name) ?? false;
             }
         }
@@ -269,12 +287,12 @@ namespace Fractural.NodeVars
         private ExpressionNodeVarReferenceEntry CreateNewEntry()
         {
             var entry = new ExpressionNodeVarReferenceEntry(
-                _nodeVarContainer,
+                _propagationSource,
                 _assetsRegistry,
                 _defaultValuesRegistry,
                 _sceneRoot,
                 _relativeToNode,
-                (data) => NodeVarUtils.CheckNodeVarCompatible(data, NodeVarOperation.Get)
+                (container, data) => NodeVarUtils.IsNodeVarValidPointer(container, _relativeToNode, _sceneRoot, data, NodeVarOperation.Set)
             );
             entry.NameChanged += OnEntryNameChanged;
             entry.DataChanged += OnEntryDataChanged;

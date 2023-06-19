@@ -11,7 +11,7 @@ namespace Fractural.NodeVars
     /// <summary>
     /// NodeVar that evaluates an expression to get a value.
     /// </summary>
-    public class ExpressionNodeVarData : NodeVarData<ExpressionNodeVarData>, IGetNodeVar
+    public class ExpressionNodeVarData : NodeVarData<ExpressionNodeVarData>, IGetNodeVar, IPrivateGetNodeVar
     {
         #region Static
         public struct TypeAndMethod
@@ -56,7 +56,7 @@ namespace Fractural.NodeVars
         public class NodeVarReference
         {
             // Serialized
-            public NodePath ContainerPath { get; set; }
+            public NodePath ContainerPath { get; set; } = new NodePath();
             public string ContainerVarName { get; set; }
             /// <summary>
             /// The key for this variable in this expression.
@@ -134,7 +134,17 @@ namespace Fractural.NodeVars
 
         // Runtime
         public ExpressionParser.Expression AST { get; set; }
-        public object Value => AST.Evaluate();
+        public object Value
+        {
+            get
+            {
+                if (!Operation.IsGet())
+                    throw new Exception($"{nameof(ExpressionNodeVarData)}: Attempted to get a non-getttable NodeVar \"{Name}\".");
+                return AST.Evaluate();
+            }
+        }
+        public object PrivateValue => AST.Evaluate();
+
         private Node _node;
         private Type _nodeType;
 
@@ -186,6 +196,7 @@ namespace Fractural.NodeVars
             var inst = new ExpressionNodeVarData()
             {
                 Name = Name,
+                Operation = Operation,
                 Expression = Expression,
             };
             foreach (var pair in NodeVarReferences)
@@ -211,10 +222,7 @@ namespace Fractural.NodeVars
 
         public override GDC.Dictionary ToGDDict()
         {
-            var dict = new GDC.Dictionary()
-            {
-                { "Type", nameof(ExpressionNodeVarData) },
-            };
+            var dict = base.ToGDDict();
             if (Expression != "")
                 dict[nameof(Expression)] = Expression;
             if (NodeVarReferences.Count > 0)
@@ -229,7 +237,7 @@ namespace Fractural.NodeVars
 
         public override void FromGDDict(GDC.Dictionary dict, string name)
         {
-            Name = name;
+            base.FromGDDict(dict, name);
             Expression = dict.Get<string>(nameof(Expression), "");
             var nodeVarReferencesDict = dict.Get(nameof(NodeVarReferences), new GDC.Dictionary());
             foreach (string key in nodeVarReferencesDict.Keys)

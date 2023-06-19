@@ -28,26 +28,22 @@ namespace Fractural.NodeVars
     public class DynamicNodeVarEntry : NodeVarEntry<DynamicNodeVarData>
     {
         private OptionButton _valueTypeButton;
-        private OptionButton _operationButton;
         private Button _isPointerButton;
         private MarginContainer _valuePropertyContainer;
         private ValueProperty _valueProperty;
         private ValueTypeData[] _valueTypes;
-        private OperationTypeData[] _operationTypes;
-        private Node _relativeToNode;
-        private IAssetsRegistry _assetsRegistry;
         private NodeVarPointerSelect _nodeVarPointerSelect;
 
-        public DynamicNodeVarEntry() { }
-        public DynamicNodeVarEntry(INodeVarContainer propagationSource, IAssetsRegistry assetsRegistry, PackedSceneDefaultValuesRegistry defaultValuesRegistry, Node sceneRoot, Node relativeToNode) : base()
-        {
-            _assetsRegistry = assetsRegistry;
-            _relativeToNode = relativeToNode;
+        private HBoxContainer _firstRowHBox;
+        private HBoxContainer _secondRowHBox;
 
-            var firstRowHBox = new HBoxContainer();
-            var secondRowHBox = new HBoxContainer();
-            _contentVBox.AddChild(firstRowHBox);
-            _contentVBox.AddChild(secondRowHBox);
+        public DynamicNodeVarEntry() : base() { }
+        public DynamicNodeVarEntry(INodeVarContainer propagationSource, IAssetsRegistry assetsRegistry, PackedSceneDefaultValuesRegistry defaultValuesRegistry, Node sceneRoot, Node relativeToNode) : base(sceneRoot, relativeToNode, assetsRegistry)
+        {
+            _firstRowHBox = new HBoxContainer();
+            _secondRowHBox = new HBoxContainer();
+            _contentVBox.AddChild(_firstRowHBox);
+            _contentVBox.AddChild(_secondRowHBox);
 
             _valuePropertyContainer = new MarginContainer();
             _valuePropertyContainer.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
@@ -57,29 +53,38 @@ namespace Fractural.NodeVars
             _valueTypeButton.ClipText = true;
             _valueTypeButton.Connect("item_selected", this, nameof(OnValueTypeSelected));
 
-            _operationButton = new OptionButton();
-            _operationButton.SizeFlagsHorizontal = (int)SizeFlags.Fill;
-            _operationButton.RectMinSize = new Vector2(80 * _assetsRegistry.Scale, 0);
-            _operationButton.Connect("item_selected", this, nameof(OnOperationSelected));
-
             _isPointerButton = new Button();
             _isPointerButton.SizeFlagsHorizontal = (int)SizeFlags.Fill;
             _isPointerButton.ToggleMode = true;
             _isPointerButton.Connect("toggled", this, nameof(OnIsPointerToggled));
 
-            _nodeVarPointerSelect = new NodeVarPointerSelect(propagationSource, assetsRegistry, defaultValuesRegistry, sceneRoot, relativeToNode, (nodeVar) => NodeVarUtils.CheckNodeVarCompatible(nodeVar, Data.Operation, Data.ValueType));
+            _nodeVarPointerSelect = new NodeVarPointerSelect(
+                propagationSource,
+                assetsRegistry,
+                defaultValuesRegistry,
+                sceneRoot,
+                relativeToNode,
+                (container, nodeVar) => NodeVarUtils.IsNodeVarValidPointer(
+                    container,
+                    _relativeToNode,
+                    _sceneRoot,
+                    nodeVar,
+                    Data.Operation,
+                    Data.ValueType
+                )
+            );
             _nodeVarPointerSelect.VarNameChanged += OnContainerVarNameSelected;
             _nodeVarPointerSelect.NodePathChanged += OnNodePathChanged;
 
-            firstRowHBox.AddChild(_nameProperty);
-            firstRowHBox.AddChild(_valueTypeButton);
-            firstRowHBox.AddChild(_operationButton);
+            _firstRowHBox.AddChild(_nameProperty);
+            _firstRowHBox.AddChild(_valueTypeButton);
+            _firstRowHBox.AddChild(_operationButton);
 
-            secondRowHBox.AddChild(_isPointerButton);
-            secondRowHBox.AddChild(_nodeVarPointerSelect);
-            secondRowHBox.AddChild(_valuePropertyContainer);
-            secondRowHBox.AddChild(_resetInitialValueButton);
-            secondRowHBox.AddChild(_deleteButton);
+            _secondRowHBox.AddChild(_isPointerButton);
+            _secondRowHBox.AddChild(_nodeVarPointerSelect);
+            _secondRowHBox.AddChild(_valuePropertyContainer);
+            _secondRowHBox.AddChild(_resetInitialValueButton);
+            _secondRowHBox.AddChild(_deleteButton);
         }
 
         public override void _Ready()
@@ -90,21 +95,24 @@ namespace Fractural.NodeVars
             if (NodeUtils.IsInEditorSceneTab(this))
                 return;
 #endif
+            _valueTypeButton.AddColorOverride("icon_color_disabled", Colors.White);
+            _valueTypeButton.AddColorOverride("font_color_disabled", _operationButton.GetColor("font_color"));
             _isPointerButton.Icon = GetIcon("GuiScrollArrowRightHl", "EditorIcons");
 
             InitValueTypes();
-            InitOperationTypes();
             UpdateDisabledAndFixedUI();
         }
 
         protected override void UpdateDisabledAndFixedUI()
         {
             base.UpdateDisabledAndFixedUI();
-            _valueTypeButton.Disabled = Disabled || IsFixed;
-            _operationButton.Disabled = Disabled || IsFixed;
+
+            _secondRowHBox.Visible = !NonSetDisabled;
+            _valueTypeButton.Disabled = Disabled || IsFixed || PrivateDisabled || NonSetDisabled;
             if (_valueProperty != null)
-                _valueProperty.Disabled = Disabled;
-            _nodeVarPointerSelect.Disabled = Disabled;
+                _valueProperty.Disabled = Disabled || PrivateDisabled || NonSetDisabled;
+            _nodeVarPointerSelect.Disabled = Disabled || PrivateDisabled || NonSetDisabled;
+            _isPointerButton.Disabled = Disabled || PrivateDisabled || NonSetDisabled;
         }
 
         private void OnContainerVarNameSelected(string name)
@@ -122,12 +130,6 @@ namespace Fractural.NodeVars
                 _valueTypeButton.Text = "";
         }
 
-        private void SetOperationsValueDisplay(NodeVarOperation operation)
-        {
-            var operationTypeData = _operationTypes.First(x => x.Operation == operation);
-            _operationButton.Select(operationTypeData.Index);
-        }
-
         public override void SetData(DynamicNodeVarData value, DynamicNodeVarData defaultData = null)
         {
             var oldData = Data;
@@ -137,10 +139,11 @@ namespace Fractural.NodeVars
                 UpdateValuePropertyType();
 
             SetValueTypeValueDisplay(Data.ValueType);
-            SetOperationsValueDisplay(Data.Operation);
             _valueProperty.SetValue(Data.InitialValue, false);
             _isPointerButton.SetPressedNoSignal(Data.IsPointer);
             UpdatePointerSelectAndVisibility();
+
+            UpdateDisabledAndFixedUI();
         }
 
         private void UpdatePointerSelectAndVisibility()
@@ -165,17 +168,6 @@ namespace Fractural.NodeVars
             };
             _valueProperty.SetValue(Data.InitialValue, false);
             _valuePropertyContainer.AddChild(_valueProperty);
-        }
-
-        private void InitOperationTypes()
-        {
-            _operationTypes = NodeVarUtils.GetOperationTypes();
-            foreach (var type in _operationTypes)
-            {
-                var index = _operationButton.GetItemCount();
-                _operationButton.AddItem(type.Name);
-                type.Index = index;
-            }
         }
 
         private void InitValueTypes()
@@ -204,16 +196,6 @@ namespace Fractural.NodeVars
             Data.InitialValue = DefaultValueUtils.GetDefault(Data.ValueType);
             SetValueTypeValueDisplay(Data.ValueType);
             UpdateValuePropertyType();
-            InvokeDataChanged();
-        }
-
-        private void OnOperationSelected(int index)
-        {
-            var operation = _operationTypes.First(x => x.Index == index).Operation;
-            if (Data.Operation == operation)
-                return;
-            Data.Operation = operation;
-            SetOperationsValueDisplay(Data.Operation);
             InvokeDataChanged();
         }
 

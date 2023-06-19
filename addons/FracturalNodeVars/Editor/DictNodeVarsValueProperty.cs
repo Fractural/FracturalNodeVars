@@ -16,12 +16,12 @@ namespace Fractural.NodeVars
     public enum NodeVarOperation
     {
         /// <summary>
-        /// public get;
-        /// DictNodeVar can be fetched from the outside
+        /// public get; private set;
+        /// DictNodeVar can be fetched from the outside. Can aslo be set privately.
         /// </summary>
         Get,
         /// <summary>
-        /// public set; private get;
+        /// private get; public set;
         /// DictNodeVar can be set from the outside. Can also be read privately.
         /// </summary>
         Set,
@@ -37,9 +37,8 @@ namespace Fractural.NodeVars
         Private,
     }
 
-    // TODO NOW: Add Private NodeVarOperation
-    // TODO NOW: Add an PrivateGetNodeVar and PrivateSetNodeVar to NodeVarContainer that lets you
-    //           get and set a node var even if it's operation doesn't permit it.
+    // TODO NOW: Make NodeVarPointerSelect work with Private NodeVars
+    // TODO NOW: Figure out how NodeVars should actualy work (See procreate).
     [Tool]
     public class DictNodeVarsValueProperty : ValueProperty<GDC.Dictionary>
     {
@@ -211,9 +210,14 @@ namespace Fractural.NodeVars
                     var displayNodeVar = fixedNodeVar;
                     if (displayedNodeVars.TryGetValue(fixedNodeVar.Name, out NodeVarData existingNodeVar))
                     {
-                        var nodeVarWithChanges = fixedNodeVar.WithChanges(existingNodeVar, true);
-                        if (nodeVarWithChanges != null)
-                            displayNodeVar = nodeVarWithChanges; // Changes were compatible
+                        if (fixedNodeVar.Operation.IsSet())
+                        {
+                            var nodeVarWithChanges = fixedNodeVar.WithChanges(existingNodeVar, true);
+                            if (nodeVarWithChanges != null)
+                                displayNodeVar = nodeVarWithChanges; // Changes were compatible
+                            else
+                                Value.Remove(existingNodeVar.Name); // Changes were not compatible, so NodeVarWithChanges was null
+                        }
                         else
                             Value.Remove(existingNodeVar.Name); // Changes were not compatible, so NodeVarWithChanges was null
                     }

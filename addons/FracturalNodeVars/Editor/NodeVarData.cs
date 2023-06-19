@@ -1,4 +1,5 @@
-﻿using Godot;
+﻿using Fractural.Utils;
+using Godot;
 using System;
 using GDC = Godot.Collections;
 
@@ -32,6 +33,18 @@ namespace Fractural.NodeVars
 
     public interface IGetSetNodeVar : ISetNodeVar, IGetNodeVar { }
 
+    public interface IPrivateGetNodeVar
+    {
+        object PrivateValue { get; }
+    }
+
+    public interface IPrivateSetNodeVar
+    {
+        object PrivateValue { set; }
+    }
+
+    public interface IPrivateGetSetNodeVar : IPrivateGetNodeVar, IPrivateSetNodeVar { }
+
     public interface ITypedNodeVar
     {
         Type ValueType { get; set; }
@@ -43,6 +56,7 @@ namespace Fractural.NodeVars
     public abstract class NodeVarData : INodeVar
     {
         public string Name { get; set; }
+        public virtual NodeVarOperation Operation { get; set; }
 
         public virtual void Ready(Node node) { }
         public override bool Equals(object obj)
@@ -60,8 +74,20 @@ namespace Fractural.NodeVars
         /// <param name="forEditorSerialization">Is the returned data for editor use?</param>
         /// <returns>Returns the resulting NodeVar with the changes on success. Returns null if the two NodeVars are incompatible.</returns>
         public abstract NodeVarData WithChanges(NodeVarData other, bool forEditorSerialization = false);
-        public abstract GDC.Dictionary ToGDDict();
-        public abstract void FromGDDict(GDC.Dictionary dict, string key);
+        public virtual GDC.Dictionary ToGDDict()
+        {
+            var dict = new GDC.Dictionary()
+            {
+                { "Type", GetType().Name },
+                { nameof(Operation), (int)Operation },
+            };
+            return dict;
+        }
+        public virtual void FromGDDict(GDC.Dictionary dict, string name)
+        {
+            Operation = (NodeVarOperation)dict.Get<int>(nameof(Operation));
+            Name = name;
+        }
         public abstract NodeVarData Clone();
         public abstract bool Equals(NodeVarData data);
         public abstract int GetHashCodeForData();

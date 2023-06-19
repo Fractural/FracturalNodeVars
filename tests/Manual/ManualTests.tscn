@@ -11,15 +11,6 @@
 
 [node name="TestExpressionContainer2" parent="." instance=ExtResource( 1 )]
 _nodeVars = {
-"Var11": {
-"NodeVarReferences": {
-"Var1": {
-"ContainerPath": NodePath(""),
-"ContainerVarName": null
-}
-},
-"Type": "ExpressionNodeVarData"
-}
 }
 
 [node name="NodeVarContainer" type="Node" parent="."]
@@ -35,6 +26,7 @@ _nodeVars = {
 "ContainerVarName": "Var11"
 }
 },
+"Operation": 0,
 "Type": "ExpressionNodeVarData"
 }
 }
@@ -70,6 +62,8 @@ _nodeVars = {
 "ValueType": "System.Int32"
 },
 "Var3": {
+"ContainerPath": NodePath("ParentPropagatedNodeVarContainer3D"),
+"ContainerVarName": "Var3",
 "InitialValue": 0,
 "Operation": 0,
 "Type": "DynamicNodeVarData",
@@ -103,8 +97,18 @@ _nodeVars = {
 "ContainerPath": NodePath(".."),
 "ContainerVarName": "Var3",
 "InitialValue": 0,
-"Operation": 0,
+"Operation": 3,
 "Type": "DynamicNodeVarData",
 "ValueType": "System.Int32"
+},
+"Var4": {
+"NodeVarReferences": {
+"Var1": {
+"ContainerPath": NodePath(".."),
+"ContainerVarName": null
+}
+},
+"Operation": 0,
+"Type": "ExpressionNodeVarData"
 }
 }

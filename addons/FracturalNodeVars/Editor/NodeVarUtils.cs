@@ -10,22 +10,40 @@ namespace Fractural.NodeVars
 {
     public static class NodeVarUtils
     {
-        public static bool CheckNodeVarCompatible(NodeVarData nodeVar, NodeVarOperation operation, Type valueType = null)
+        public static bool IsGet(this NodeVarOperation operation, bool includePrivate = false)
         {
-            if (valueType != null && nodeVar is ITypedNodeVar typedNodeVar && typedNodeVar.ValueType != valueType) return false;
-            NodeVarOperation nodeVarOperation = NodeVarOperation.Get;
-            if (nodeVar is ISetNodeVar)
-                nodeVarOperation = NodeVarOperation.Set;
-            if (nodeVar is IGetSetNodeVar)
-                nodeVarOperation = NodeVarOperation.GetSet;
-            if (nodeVar is DynamicNodeVarData dynamicData)
-                nodeVarOperation = dynamicData.Operation;
+            return operation == NodeVarOperation.Get || operation == NodeVarOperation.GetSet || (includePrivate && operation == NodeVarOperation.Private);
+        }
 
-            if (nodeVarOperation == operation
-                || (operation == NodeVarOperation.Get && nodeVarOperation == NodeVarOperation.GetSet)
-                || (operation == NodeVarOperation.Set && nodeVarOperation == NodeVarOperation.GetSet)
-                ) return true;
-            return false;
+        public static bool IsSet(this NodeVarOperation operation, bool includePrivate = false)
+        {
+            return operation == NodeVarOperation.Set || operation == NodeVarOperation.GetSet || (includePrivate && operation == NodeVarOperation.Private);
+        }
+
+        public static bool IsNodeVarValidPointer(INodeVarContainer nodeVarContainer, Node sourceNode, Node sceneRoot, NodeVarData nodeVar, NodeVarOperation sourceOperation, Type sourceValueType = null)
+        {
+            if (sourceValueType != null && nodeVar is ITypedNodeVar typedNodeVar && typedNodeVar.ValueType != sourceValueType) return false;
+            NodeVarOperation nodeVarOperation = nodeVar.Operation;
+
+            // Pointers can only be set on NodeVars that have a publically accessible setter.
+            // Private Get NodeVars are only used when the sourceNode is a child of the nodeVarContainer.
+
+            bool isSourceNodeInstanced = IsInstancedScene(sourceNode, sceneRoot);
+            bool includePrivate = sourceNode.HasParent(nodeVarContainer as Node);
+            if (isSourceNodeInstanced)
+                // If the source node is instanced, then we can only make pointers for settable NodeVars, and only 
+                // attach gettable NodeVars as pointers.
+                // Private NodeVars from the container can be used as a pointer if the container is a parent of the sourceNode.
+                return sourceOperation.IsSet(true) && nodeVarOperation.IsGet(includePrivate);
+            else
+                // If the source node is not instanced, then we can make pointers for any sourceNode variable, which point to any
+                // sort of gettable variable from nodeVarContainer.
+                return nodeVarOperation.IsGet(includePrivate);
+        }
+
+        public static bool IsInstancedScene(Node node, Node sceneRoot)
+        {
+            return node != sceneRoot && node.Filename != "";
         }
 
         public static NodeVarData NodeVarDataFromGDDict(GDC.Dictionary dict, string key)
@@ -148,13 +166,15 @@ namespace Fractural.NodeVars
                     {
                         // Update the NodeVar based off of the existing NodeVar
                         var nodeVarWithChanges = defaultNodeVar.WithChanges(localVar);
-                        if (nodeVarWithChanges == null)
+                        if (nodeVarWithChanges != null)
+                        {
+                            nodeVarsDict[defaultNodeVar.Name] = nodeVarWithChanges;
+                        }
+                        else
                         {
                             GD.PushWarning($"{nameof(NodeVarContainer)}: NodeVar of name \"{defaultNodeVar.Name}\" could not be merged with its default value, therefore reverting back to default.");
                             nodeVarsDict[defaultNodeVar.Name] = defaultNodeVar;
                         }
-                        else
-                            nodeVarsDict[defaultNodeVar.Name] = nodeVarWithChanges;
                     }
                     else
                         nodeVarsDict[defaultNodeVar.Name] = defaultNodeVar;
@@ -223,6 +243,10 @@ namespace Fractural.NodeVars
                 new OperationTypeData() {
                     Name = "Set",
                     Operation = NodeVarOperation.Set
+                },
+                new OperationTypeData() {
+                    Name = "Private",
+                    Operation = NodeVarOperation.Private
                 },
             };
         }

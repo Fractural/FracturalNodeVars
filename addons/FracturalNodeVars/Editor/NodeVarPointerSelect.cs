@@ -28,7 +28,7 @@ namespace Fractural.NodeVars
 
         public NodePath ContainerPath { get; private set; }
         public string VarName { get; private set; }
-        public Func<NodeVarData, bool> NodeVarConditionFunc { get; set; }
+        public Func<INodeVarContainer, NodeVarData, bool> NodeVarConditionFunc { get; set; }
 
         private PopupSearch _containerVarPopupSearch;
         private Button _containerVarSelectButton;
@@ -40,7 +40,7 @@ namespace Fractural.NodeVars
         private INodeVarContainer _propagationSource;
 
         public NodeVarPointerSelect() { }
-        public NodeVarPointerSelect(INodeVarContainer propagationSource, IAssetsRegistry assetsRegistry, PackedSceneDefaultValuesRegistry defaultValuesRegistry, Node sceneRoot, Node relativeToNode, Func<NodeVarData, bool> conditionFunc = null)
+        public NodeVarPointerSelect(INodeVarContainer propagationSource, IAssetsRegistry assetsRegistry, PackedSceneDefaultValuesRegistry defaultValuesRegistry, Node sceneRoot, Node relativeToNode, Func<INodeVarContainer, NodeVarData, bool> conditionFunc = null)
         {
             SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
 
@@ -51,7 +51,7 @@ namespace Fractural.NodeVars
             if (conditionFunc != null)
                 NodeVarConditionFunc = conditionFunc;
             else
-                NodeVarConditionFunc = (var) => true;
+                NodeVarConditionFunc = (container, var) => true;
 
             _containerVarSelectButton = new Button();
             _containerVarSelectButton.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
@@ -88,7 +88,7 @@ namespace Fractural.NodeVars
             if (containerPath != null && _propagationSource != null)
             {
                 var propagationSourcePath = _relativeToNode.GetPathTo(_propagationSource as Node);
-                if (!Equals(containerPath, propagationSourcePath))
+                if (!Equals(GetNodeOrNull(containerPath), GetNodeOrNull(propagationSourcePath)))
                 {
                     _containerPathProperty.SetValue(propagationSourcePath, false);
                     OnContainerPathChanged(propagationSourcePath);
@@ -116,7 +116,7 @@ namespace Fractural.NodeVars
             var container = _relativeToNode.GetNodeOrNull<INodeVarContainer>(ContainerPath);
             if (container == null) return;
             _containerVarPopupSearch.SearchEntries = container.GetNodeVarsList(_defaultValuesRegistry)
-                .Where(x => NodeVarConditionFunc(x))
+                .Where(x => NodeVarConditionFunc(container, x))
                 .Select(x =>
                 {
                     var entry = new SearchEntry(x.Name);
@@ -137,6 +137,7 @@ namespace Fractural.NodeVars
             else
                 UpdateDisabledAndSelectUI();
             NodePathChanged?.Invoke(path);
+            UpdateSearchEntries();
         }
 
         private void OnContainerVarNameSelected(string name)

@@ -94,6 +94,42 @@ namespace Fractural.NodeVars
         }
 
         /// <summary>
+        /// Gets a NodeVar value at runtime.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns></returns>
+        public object PrivateGetNodeVar(string key)
+        {
+            var data = NodeVars[key];
+            if (data is IPrivateGetNodeVar privateGetNodeVar)
+                return privateGetNodeVar.PrivateValue;
+            if (data is IGetNodeVar getNodeVar)
+                return getNodeVar.Value;
+            throw new Exception($"{nameof(NodeVarContainer)}: Could not private get NodeVar of \"{key}\".");
+        }
+
+        /// <summary>
+        /// Sets a NodeVar value at runtime.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns></returns>
+        public void PrivateSetNodeVar(string key, object value)
+        {
+            var data = NodeVars[key];
+            if (data is IPrivateSetNodeVar privateSetNodeVar)
+            {
+                privateSetNodeVar.PrivateValue = value;
+                return;
+            }
+            if (data is ISetNodeVar setNodeVar)
+            {
+                setNodeVar.Value = value;
+                return;
+            }
+            throw new Exception($"{nameof(NodeVarContainer)}: Could not private get NodeVar of \"{key}\".");
+        }
+
+        /// <summary>
         /// Gets a list of all DictNodeVars for this <see cref="INodeVarContainer"/>
         /// </summary>
         /// <returns></returns>

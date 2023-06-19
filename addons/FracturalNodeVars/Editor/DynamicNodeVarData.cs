@@ -8,11 +8,10 @@ namespace Fractural.NodeVars
     /// <summary>
     /// NodeVar that can change it's behaviour. It can change it's operation, and also change whether it's a pointer or not.
     /// </summary>
-    public class DynamicNodeVarData : NodeVarData<DynamicNodeVarData>, IGetSetNodeVar, ITypedNodeVar, IResetNodeVar, ISerializableNodeVar
+    public class DynamicNodeVarData : NodeVarData<DynamicNodeVarData>, IGetSetNodeVar, ITypedNodeVar, IResetNodeVar, ISerializableNodeVar, IPrivateGetSetNodeVar
     {
         // Serialized
         public Type ValueType { get; set; }
-        public NodeVarOperation Operation { get; set; }
         public string ContainerVarName { get; set; }
         public NodePath ContainerPath { get; set; }
 
@@ -20,22 +19,44 @@ namespace Fractural.NodeVars
         public INodeVarContainer Container { get; set; }
         public object InitialValue { get; set; }
         private object _value;
+        /// <summary>
+        /// Get/set the value the NodeVar. This throws an error if you attempt to get/set a NodeVar that
+        /// does not have a public get/set accessor.
+        /// </summary>
         public object Value
         {
             get
             {
-                if (Operation != NodeVarOperation.Get && Operation != NodeVarOperation.GetSet)
+                if (!Operation.IsGet())
                     throw new Exception($"{nameof(DynamicNodeVarData)}: Attempted to get a non-getttable NodeVar \"{Name}\".");
+                return PrivateValue;
+            }
+            set
+            {
+                if (!Operation.IsSet())
+                    throw new Exception($"{nameof(DynamicNodeVarData)}: Attempted to set a non-setttable NodeVar \"{Name}\".");
+                PrivateValue = value;
+            }
+        }
+        /// <summary>
+        /// Get/set the value of the NodeVar. This does not guard against getting/setting private NodeVars.
+        /// </summary>
+        public object PrivateValue
+        {
+            get
+            {
                 if (IsPointer)
+                {
+                    if (Container is IPrivateNodeVarContainer privateContainer)
+                        return privateContainer.PrivateGetNodeVar(ContainerVarName);
                     return Container.GetNodeVar(ContainerVarName);
+                }
                 return _value;
             }
             set
             {
-                if (Operation != NodeVarOperation.Set && Operation != NodeVarOperation.GetSet)
-                    throw new Exception($"{nameof(DynamicNodeVarData)}: Attempted to set a non-setttable NodeVar \"{Name}\".");
                 if (IsPointer)
-                    Container.SetNodeVar(ContainerVarName, value);
+                    throw new Exception($"{nameof(DynamicNodeVarData)}: Attempted to set a NodeVar that relies on a Pointer.");
                 else
                     _value = value;
             }
@@ -112,12 +133,8 @@ namespace Fractural.NodeVars
 
         public override GDC.Dictionary ToGDDict()
         {
-            var dict = new GDC.Dictionary()
-            {
-                { "Type", nameof(DynamicNodeVarData) },
-                { nameof(ValueType), ValueType.FullName },
-                { nameof(Operation), (int)Operation },
-            };
+            var dict = base.ToGDDict();
+            dict[nameof(ValueType)] = ValueType.FullName;
             if (InitialValue != null)
                 dict[nameof(InitialValue)] = InitialValue;
             if (IsPointer)
@@ -130,12 +147,11 @@ namespace Fractural.NodeVars
 
         public override void FromGDDict(GDC.Dictionary dict, string name)
         {
+            base.FromGDDict(dict, name);
             ValueType = ReflectionUtils.FindTypeFullName(dict.Get<string>(nameof(ValueType)));
-            Operation = (NodeVarOperation)dict.Get<int>(nameof(Operation));
             ContainerPath = dict.Get<NodePath>(nameof(ContainerPath), null);
             ContainerVarName = dict.Get<string>(nameof(ContainerVarName), null);
             InitialValue = dict.Get<object>(nameof(InitialValue), null);
-            Name = name;
         }
 
         public object Save()

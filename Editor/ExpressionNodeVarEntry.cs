@@ -82,6 +82,7 @@ namespace Fractural.NodeVars
 
         public override void SetData(ExpressionNodeVarData value, ExpressionNodeVarData defaultData = null)
         {
+            GD.Print("Expression NodeVarEntry set data");
             base.SetData(value, defaultData);
 
             if (defaultData != null && value.Expression == "")
@@ -110,11 +111,11 @@ namespace Fractural.NodeVars
             _midHBox.Visible = !NonSetDisabled;
             _referenceEntriesVBox.Visible = !NonSetDisabled;
             _expressionProperty.Disabled = Disabled || PrivateDisabled || NonSetDisabled;
-            foreach (ExpressionNodeVarReferenceEntry entry in _referenceEntriesVBox.GetChildren())
-            {
-                //entry.Disabled = Disabled || PrivateDisabled || NonSetDisabled;
-                //entry.IsFixed = DefaultData?.NodeVarReferences.ContainsKey(entry.Data.Name) ?? false;
-            }
+            //foreach (ExpressionNodeVarReferenceEntry entry in _referenceEntriesVBox.GetChildren())
+            //{
+            //entry.Disabled = Disabled || PrivateDisabled || NonSetDisabled;
+            //entry.IsFixed = DefaultData?.NodeVarReferences.ContainsKey(entry.Data.Name) ?? false;
+            //}
         }
 
         protected override void UpdateResetButton()
@@ -234,12 +235,12 @@ namespace Fractural.NodeVars
                     //entry.NameChanged -= OnEntryNameChanged;
                     //entry.DataChanged -= OnEntryDataChanged;
                     //entry.Deleted -= OnEntryDeleted;
+                    //if (IsInstanceValid(entry))
                     entry.QueueFree();
                 }
             }
 
-            if (!IsInstanceValid(_currentFocused))
-                _currentFocused = null;
+            _currentFocused = null;
 
             //_addElementButton.Disabled = CheckAllVarNamesTaken();
         }
@@ -263,11 +264,11 @@ namespace Fractural.NodeVars
             InvokeDataChanged();
         }
 
-        private bool CheckAllVarNamesTaken()
-        {
-            var nextKey = GetNextVarName();
-            return Data.NodeVarReferences.ContainsKey(nextKey) || (DefaultData?.NodeVarReferences.ContainsKey(nextKey) ?? false);
-        }
+        //private bool CheckAllVarNamesTaken()
+        //{
+        //    var nextKey = GetNextVarName();
+        //    return Data.NodeVarReferences.ContainsKey(nextKey) || (DefaultData?.NodeVarReferences.ContainsKey(nextKey) ?? false);
+        //}
 
         private string GetNextVarName()
         {
@@ -300,44 +301,47 @@ namespace Fractural.NodeVars
             );
             //entry.NameChanged += OnEntryNameChanged;
             //entry.DataChanged += OnEntryDataChanged;
-            entry.Deleted += OnEntryDeleted;
+            //entry.Deleted += OnEntryDeleted;
+            entry.Connect(nameof(ExpressionNodeVarReferenceEntry.Deleted), this, nameof(OnEntryDeleted));
             _referenceEntriesVBox.AddChild(entry);
             return entry;
         }
 
         private void OnEntryNameChanged(string oldKey, ExpressionNodeVarReferenceEntry entry)
         {
-            var newKey = entry.Data.Name;
-            if (Data.NodeVarReferences.ContainsKey(newKey))
-            {
-                // Reject change since the newKey already exists
-                entry.ResetName(oldKey);
-                return;
-            }
-            Data.NodeVarReferences.Remove(oldKey);
-            Data.NodeVarReferences[newKey] = entry.Data.Clone();
-            InvokeDataChanged();
-            UpdateReferencesUI();
+            //var newKey = entry.Data.Name;
+            //if (Data.NodeVarReferences.ContainsKey(newKey))
+            //{
+            //    // Reject change since the newKey already exists
+            //    entry.ResetName(oldKey);
+            //    return;
+            //}
+            //Data.NodeVarReferences.Remove(oldKey);
+            //Data.NodeVarReferences[newKey] = entry.Data.Clone();
+            //InvokeDataChanged();
+            //UpdateReferencesUI();
         }
 
-        private void OnEntryDataChanged(string key, NodeVarReference newValue)
-        {
-            // Remove entry if it is the same as the fixed value (no point in storing redundant information)
-            if (DefaultData != null && DefaultData.NodeVarReferences.TryGetValue(key, out NodeVarReference existingReference) && existingReference.Equals(newValue))
-            {
-                Data.NodeVarReferences.Remove(key);
-            }
-            else
-            {
-                Data.NodeVarReferences[key] = newValue;
-            }
-            InvokeDataChanged();
-            UpdateReferencesUI();
-        }
+        //private void OnEntryDataChanged(string key, NodeVarReference newValue)
+        //{
+        //    // Remove entry if it is the same as the fixed value (no point in storing redundant information)
+        //    if (DefaultData != null && DefaultData.NodeVarReferences.TryGetValue(key, out NodeVarReference existingReference) && existingReference.Equals(newValue))
+        //    {
+        //        Data.NodeVarReferences.Remove(key);
+        //    }
+        //    else
+        //    {
+        //        Data.NodeVarReferences[key] = newValue;
+        //    }
+        //    InvokeDataChanged();
+        //    UpdateReferencesUI();
+        //}
 
         private void OnEntryDeleted(string key)
         {
             Data.NodeVarReferences.Remove(key);
+            // TODO NOW: For some reason InvokeDataChanged here causes the ptr == null error.
+            //           Investigate this further.
             InvokeDataChanged();
             UpdateReferencesUI();
         }

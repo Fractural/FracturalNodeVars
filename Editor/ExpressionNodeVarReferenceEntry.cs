@@ -8,13 +8,17 @@ using static Fractural.NodeVars.ExpressionNodeVarData;
 #if TOOLS
 namespace Fractural.NodeVars
 {
+    [Tool]
     public class ExpressionNodeVarReferenceEntry : HBoxContainer
     {
         //public event Action<string, ExpressionNodeVarReferenceEntry> NameChanged;
         //public event Action<string, NodeVarReference> DataChanged;
-        public event Action<string> Deleted;
+        //public event Action<string> Deleted;
+        [Signal]
+        public delegate void Deleted(string name);
 
-        public NodeVarReference Data { get; private set; }
+        private string _name;
+        //public NodeVarReference Data { get; private set; }
         //public NodeVarReference DefaultData { get; private set; }
         //private bool _isFixed;
         //public bool IsFixed
@@ -53,10 +57,10 @@ namespace Fractural.NodeVars
             //control.RectSize = new Vector2(24, 0);
             //AddChild(control);
 
-            var contentVBox = new VBoxContainer();
-            contentVBox.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
-            contentVBox.SizeFlagsStretchRatio = 0.9f;
-            AddChild(contentVBox);
+            //var contentVBox = new VBoxContainer();
+            //contentVBox.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
+            //contentVBox.SizeFlagsStretchRatio = 0.9f;
+            //AddChild(contentVBox);
 
             //_nameProperty = new StringValueProperty();
             //_nameProperty.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
@@ -76,16 +80,17 @@ namespace Fractural.NodeVars
 
             _deleteButton = new Button();
             _deleteButton.Connect("pressed", this, nameof(OnDeletePressed));
+            AddChild(_deleteButton);
 
             //_resetInitialValueButton = new Button();
             //_resetInitialValueButton.Connect("pressed", this, nameof(OnResetButtonPressed));
 
-            var hbox = new HBoxContainer();
+            //var hbox = new HBoxContainer();
             //hbox.AddChild(_nameProperty);
             //hbox.AddChild(_resetInitialValueButton);
-            hbox.AddChild(_deleteButton);
+            //hbox.AddChild(_deleteButton);
 
-            contentVBox.AddChild(hbox);
+            //contentVBox.AddChild(hbox);
             //contentVBox.AddChild(_nodeVarPointerSelect);
         }
 
@@ -101,7 +106,8 @@ namespace Fractural.NodeVars
 
         public void SetData(NodeVarReference data, NodeVarReference defaultData)
         {
-            Data = data.Clone();
+            _name = data.Name;
+            //Data = data.Clone();
             //DefaultData = defaultData;
             //_nodeVarPointerSelect.SetValue(data.ContainerPath, data.ContainerVarName);
             //_nameProperty.SetValue(data.Name, false);
@@ -160,7 +166,8 @@ namespace Fractural.NodeVars
             //DataChanged?.Invoke(Data.Name, Data);
         }
 
-        private void InvokeDeleted() => Deleted?.Invoke(Data.Name);
+        //private void InvokeDeleted() => Deleted?.Invoke(_name);
+        private void InvokeDeleted() => EmitSignal(nameof(Deleted), _name);
     }
 }
 #endif

@@ -65,7 +65,17 @@ namespace Fractural.NodeVars
             public bool HasFixedNodeVars => _fixedNodeVarsDict != null;
             public bool _canAddNewVars;
             public IAssetsRegistry _assetsRegistry;
-            public Control _currentFocused;
+            public Control CurrentFocused
+            {
+                get
+                {
+                    if (!IsInstanceValid(_currentFocused))
+                        _currentFocused = null;
+                    return _currentFocused;
+                }
+                set => _currentFocused = value;
+            }
+            private Control _currentFocused;
         }
 
         private enum AddOptionIndex
@@ -168,7 +178,7 @@ namespace Fractural.NodeVars
                 entry.Disabled = disabled;
         }
 
-        private void OnFocusChanged(Control control) => _data._currentFocused = control;
+        private void OnFocusChanged(Control control) => _data.CurrentFocused = control;
 
         private bool CheckValueSameAsFixed()
         {
@@ -254,7 +264,7 @@ namespace Fractural.NodeVars
             // Move the current focused entry into it's Value dict index inside the entries vBox.
             // We don't want to just overwrite the current focused entry since that would
             // cause the user to retain gui focus on the wrong entry.
-            var currFocusedEntry = _data._currentFocused?.GetAncestor<NodeVarEntry>();
+            var currFocusedEntry = _data.CurrentFocused?.GetAncestor<NodeVarEntry>();
             if (currFocusedEntry != null)
             {
                 // Find the new index of the current focused entry within the Value dictionary.

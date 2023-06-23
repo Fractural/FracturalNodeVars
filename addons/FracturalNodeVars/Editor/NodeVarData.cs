@@ -5,58 +5,18 @@ using GDC = Godot.Collections;
 
 namespace Fractural.NodeVars
 {
-    public interface ISerializableNodeVar
+    public abstract class NodeVarStrategy
     {
-        object Save();
-        void Load(object any);
+        public abstract NodeVarOperation[] ValidOperations { get; }
+        public abstract NodeVarStrategy WithChanges(NodeVarStrategy other, bool forEditorSerialization = false);
+
     }
 
-    public interface IResetNodeVar
-    {
-        void Reset();
-    }
-
-    public interface INodeVar
-    {
-        string Name { get; set; }
-    }
-
-    public interface ISetNodeVar : INodeVar
-    {
-        object Value { set; }
-    }
-
-    public interface IGetNodeVar : INodeVar
-    {
-        object Value { get; }
-    }
-
-    public interface IGetSetNodeVar : ISetNodeVar, IGetNodeVar { }
-
-    public interface IPrivateGetNodeVar
-    {
-        object PrivateValue { get; }
-    }
-
-    public interface IPrivateSetNodeVar
-    {
-        object PrivateValue { set; }
-    }
-
-    public interface IPrivateGetSetNodeVar : IPrivateGetNodeVar, IPrivateSetNodeVar { }
-
-    public interface ITypedNodeVar
-    {
-        Type ValueType { get; set; }
-    }
-
-    /// <summary>
-    /// Base class for NodeVars. Is used to serialize editor data, as well as hold runtime data.
-    /// </summary>
-    public abstract class NodeVarData : INodeVar
+    public class NodeVarData
     {
         public string Name { get; set; }
-        public virtual NodeVarOperation Operation { get; set; }
+        public NodeVarOperation Operation { get; set; }
+        public NodeVarStrategy Strategy { get; set; }
 
         public virtual void Ready(Node node) { }
         public override bool Equals(object obj)
@@ -73,7 +33,7 @@ namespace Fractural.NodeVars
         /// <param name="other">Data to use as changed</param>
         /// <param name="forEditorSerialization">Is the returned data for editor use?</param>
         /// <returns>Returns the resulting NodeVar with the changes on success. Returns null if the two NodeVars are incompatible.</returns>
-        public abstract NodeVarData WithChanges(NodeVarData other, bool forEditorSerialization = false);
+        public NodeVarData WithChanges(NodeVarData other, bool forEditorSerialization = false);
         public virtual GDC.Dictionary ToGDDict()
         {
             var dict = new GDC.Dictionary()

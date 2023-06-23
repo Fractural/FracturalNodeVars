@@ -197,7 +197,7 @@ namespace Fractural.NodeVars
                 return a.Name.CompareTo(b.Name);
             });
 
-            var currFocusedEntry = _currentFocused?.GetAncestor<ExpressionNodeVarReferenceEntry>();
+            var currFocusedEntry = CurrentFocused?.GetAncestor<ExpressionNodeVarReferenceEntry>();
             if (currFocusedEntry != null && currFocusedEntry.HasParent(this))
             {
                 int keyIndex = sortedReferences.FindIndex(x => x.Name == currFocusedEntry.Data.Name);
@@ -240,8 +240,18 @@ namespace Fractural.NodeVars
             _addElementButton.Disabled = CheckAllVarNamesTaken();
         }
 
+        private Control CurrentFocused
+        {
+            get
+            {
+                if (!IsInstanceValid(_currentFocused))
+                    _currentFocused = null;
+                return _currentFocused;
+            }
+            set => _currentFocused = value;
+        }
         private Control _currentFocused;
-        private void OnFocusChanged(Control control) => _currentFocused = control;
+        private void OnFocusChanged(Control control) => CurrentFocused = control;
 
         private void OnExpressionChanged(string newExpression)
         {

@@ -196,7 +196,7 @@ namespace Fractural.NodeVars
         public override bool Equals(object other)
         {
             return other is ExpressionNodeVarStrategy strategy &&
-                strategy.Expression == Expression &&
+                Equals(strategy.Expression, Expression) &&
                 strategy.NodeVarReferences.SequenceEqual(NodeVarReferences);
         }
 

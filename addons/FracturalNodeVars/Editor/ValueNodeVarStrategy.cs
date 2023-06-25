@@ -69,7 +69,7 @@ namespace Fractural.NodeVars
 
         public override int GetHashCode()
         {
-            return InitialValue.GetHashCode();
+            return InitialValue?.GetHashCode() ?? 0;
         }
 
         public override GDC.Dictionary ToGDDict()

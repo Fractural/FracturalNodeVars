@@ -126,8 +126,8 @@ namespace Fractural.NodeVars
         public object GetNodeVar(string key)
         {
             var data = NodeVars[key];
-            if (data is IGetNodeVar getNodeVar)
-                return getNodeVar.Value;
+            if (data.Operation.IsGet())
+                return data.Value;
             throw new Exception($"{nameof(NodeVarContainer)}: Could not get NodeVar of \"{key}\".");
         }
 
@@ -140,9 +140,9 @@ namespace Fractural.NodeVars
         public void SetNodeVar(string key, object value)
         {
             var data = NodeVars[key];
-            if (data is ISetNodeVar setNodeVar)
+            if (data.Operation.IsSet())
             {
-                setNodeVar.Value = value;
+                data.Value = value;
                 return;
             }
             throw new Exception($"{nameof(NodeVarContainer)}: Could not set NodeVar of \"{key}\".");
@@ -156,10 +156,8 @@ namespace Fractural.NodeVars
         public object PrivateGetNodeVar(string key)
         {
             var data = NodeVars[key];
-            if (data is IPrivateGetNodeVar privateGetNodeVar)
-                return privateGetNodeVar.PrivateValue;
-            if (data is IGetNodeVar getNodeVar)
-                return getNodeVar.Value;
+            if (data.Operation.IsGet(true))
+                return data.Value;
             throw new Exception($"{nameof(NodeVarContainer)}: Could not private get NodeVar of \"{key}\".");
         }
 
@@ -171,14 +169,9 @@ namespace Fractural.NodeVars
         public void PrivateSetNodeVar(string key, object value)
         {
             var data = NodeVars[key];
-            if (data is IPrivateSetNodeVar privateSetNodeVar)
+            if (data.Operation.IsSet(true))
             {
-                privateSetNodeVar.PrivateValue = value;
-                return;
-            }
-            if (data is ISetNodeVar setNodeVar)
-            {
-                setNodeVar.Value = value;
+                data.Value = value;
                 return;
             }
             throw new Exception($"{nameof(NodeVarContainer)}: Could not private get NodeVar of \"{key}\".");

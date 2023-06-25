@@ -56,6 +56,16 @@ namespace Fractural.NodeVars
             return operation == NodeVarOperation.Set || operation == NodeVarOperation.GetSet || (includePrivate && IsPrivateSet(operation));
         }
 
+        public static bool IsPrivate(this NodeVarOperation operation)
+        {
+            return operation == NodeVarOperation.PrivateGet || operation == NodeVarOperation.PrivateSet || operation == NodeVarOperation.PrivateGetSet;
+        }
+
+        public static bool HasPublic(this NodeVarOperation operation)
+        {
+            return !operation.IsPrivate();
+        }
+
         public static bool IsNodeVarValidPointer(INodeVarContainer nodeVarContainer, Node sourceNode, Node sceneRoot, NodeVarData nodeVar, NodeVarOperation sourceOperation, Type sourceValueType = null)
         {
             if (sourceValueType != null && nodeVar.ValueType != sourceValueType) return false;
@@ -82,12 +92,22 @@ namespace Fractural.NodeVars
             return node != sceneRoot && node.Filename != "";
         }
 
+        public static NodeVarData NodeVarDataFromGDDict(GDC.Dictionary dict, string name)
+        {
+            var nodeVarData = new NodeVarData();
+            nodeVarData.FromGDDict(dict, name);
+            return nodeVarData;
+        }
+
         public static NodeVarStrategy NodeVarStrategyFromGDDict(GDC.Dictionary dict)
         {
             string type = dict.Get<string>("Type", nameof(PointerNodeVarStrategy));
             NodeVarStrategy result;
             switch (type)
             {
+                case nameof(ValueNodeVarStrategy):
+                    result = new ValueNodeVarStrategy();
+                    break;
                 case nameof(PointerNodeVarStrategy):
                     result = new PointerNodeVarStrategy();
                     break;
@@ -97,6 +117,7 @@ namespace Fractural.NodeVars
                 default:
                     throw new Exception($"{nameof(NodeVarUtils)}: Cannot convert type \"{type}\" to {nameof(NodeVarStrategy)} from GDDict.");
             }
+            result.FromGDDict(dict);
             return result;
         }
 
@@ -131,7 +152,7 @@ namespace Fractural.NodeVars
                         operation = NodeVarOperation.GetSet;
                     else if (hasGetter)
                         // If the property has a getter, then it needs someone else to set it's value
-                        operation = NodeVarOperation.Set;
+                        operation = NodeVarOperation.SetPrivateGet;
                     else
                         // If the property has a setter, then it means other users can get it's value
                         operation = NodeVarOperation.Get;
@@ -142,8 +163,10 @@ namespace Fractural.NodeVars
                     Name = property.Name,
                     ValueType = property.PropertyType,
                     Operation = operation,
-                    Strategy = new // TODO NOW: FINISH THIS
-                    InitialValue = DefaultValueUtils.GetDefault(property.PropertyType)
+                    Strategy = new ValueNodeVarStrategy()
+                    {
+                        InitialValue = DefaultValueUtils.GetDefault(property.PropertyType)
+                    }
                 });
             }
             return fixedDictNodeVars.ToArray();
@@ -155,7 +178,7 @@ namespace Fractural.NodeVars
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public static PointerNodeVarStrategy[] GetNodeVarsFromAttributes<T>() => GetNodeVarsFromAttributes(typeof(T));
+        public static NodeVarData[] GetNodeVarsFromAttributes<T>() => GetNodeVarsFromAttributes(typeof(T));
 
         public static string GetNextVarName(IEnumerable<string> previousValues)
         {
@@ -280,8 +303,24 @@ namespace Fractural.NodeVars
                     Operation = NodeVarOperation.Set
                 },
                 new OperationTypeData() {
-                    Name = "Private",
-                    Operation = NodeVarOperation.Private
+                    Name = "Get/p_Set",
+                    Operation = NodeVarOperation.GetPrivateSet
+                },
+                new OperationTypeData() {
+                    Name = "p_Get/Set",
+                    Operation = NodeVarOperation.SetPrivateGet
+                },
+                new OperationTypeData() {
+                    Name = "p_Get",
+                    Operation = NodeVarOperation.PrivateGet
+                },
+                new OperationTypeData() {
+                    Name = "p_Set",
+                    Operation = NodeVarOperation.PrivateSet
+                },
+                new OperationTypeData() {
+                    Name = "p_Get/p_Set",
+                    Operation = NodeVarOperation.PrivateGetSet
                 },
             };
         }

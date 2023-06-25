@@ -41,12 +41,16 @@ namespace Fractural.NodeVars
         }
 
         public void Ready(Node node) => Strategy.Ready(node);
+
         public override bool Equals(object obj)
         {
-            if (obj is NodeVarData data)
-                return Equals(data);
-            return false;
+            return obj is NodeVarData data &&
+                Equals(data.Name, Name) &&
+                Equals(data.Operation, Operation) &&
+                Equals(data.Strategy, Strategy) &&
+                Equals(data.ValueType, ValueType);
         }
+
         public override int GetHashCode() => GeneralUtils.CombineHashCodes(Name.GetHashCode(), Operation.GetHashCode(), Strategy.GetHashCode());
 
         /// <summary>
@@ -57,7 +61,7 @@ namespace Fractural.NodeVars
         /// <returns>Returns the resulting NodeVar with the changes on success. Returns null if the two NodeVars are incompatible.</returns>
         public NodeVarData WithChanges(NodeVarData other, bool forEditorSerialization = false)
         {
-            if (other.Name == Name)
+            if (other.Name == Name && other.ValueType == ValueType)
             {
                 var inheritedData = Clone();
                 if (Strategy.GetType() == other.Strategy.GetType())
@@ -68,29 +72,37 @@ namespace Fractural.NodeVars
             }
             return null;
         }
+
         public NodeVarData Clone()
         {
             return new NodeVarData()
             {
                 Name = Name,
+                ValueType = ValueType,
                 Operation = Operation,
                 Strategy = Strategy.Clone()
             };
         }
+
         public virtual GDC.Dictionary ToGDDict()
         {
             var dict = new GDC.Dictionary()
             {
                 { nameof(Operation), (int)Operation },
-                { nameof(Strategy), Strategy.ToGDDict() }
+                { nameof(ValueType), ValueType.FullName },
+                { nameof(Strategy), Strategy?.ToGDDict() }
             };
             return dict;
         }
+
         public virtual void FromGDDict(GDC.Dictionary dict, string name)
         {
             Name = name;
+            ValueType = ReflectionUtils.FindTypeFullName(dict.Get<string>(nameof(ValueType)));
             Operation = (NodeVarOperation)dict.Get<int>(nameof(Operation));
             Strategy = NodeVarUtils.NodeVarStrategyFromGDDict(dict.Get<GDC.Dictionary>(nameof(Strategy)));
         }
+
+        public override string ToString() => $"{Name}: {JSON.Print(ToGDDict())}";
     }
 }

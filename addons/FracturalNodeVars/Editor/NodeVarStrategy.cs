@@ -6,6 +6,8 @@ namespace Fractural.NodeVars
 {
     public abstract class NodeVarStrategy
     {
+        public abstract NodeVarOperation[] ValidOperations { get; }
+
         public virtual object Value
         {
             get => throw new NotImplementedException();
@@ -13,7 +15,6 @@ namespace Fractural.NodeVars
         }
 
         public virtual void Ready(Node node) { }
-        public abstract NodeVarOperation[] ValidOperations { get; }
         public abstract NodeVarStrategy WithChanges(NodeVarStrategy other, bool forEditorSerialization = false);
         public abstract NodeVarStrategy Clone();
         public virtual GDC.Dictionary ToGDDict()
@@ -24,5 +25,7 @@ namespace Fractural.NodeVars
             };
         }
         public abstract void FromGDDict(GDC.Dictionary dictionary);
+
+        public override string ToString() => JSON.Print(ToGDDict());
     }
 }

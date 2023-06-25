@@ -8,86 +8,148 @@ __meta__ = {
 "_nodeVars/visible": true
 }
 _nodeVars = {
-"ExpressionVar15": {
-"Operation": 3,
-"Type": "ExpressionNodeVarData"
+"GetSetVar": {
+"Operation": 0,
+"Strategy": {
+"InitialValue": 0,
+"Type": "ValueNodeVarStrategy"
 },
-"Var11": {
-"Expression": "Var",
+"ValueType": "System.Int32"
+},
+"GetVar": {
+"Operation": 1,
+"Strategy": {
+"InitialValue": 0,
+"Type": "ValueNodeVarStrategy"
+},
+"ValueType": "System.Int32"
+},
+"Get_SetVar": {
+"Operation": 3,
+"Strategy": {
+"InitialValue": 0,
+"Type": "ValueNodeVarStrategy"
+},
+"ValueType": "System.Int32"
+},
+"SetVar": {
+"Operation": 2,
+"Strategy": {
+"InitialValue": 0,
+"Type": "ValueNodeVarStrategy"
+},
+"ValueType": "System.Int32"
+},
+"_ExpressionVar": {
+"Operation": 0,
+"Strategy": {
 "NodeVarReferences": {
 "Var1": {
 "ContainerPath": NodePath("."),
-"ContainerVarName": "Var11"
-},
-"Var2": {
-"ContainerPath": null,
 "ContainerVarName": null
 },
-"otherVa": {
-"ContainerPath": NodePath("."),
+"Var2": {
+"ContainerPath": NodePath(""),
 "ContainerVarName": null
 }
 },
-"Operation": 0,
-"Type": "ExpressionNodeVarData"
+"Type": "ExpressionNodeVarStrategy"
 },
-"Var12": {
-"ContainerPath": NodePath("NodeVarContainer"),
-"ContainerVarName": "Var4",
-"InitialValue": 0,
-"Operation": 3,
-"Type": "DynamicNodeVarData",
 "ValueType": "System.Int32"
 },
-"Var13": {
+"_GetVar": {
+"Operation": 5,
+"Strategy": {
 "InitialValue": 0,
-"Operation": 1,
-"Type": "DynamicNodeVarData",
+"Type": "ValueNodeVarStrategy"
+},
+"ValueType": "System.Int32"
+},
+"_Get_SetVar": {
+"Operation": 7,
+"Strategy": {
+"InitialValue": 0,
+"Type": "ValueNodeVarStrategy"
+},
+"ValueType": "System.Int32"
+},
+"_SetVar": {
+"Operation": 6,
+"Strategy": {
+"InitialValue": 0,
+"Type": "ValueNodeVarStrategy"
+},
 "ValueType": "System.Int32"
 }
 }
 
-[node name="NodeVarContainer" type="Node" parent="."]
+[node name="NodeVarContainer2" type="Node" parent="."]
 script = ExtResource( 1 )
 __meta__ = {
 "_nodeVars/visible": true
 }
 _nodeVars = {
-"ExpressionVar6": {
-"Operation": 3,
-"Type": "ExpressionNodeVarData"
-},
-"Var1": {
+"GetSetVar": {
+"Operation": 0,
+"Strategy": {
 "InitialValue": 0,
-"Operation": 2,
-"Type": "DynamicNodeVarData",
+"Type": "ValueNodeVarStrategy"
+},
 "ValueType": "System.Int32"
 },
-"Var2": {
-"InitialValue": 0,
-"Operation": 3,
-"Type": "DynamicNodeVarData",
-"ValueType": "System.Int32"
-},
-"Var3": {
-"InitialValue": 0,
+"GetVar": {
 "Operation": 1,
-"Type": "DynamicNodeVarData",
+"Strategy": {
+"InitialValue": 0,
+"Type": "ValueNodeVarStrategy"
+},
 "ValueType": "System.Int32"
 },
-"Var4": {
-"InitialValue": 3434,
+"Get_SetVar": {
+"Operation": 3,
+"Strategy": {
+"InitialValue": 0,
+"Type": "ValueNodeVarStrategy"
+},
+"ValueType": "System.Int32"
+},
+"SetVar": {
 "Operation": 2,
-"Type": "DynamicNodeVarData",
+"Strategy": {
+"InitialValue": 0,
+"Type": "ValueNodeVarStrategy"
+},
 "ValueType": "System.Int32"
 },
-"Var5": {
-"NodeVarReferences": {
-"Var1": {
-"ContainerPath": NodePath(".."),
-"ContainerVarName": "Var12"
-}
+"_GetVar": {
+"Operation": 5,
+"Strategy": {
+"InitialValue": 0,
+"Type": "ValueNodeVarStrategy"
 },
-"Type": "ExpressionNodeVarData"
+"ValueType": "System.Int32"
+},
+"_Get_SetVar": {
+"Operation": 7,
+"Strategy": {
+"InitialValue": 0,
+"Type": "ValueNodeVarStrategy"
+},
+"ValueType": "System.Int32"
+},
+"_SetVar": {
+"Operation": 6,
+"Strategy": {
+"InitialValue": 0,
+"Type": "ValueNodeVarStrategy"
+},
+"ValueType": "System.Int32"
+},
+"__ExpressionVar": {
+"Operation": 0,
+"Strategy": {
+"Type": "ExpressionNodeVarStrategy"
+},
+"ValueType": "System.Int32"
 }
 }

@@ -1,5 +1,7 @@
 ﻿using Fractural.Plugin;
+using Fractural.Utils;
 using Godot;
+using System;
 
 #if TOOLS
 namespace Fractural.NodeVars
@@ -9,6 +11,7 @@ namespace Fractural.NodeVars
     {
         private MarginContainer _valuePropertyContainer;
         private ValueProperty _valueProperty;
+        private Type _prevValueType;
 
         public ValueNodeVarStrategyDisplay() : base() { }
         public ValueNodeVarStrategyDisplay(Control topRow)
@@ -27,9 +30,17 @@ namespace Fractural.NodeVars
 
         public override void SetData(NodeVarData value, NodeVarData defaultData = null)
         {
-            var oldData = Data;
             base.SetData(value, defaultData);
-            UpdateValuePropertyType(oldData?.ValueType != Data?.ValueType);
+
+            bool rebuildProperty = false;
+            if (_prevValueType != Data.ValueType)
+            {
+                rebuildProperty = true;
+                _prevValueType = Data.ValueType;
+                Strategy.InitialValue = DefaultValueUtils.GetDefault(Data.ValueType);
+                InvokeDataChanged();
+            }
+            UpdateValuePropertyType(rebuildProperty);
         }
 
         /// <summary>

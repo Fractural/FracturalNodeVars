@@ -13,15 +13,20 @@ _nodeVars = {
 "Var1": {
 "Operation": 0,
 "Strategy": {
+"ContainerPath": NodePath("."),
+"ContainerVarName": "Var2",
+"Type": "PointerNodeVarStrategy"
+},
+"ValueType": "System.Int32"
+},
+"Var2": {
+"Operation": 0,
+"Strategy": {
 "NodeVarReferences": {
 "Var1": {
 "ContainerPath": NodePath(".")
 },
 "Var2": {
-"ContainerPath": NodePath(""),
-"ContainerVarName": null
-},
-"Var3": {
 "ContainerPath": NodePath(""),
 "ContainerVarName": null
 }

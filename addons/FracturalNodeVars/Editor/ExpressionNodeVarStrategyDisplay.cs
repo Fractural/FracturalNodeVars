@@ -321,16 +321,6 @@ namespace Fractural.NodeVars
             InvokeDataChanged();
             UpdateReferencesUI();
         }
-
-        // TODO LATER: Delete if this is not needed
-        //public void OnBeforeSerialize()
-        //{
-        //    _assetsRegistry = null;
-        //    Data = null;
-        //    DefaultData = null;
-        //}
-
-        //public void OnAfterDeserialize() { }
     }
 }
 #endif

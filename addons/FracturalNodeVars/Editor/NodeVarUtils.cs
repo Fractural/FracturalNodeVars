@@ -295,6 +295,14 @@ namespace Fractural.NodeVars
                     Operation = NodeVarOperation.GetSet
                 },
                 new OperationTypeData() {
+                    Name = "Get/_Set",
+                    Operation = NodeVarOperation.GetPrivateSet
+                },
+                new OperationTypeData() {
+                    Name = "Set/_Get",
+                    Operation = NodeVarOperation.SetPrivateGet
+                },
+                new OperationTypeData() {
                     Name = "Get",
                     Operation = NodeVarOperation.Get
                 },
@@ -303,23 +311,15 @@ namespace Fractural.NodeVars
                     Operation = NodeVarOperation.Set
                 },
                 new OperationTypeData() {
-                    Name = "Get/p_Set",
-                    Operation = NodeVarOperation.GetPrivateSet
-                },
-                new OperationTypeData() {
-                    Name = "p_Get/Set",
-                    Operation = NodeVarOperation.SetPrivateGet
-                },
-                new OperationTypeData() {
-                    Name = "p_Get",
+                    Name = "_Get",
                     Operation = NodeVarOperation.PrivateGet
                 },
                 new OperationTypeData() {
-                    Name = "p_Set",
+                    Name = "_Set",
                     Operation = NodeVarOperation.PrivateSet
                 },
                 new OperationTypeData() {
-                    Name = "p_Get/p_Set",
+                    Name = "_Get/_Set",
                     Operation = NodeVarOperation.PrivateGetSet
                 },
             };

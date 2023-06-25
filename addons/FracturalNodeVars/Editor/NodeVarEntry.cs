@@ -159,7 +159,7 @@ namespace Fractural.NodeVars
 
             _operationButton = new OptionButton();
             _operationButton.SizeFlagsHorizontal = (int)SizeFlags.Fill;
-            _operationButton.RectMinSize = new Vector2(80 * _assetsRegistry.Scale, 0);
+            _operationButton.RectMinSize = new Vector2(90 * _assetsRegistry.Scale, 0);
             _operationButton.Connect("item_selected", this, nameof(OnOperationSelected));
 
             var control = new Control();
@@ -178,7 +178,6 @@ namespace Fractural.NodeVars
 
             _strategyToggleButton = new Button();
             _strategyToggleButton.SizeFlagsHorizontal = (int)SizeFlags.Fill;
-            _strategyToggleButton.ToggleMode = true;
             _strategyToggleButton.Connect("pressed", this, nameof(OnStrategyTogglePressed));
 
             _firstRowHBox.AddChild(_nameProperty);
@@ -262,7 +261,9 @@ namespace Fractural.NodeVars
                     Icon = GetIcon("FixedMaterial", "EditorIcons"),
                     StrategyType = typeof(ValueNodeVarStrategy),
                     StrategyDisplayType = typeof(ValueNodeVarStrategyDisplay),
-                    BuildStrategy = () => new ValueNodeVarStrategy(),
+                    BuildStrategy = () => new ValueNodeVarStrategy() {
+                        InitialValue = DefaultValueUtils.GetDefault(Data.ValueType)
+                    },
                     BuildDisplay = () => {
                         return new ValueNodeVarStrategyDisplay(_strategyDisplayTopRow);
                     },
@@ -370,12 +371,11 @@ namespace Fractural.NodeVars
                     ClearStrategyDisplay();
 
                     _strategyDisplay = strategyType.BuildDisplay();
+                    AddChild(_strategyDisplay);
                 }
 
                 _strategyDisplay.SetData(Data, DefaultData);
                 _strategyDisplay.DataChanged += InvokeDataChanged;
-
-                AddChild(_strategyDisplay);
             }
         }
 

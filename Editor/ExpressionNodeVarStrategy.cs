@@ -8,10 +8,7 @@ using GDC = Godot.Collections;
 
 namespace Fractural.NodeVars
 {
-    /// <summary>
-    /// NodeVar that evaluates an expression to get a value.
-    /// </summary>
-    public class ExpressionNodeVarData : NodeVarData<ExpressionNodeVarData>, IGetNodeVar, IPrivateGetNodeVar
+    public class ExpressionNodeVarStrategy : NodeVarStrategy
     {
         #region Static
         public struct TypeAndMethod
@@ -44,7 +41,7 @@ namespace Fractural.NodeVars
                 return;
             _initialized = true;
             var types =
-                from type in Assembly.GetAssembly(typeof(ExpressionNodeVarData)).GetTypes()
+                from type in Assembly.GetAssembly(typeof(ExpressionNodeVarStrategy)).GetTypes()
                 select type;
 
             foreach (var type in types)
@@ -124,9 +121,12 @@ namespace Fractural.NodeVars
                     Name = Name
                 };
             }
+
+            public override string ToString() => $"{Name}: {JSON.Print(ToGDDict())}";
         }
 
         #region Main
+        public override NodeVarOperation[] ValidOperations => NodeVarOperations.Gettable;
 
         // Serialized
         public string Expression { get; set; } = "";
@@ -134,14 +134,9 @@ namespace Fractural.NodeVars
 
         // Runtime
         public ExpressionParser.Expression AST { get; set; }
-        public object Value
+        public override object Value
         {
-            get
-            {
-                if (!Operation.IsGet())
-                    throw new Exception($"{nameof(ExpressionNodeVarData)}: Attempted to get a non-getttable NodeVar \"{Name}\".");
-                return AST.Evaluate();
-            }
+            get => AST.Evaluate();
         }
         public object PrivateValue => AST.Evaluate();
 
@@ -157,6 +152,8 @@ namespace Fractural.NodeVars
             var methods = node.GetType().GetMethods().Where(x => x.GetCustomAttributes(typeof(NodeVarFuncAttribute), false).Length > 0).ToArray();
 
             AST = ExpressionUtils.ParseFromText(Expression, GetVariable, CallFunction);
+            if (AST == null)
+                GD.PushError($"{nameof(ExpressionNodeVarStrategy)}: An expression in NodeVarContainer ({_node.GetPath()}) could not be parsed!");
             foreach (var reference in NodeVarReferences.Values)
                 reference.Ready(node);
         }
@@ -169,34 +166,30 @@ namespace Fractural.NodeVars
             return null;
         }
 
-        public override ExpressionNodeVarData WithChanges(ExpressionNodeVarData newData, bool forEditorSerialization = false)
+        public override NodeVarStrategy WithChanges(NodeVarStrategy newData, bool forEditorSerialization = false)
         {
+            if (!(newData is ExpressionNodeVarStrategy strategy)) return null;
+
             // NOTE: We dont' care if the newData.ValueType == ValueType, since types for
             // expression node vars are user set anyways.
-            if (newData.Name == Name)
-            {
-                var inheritedData = TypedClone();
-                if (forEditorSerialization)
-                    // We don't save default NodeVarReference for editor.
-                    inheritedData.NodeVarReferences.Clear();
-                // Make sure old NodeVarReferences are always there.
-                // Inheriting a NodeVarExpression should never remove existing NodeVarReferences.
-                foreach (var reference in newData.NodeVarReferences.Values)
-                    inheritedData.NodeVarReferences[reference.Name] = reference.Clone();
-                if (!Equals(newData.Expression, Expression))
-                    // If the newData's value is different from our value, then prefer the new data's value
-                    inheritedData.Expression = newData.Expression;
-                return inheritedData;
-            }
-            return null;
+            var inheritedData = Clone() as ExpressionNodeVarStrategy;
+            if (forEditorSerialization)
+                // We don't save default NodeVarReference for editor.
+                inheritedData.NodeVarReferences.Clear();
+            // Make sure old NodeVarReferences are always there.
+            // Inheriting a NodeVarExpression should never remove existing NodeVarReferences.
+            foreach (var reference in strategy.NodeVarReferences.Values)
+                inheritedData.NodeVarReferences[reference.Name] = reference.Clone();
+            if (!Equals(strategy.Expression, Expression))
+                // If the newData's value is different from our value, then prefer the new data's value
+                inheritedData.Expression = strategy.Expression;
+            return inheritedData;
         }
 
-        public override ExpressionNodeVarData TypedClone()
+        public override NodeVarStrategy Clone()
         {
-            var inst = new ExpressionNodeVarData()
+            var inst = new ExpressionNodeVarStrategy()
             {
-                Name = Name,
-                Operation = Operation,
                 Expression = Expression,
             };
             foreach (var pair in NodeVarReferences)
@@ -204,21 +197,14 @@ namespace Fractural.NodeVars
             return inst;
         }
 
-        public override bool Equals(ExpressionNodeVarData otherData)
+        public override bool Equals(object other)
         {
-            return otherData.Name == Name &&
-                otherData.Expression == Expression &&
-                otherData.NodeVarReferences.SequenceEqual(NodeVarReferences);
+            return other is ExpressionNodeVarStrategy strategy &&
+                Equals(strategy.Expression, Expression) &&
+                strategy.NodeVarReferences.SequenceEqual(NodeVarReferences);
         }
 
-        public override int GetHashCodeForData()
-        {
-            var code = Name.GetHashCode();
-            code = GeneralUtils.CombineHashCodes(code, Expression.GetHashCode());
-            foreach (var reference in NodeVarReferences)
-                code = GeneralUtils.CombineHashCodes(code, reference.GetHashCode());
-            return code;
-        }
+        public override int GetHashCode() => GeneralUtils.CombineHashCodes(Expression.GetHashCode(), NodeVarReferences);
 
         public override GDC.Dictionary ToGDDict()
         {
@@ -235,9 +221,8 @@ namespace Fractural.NodeVars
             return dict;
         }
 
-        public override void FromGDDict(GDC.Dictionary dict, string name)
+        public override void FromGDDict(GDC.Dictionary dict)
         {
-            base.FromGDDict(dict, name);
             Expression = dict.Get<string>(nameof(Expression), "");
             var nodeVarReferencesDict = dict.Get(nameof(NodeVarReferences), new GDC.Dictionary());
             foreach (string key in nodeVarReferencesDict.Keys)

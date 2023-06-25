@@ -5,67 +5,53 @@ using GDC = Godot.Collections;
 
 namespace Fractural.NodeVars
 {
-    public interface ISerializableNodeVar
-    {
-        object Save();
-        void Load(object any);
-    }
-
-    public interface IResetNodeVar
-    {
-        void Reset();
-    }
-
-    public interface INodeVar
-    {
-        string Name { get; set; }
-    }
-
-    public interface ISetNodeVar : INodeVar
-    {
-        object Value { set; }
-    }
-
-    public interface IGetNodeVar : INodeVar
-    {
-        object Value { get; }
-    }
-
-    public interface IGetSetNodeVar : ISetNodeVar, IGetNodeVar { }
-
-    public interface IPrivateGetNodeVar
-    {
-        object PrivateValue { get; }
-    }
-
-    public interface IPrivateSetNodeVar
-    {
-        object PrivateValue { set; }
-    }
-
-    public interface IPrivateGetSetNodeVar : IPrivateGetNodeVar, IPrivateSetNodeVar { }
-
-    public interface ITypedNodeVar
-    {
-        Type ValueType { get; set; }
-    }
-
-    /// <summary>
-    /// Base class for NodeVars. Is used to serialize editor data, as well as hold runtime data.
-    /// </summary>
-    public abstract class NodeVarData : INodeVar
+    public class NodeVarData
     {
         public string Name { get; set; }
-        public virtual NodeVarOperation Operation { get; set; }
+        public NodeVarOperation Operation { get; set; }
+        public NodeVarStrategy Strategy { get; set; }
+        public Type ValueType { get; set; }
+        public object Value
+        {
+            get => GetValue();
+            set => SetValue(value);
+        }
+        public object GetValue(bool includePrivate = false)
+        {
+            if (Operation.IsGet(includePrivate))
+            {
+                var result = Strategy.Value;
+                if (result.GetType() != ValueType)
+                    throw new Exception($"{nameof(NodeVarData)}: Get value is not of type \"{ValueType.Name}\".");
+                return result;
+            }
+            else
+                throw new Exception($"{nameof(NodeVarData)}: Could not get on NodeVar of operation \"{Operation}\".");
+        }
+        public void SetValue(object value, bool includePrivate = false)
+        {
+            if (Operation.IsSet(includePrivate))
+            {
+                if (value.GetType() != ValueType)
+                    throw new Exception($"{nameof(NodeVarData)}: Attempted to set value that's not of type \"{ValueType.Name}\".");
+                Strategy.Value = value;
+            }
+            else
+                throw new Exception($"{nameof(NodeVarData)}: Could not set on NodeVar of operation \"{Operation}\".");
+        }
 
-        public virtual void Ready(Node node) { }
+        public void Ready(Node node) => Strategy.Ready(node);
+
         public override bool Equals(object obj)
         {
-            if (obj is NodeVarData data)
-                return Equals(data);
-            return false;
+            return obj is NodeVarData data &&
+                Equals(data.Name, Name) &&
+                Equals(data.Operation, Operation) &&
+                Equals(data.Strategy, Strategy) &&
+                Equals(data.ValueType, ValueType);
         }
-        public override int GetHashCode() => GetHashCodeForData();
+
+        public override int GetHashCode() => GeneralUtils.CombineHashCodes(Name.GetHashCode(), Operation.GetHashCode(), Strategy.GetHashCode());
 
         /// <summary>
         /// Attempts to use another NodeVar's data to make changes to this NodeVar.
@@ -73,38 +59,50 @@ namespace Fractural.NodeVars
         /// <param name="other">Data to use as changed</param>
         /// <param name="forEditorSerialization">Is the returned data for editor use?</param>
         /// <returns>Returns the resulting NodeVar with the changes on success. Returns null if the two NodeVars are incompatible.</returns>
-        public abstract NodeVarData WithChanges(NodeVarData other, bool forEditorSerialization = false);
+        public NodeVarData WithChanges(NodeVarData other, bool forEditorSerialization = false)
+        {
+            if (other.Name == Name && other.ValueType == ValueType)
+            {
+                var inheritedData = Clone();
+                if (Strategy.GetType() == other.Strategy.GetType())
+                    inheritedData.Strategy = Strategy.WithChanges(other.Strategy, forEditorSerialization);
+                else if (other.Strategy.ValidOperations.Contains(Operation))
+                    inheritedData.Strategy = other.Strategy;
+                return inheritedData;
+            }
+            return null;
+        }
+
+        public NodeVarData Clone()
+        {
+            return new NodeVarData()
+            {
+                Name = Name,
+                ValueType = ValueType,
+                Operation = Operation,
+                Strategy = Strategy.Clone()
+            };
+        }
+
         public virtual GDC.Dictionary ToGDDict()
         {
             var dict = new GDC.Dictionary()
             {
-                { "Type", GetType().Name },
                 { nameof(Operation), (int)Operation },
+                { nameof(ValueType), ValueType.FullName },
+                { nameof(Strategy), Strategy?.ToGDDict() }
             };
             return dict;
         }
+
         public virtual void FromGDDict(GDC.Dictionary dict, string name)
         {
-            Operation = (NodeVarOperation)dict.Get<int>(nameof(Operation));
             Name = name;
+            ValueType = ReflectionUtils.FindTypeFullName(dict.Get<string>(nameof(ValueType)));
+            Operation = (NodeVarOperation)dict.Get<int>(nameof(Operation));
+            Strategy = NodeVarUtils.NodeVarStrategyFromGDDict(dict.Get<GDC.Dictionary>(nameof(Strategy)));
         }
-        public abstract NodeVarData Clone();
-        public abstract bool Equals(NodeVarData data);
-        public abstract int GetHashCodeForData();
-    }
 
-    public abstract class NodeVarData<T> : NodeVarData, INodeVar where T : NodeVarData
-    {
-        public override NodeVarData Clone() => TypedClone();
-        public override bool Equals(NodeVarData data)
-        {
-            if (data is T newData)
-                return Equals(newData);
-            return false;
-        }
-        public override NodeVarData WithChanges(NodeVarData other, bool forEditorSerialization = false) => WithChanges((T)other, forEditorSerialization);
-        public abstract T WithChanges(T other, bool forEditorSerialization = false);
-        public abstract T TypedClone();
-        public abstract bool Equals(T data);
+        public override string ToString() => $"{Name}: {JSON.Print(ToGDDict())}";
     }
 }

@@ -3,7 +3,7 @@ using Fractural.Plugin.AssetsRegistry;
 using Fractural.Utils;
 using Godot;
 using System;
-using static Fractural.NodeVars.ExpressionNodeVarData;
+using static Fractural.NodeVars.ExpressionNodeVarStrategy;
 
 #if TOOLS
 namespace Fractural.NodeVars

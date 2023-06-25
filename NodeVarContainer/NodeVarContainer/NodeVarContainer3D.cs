@@ -10,7 +10,7 @@ namespace Fractural.NodeVars
 {
     [RegisteredType(nameof(NodeVarContainer3D), "res://addons/FracturalNodeVars/Assets/dependency-container-3d.svg", nameof(Spatial))]
     [Tool]
-    public class NodeVarContainer3D : Spatial, IDictNodeVarContainer, IInjectDIContainer, ISerializationListener
+    public class NodeVarContainer3D : Spatial, IDictNodeVarContainer, IInjectDIContainer, ISerializationListener, IPrivateNodeVarContainer
     {
         // Native C# Dictionary is around x9 faster than Godot Dictionary
         public IDictionary<string, NodeVarData> NodeVars { get; private set; }
@@ -65,29 +65,31 @@ namespace Fractural.NodeVars
         public T GetDictNodeVar<T>(string key) => (T)GetNodeVar(key);
 
         /// <summary>
-        /// Gets a NodeVar value at runtime. Does nothing when called from the editor.
+        /// Gets a NodeVar value at runtime. Only works if the NodeVar has a public get accesor. 
+        /// Does nothing when called from the editor.
         /// </summary>
         /// <param name="key"></param>
         /// <returns></returns>
         public object GetNodeVar(string key)
         {
             var data = NodeVars[key];
-            if (data is IGetNodeVar getNodeVar)
-                return getNodeVar.Value;
+            if (data.Operation.IsGet())
+                return data.GetValue();
             throw new Exception($"{nameof(NodeVarContainer)}: Could not get NodeVar of \"{key}\".");
         }
 
         /// <summary>
-        /// Sets a NodeVar value at runtime. Does nothing when called from the editor.
+        /// Sets a NodeVar value at runtime. Only works if the NodeVar has a public set accesor. 
+        /// Does nothing when called from the editor.
         /// </summary>
         /// <param name="key"></param>
         /// <param name="value"></param>
         public void SetNodeVar(string key, object value)
         {
             var data = NodeVars[key];
-            if (data is ISetNodeVar setNodeVar)
+            if (data.Operation.IsSet())
             {
-                setNodeVar.Value = value;
+                data.SetValue(value);
                 return;
             }
             throw new Exception($"{nameof(NodeVarContainer)}: Could not set NodeVar of \"{key}\".");
@@ -101,10 +103,8 @@ namespace Fractural.NodeVars
         public object PrivateGetNodeVar(string key)
         {
             var data = NodeVars[key];
-            if (data is IPrivateGetNodeVar privateGetNodeVar)
-                return privateGetNodeVar.PrivateValue;
-            if (data is IGetNodeVar getNodeVar)
-                return getNodeVar.Value;
+            if (data.Operation.IsGet(true))
+                return data.GetValue(true);
             throw new Exception($"{nameof(NodeVarContainer)}: Could not private get NodeVar of \"{key}\".");
         }
 
@@ -116,14 +116,9 @@ namespace Fractural.NodeVars
         public void PrivateSetNodeVar(string key, object value)
         {
             var data = NodeVars[key];
-            if (data is IPrivateSetNodeVar privateSetNodeVar)
+            if (data.Operation.IsSet(true))
             {
-                privateSetNodeVar.PrivateValue = value;
-                return;
-            }
-            if (data is ISetNodeVar setNodeVar)
-            {
-                setNodeVar.Value = value;
+                data.SetValue(value, true);
                 return;
             }
             throw new Exception($"{nameof(NodeVarContainer)}: Could not private get NodeVar of \"{key}\".");

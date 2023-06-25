@@ -4,35 +4,57 @@ using Fractural.Plugin;
 using Fractural.Plugin.AssetsRegistry;
 using Fractural.Utils;
 using Godot;
-using static Fractural.NodeVars.ExpressionNodeVarData;
+using static Fractural.NodeVars.ExpressionNodeVarStrategy;
 
 #if TOOLS
 namespace Fractural.NodeVars
 {
     // TODO: Add meta based collapsing
     [Tool]
-    public class ExpressionNodeVarEntry : NodeVarEntry<ExpressionNodeVarData>
+    public class ExpressionNodeVarStrategyDisplay : NodeVarStrategyDisplay<ExpressionNodeVarStrategy>
     {
+        public override bool IsSameAsDefault => CheckReferencesSameAsDefault() &&
+                Equals(Data.Name, DefaultData.Name);
+
         private StringValueProperty _expressionProperty;
         private VBoxContainer _referenceEntriesVBox;
         private Button _addElementButton;
         private Button _resetExpressionButton;
-        private TextureRect _expressionIconTextureRect;
 
         private INodeVarContainer _propagationSource;
+        private IAssetsRegistry _assetsRegistry;
         private PackedSceneDefaultValuesRegistry _defaultValuesRegistry;
-        private HBoxContainer _midHBox;
+        private Node _sceneRoot;
+        private Node _relativeToNode;
 
-        public ExpressionNodeVarEntry() { }
-        public ExpressionNodeVarEntry(INodeVarContainer propagationSource, IAssetsRegistry assetsRegistry, PackedSceneDefaultValuesRegistry defaultValuesRegistry, Node sceneRoot, Node relativeToNode) : base(sceneRoot, relativeToNode, assetsRegistry)
+        private Control CurrentFocused
+        {
+            get
+            {
+                if (!IsInstanceValid(_currentFocused))
+                    _currentFocused = null;
+                return _currentFocused;
+            }
+            set => _currentFocused = value;
+        }
+        private Control _currentFocused;
+
+        private bool IsExpressionSameAsDefault => Strategy.Expression == DefaultStrategy.Expression || Strategy.Expression == "";
+
+        public ExpressionNodeVarStrategyDisplay() { }
+        public ExpressionNodeVarStrategyDisplay(Control topRow, Control bottomRow, INodeVarContainer propagationSource, IAssetsRegistry assetsRegistry, PackedSceneDefaultValuesRegistry defaultValuesRegistry, Node sceneRoot, Node relativeToNode)
         {
             _propagationSource = propagationSource;
+            _assetsRegistry = assetsRegistry;
             _defaultValuesRegistry = defaultValuesRegistry;
+            _sceneRoot = sceneRoot;
+            _relativeToNode = relativeToNode;
 
             _expressionProperty = new StringValueProperty();
             _expressionProperty.SizeFlagsHorizontal = (int)SizeFlags.ExpandFill;
             _expressionProperty.RectMinSize = Vector2.Zero;
             _expressionProperty.PlaceholderText = "Expression";
+            _expressionProperty.RectClipContent = true;
             _expressionProperty.ValueChanged += OnExpressionChanged;
 
             _referenceEntriesVBox = new VBoxContainer();
@@ -43,25 +65,10 @@ namespace Fractural.NodeVars
             _addElementButton = new Button();
             _addElementButton.Connect("pressed", this, nameof(OnAddElementPressed));
 
-            _expressionIconTextureRect = new TextureRect();
-            _expressionIconTextureRect.RectMinSize = new Vector2(44 * _assetsRegistry.Scale, 0);
-            _expressionIconTextureRect.SizeFlagsVertical = (int)SizeFlags.ShrinkCenter;
-
-            var topHBox = new HBoxContainer();
-            topHBox.AddChild(_nameProperty);
-            topHBox.AddChild(_expressionIconTextureRect);
-            topHBox.AddChild(_operationButton);
-            topHBox.AddChild(_resetInitialValueButton);
-
-            _midHBox = new HBoxContainer();
-            _midHBox.AddChild(_expressionProperty);
-            _midHBox.AddChild(_resetExpressionButton);
-            _midHBox.AddChild(_addElementButton);
-            _midHBox.AddChild(_deleteButton);
-
-            _contentVBox.AddChild(topHBox);
-            _contentVBox.AddChild(_midHBox);
-            _contentVBox.AddChild(_referenceEntriesVBox);
+            topRow.AddChild(_expressionProperty);
+            topRow.AddChild(_resetExpressionButton);
+            topRow.AddChild(_addElementButton);
+            bottomRow.AddChild(_referenceEntriesVBox);
         }
 
         public override void _Ready()
@@ -71,7 +78,6 @@ namespace Fractural.NodeVars
             if (NodeUtils.IsInEditorSceneTab(this))
                 return;
 #endif
-            _expressionIconTextureRect.Texture = GetIcon("SceneUniqueName", "EditorIcons");
             _expressionProperty.Font = (Font)GetFont("source", "EditorFonts").Duplicate();
             var dynamicFont = _expressionProperty.Font as DynamicFont;
             dynamicFont.Size = (int)(16 * _assetsRegistry.Scale);
@@ -80,74 +86,44 @@ namespace Fractural.NodeVars
             GetViewport().Connect("gui_focus_changed", this, nameof(OnFocusChanged));
         }
 
-        public override void SetData(ExpressionNodeVarData value, ExpressionNodeVarData defaultData = null)
+        public override void SetData(NodeVarData value, NodeVarData defaultData = null)
         {
             base.SetData(value, defaultData);
 
-            if (defaultData != null && value.Expression == "")
-                _expressionProperty.SetValue(defaultData.Expression, false);
+            if (DefaultStrategy != null && Strategy.Expression == "")
+                _expressionProperty.SetValue(DefaultStrategy.Expression, false);
             else
-                _expressionProperty.SetValue(value.Expression, false);
+                _expressionProperty.SetValue(Strategy.Expression, false);
+
             UpdateReferencesUI();
+            UpdateExpressionResetButton();
         }
 
-        protected override OperationTypeData[] FetchOperationTypes => new[]
+        public override void UpdateDisabledAndFixedUI(bool isFixed, bool disabled, bool privateDisabled, bool nonSetDisabled)
         {
-            new OperationTypeData() {
-                Name = "Get",
-                Operation = NodeVarOperation.Get
-            },
-            new OperationTypeData() {
-                Name = "Private",
-                Operation = NodeVarOperation.Private
-            }
-        };
-
-        protected override void UpdateDisabledAndFixedUI()
-        {
-            base.UpdateDisabledAndFixedUI();
-
-            _midHBox.Visible = !NonSetDisabled;
-            _referenceEntriesVBox.Visible = !NonSetDisabled;
-            _expressionProperty.Disabled = Disabled || PrivateDisabled || NonSetDisabled;
+            _referenceEntriesVBox.Visible = !nonSetDisabled;
+            _expressionProperty.Disabled = disabled || privateDisabled || nonSetDisabled;
             foreach (ExpressionNodeVarReferenceEntry entry in _referenceEntriesVBox.GetChildren())
             {
-                entry.Disabled = Disabled || PrivateDisabled || NonSetDisabled;
-                entry.IsFixed = DefaultData?.NodeVarReferences.ContainsKey(entry.Data.Name) ?? false;
+                entry.Disabled = disabled || privateDisabled || nonSetDisabled;
+                entry.IsFixed = DefaultStrategy?.NodeVarReferences.ContainsKey(entry.Data.Name) ?? false;
             }
         }
 
-        protected override void UpdateResetButton()
+        private void UpdateExpressionResetButton()
         {
-            _resetInitialValueButton.Visible = DefaultData != null && !CheckIsSameAsDefault();
-            _resetExpressionButton.Visible = DefaultData != null && !CheckExpressionSameAsDefault();
-        }
-
-        protected override bool CheckIsSameAsDefault()
-        {
-            if (DefaultData == null)
-                return false;
-            return CheckReferencesSameAsDefault() &&
-                Equals(Data.Name, DefaultData.Name) &&
-                CheckExpressionSameAsDefault();
-        }
-
-        private bool CheckExpressionSameAsDefault()
-        {
-            return Data.Expression == DefaultData.Expression || Data.Expression == "";
+            _resetExpressionButton.Visible = DefaultStrategy != null && !IsExpressionSameAsDefault;
         }
 
         private bool CheckReferencesSameAsDefault()
         {
-            if (Data.NodeVarReferences.Count == 0)
+            if (Strategy.NodeVarReferences.Count == 0)
                 return true;
-            if (DefaultData == null)
+            if (DefaultStrategy == null || Strategy.NodeVarReferences.Count > DefaultStrategy.NodeVarReferences.Count)
                 return false;
-            if (Data.NodeVarReferences.Count > DefaultData.NodeVarReferences.Count)
-                return false;
-            foreach (var reference in Data.NodeVarReferences.Values)
+            foreach (var reference in Strategy.NodeVarReferences.Values)
             {
-                if (!DefaultData.NodeVarReferences.TryGetValue(reference.Name, out NodeVarReference fixedReference))
+                if (!DefaultStrategy.NodeVarReferences.TryGetValue(reference.Name, out NodeVarReference fixedReference))
                     return false;
                 if (!reference.Equals(fixedReference))
                     return false;
@@ -157,19 +133,19 @@ namespace Fractural.NodeVars
 
         private void UpdateReferencesUI()
         {
-            if (Data.NodeVarReferences.Count > 0 && CheckReferencesSameAsDefault())
+            if (Strategy.NodeVarReferences.Count > 0 && CheckReferencesSameAsDefault())
             {
-                Data.NodeVarReferences.Clear();
+                Strategy.NodeVarReferences.Clear();
             }
 
             var displayedReferences = new Dictionary<string, NodeVarReference>();
-            foreach (var reference in Data.NodeVarReferences.Values)
+            foreach (var reference in Strategy.NodeVarReferences.Values)
             {
                 displayedReferences.Add(reference.Name, reference);
             }
 
-            if (DefaultData != null)
-                foreach (var fixedReference in DefaultData.NodeVarReferences.Values)
+            if (DefaultStrategy != null)
+                foreach (var fixedReference in DefaultStrategy.NodeVarReferences.Values)
                 {
                     var displayReference = fixedReference;
                     if (displayedReferences.TryGetValue(fixedReference.Name, out NodeVarReference existingNodeVar))
@@ -178,7 +154,7 @@ namespace Fractural.NodeVars
                         if (referenceWithChanges != null)
                             displayReference = referenceWithChanges;
                         else
-                            Data.NodeVarReferences.Remove(existingNodeVar.Name);
+                            Strategy.NodeVarReferences.Remove(existingNodeVar.Name);
                     }
                     displayedReferences[fixedReference.Name] = displayReference;
                 }
@@ -186,10 +162,10 @@ namespace Fractural.NodeVars
             var sortedReferences = new List<NodeVarReference>(displayedReferences.Values);
             sortedReferences.Sort((a, b) =>
             {
-                if (DefaultData != null)
+                if (DefaultStrategy != null)
                 {
                     // Sort by whether it's fixed, and then by alphabetical order
-                    int fixedOrdering = DefaultData.NodeVarReferences.ContainsKey(b.Name).CompareTo(DefaultData.NodeVarReferences.ContainsKey(a.Name));
+                    int fixedOrdering = DefaultStrategy.NodeVarReferences.ContainsKey(b.Name).CompareTo(DefaultStrategy.NodeVarReferences.ContainsKey(a.Name));
                     if (fixedOrdering == 0)
                         return a.Name.CompareTo(b.Name);
                     return fixedOrdering;
@@ -198,11 +174,13 @@ namespace Fractural.NodeVars
             });
 
             var currFocusedEntry = CurrentFocused?.GetAncestor<ExpressionNodeVarReferenceEntry>();
-            if (currFocusedEntry != null && currFocusedEntry.HasParent(this))
+            if (currFocusedEntry != null && currFocusedEntry.HasParent(_referenceEntriesVBox))
             {
                 int keyIndex = sortedReferences.FindIndex(x => x.Name == currFocusedEntry.Data.Name);
                 if (keyIndex < 0)
+                {
                     currFocusedEntry = null;
+                }
                 else
                 {
                     var targetEntry = _referenceEntriesVBox.GetChild(keyIndex);
@@ -220,8 +198,8 @@ namespace Fractural.NodeVars
                 else
                     entry = _referenceEntriesVBox.GetChild<ExpressionNodeVarReferenceEntry>(index);
                 if (currFocusedEntry == null || entry != currFocusedEntry)
-                    entry.SetData(reference, DefaultData?.NodeVarReferences.GetValue(reference.Name, null));
-                entry.IsFixed = DefaultData?.NodeVarReferences.ContainsKey(reference.Name) ?? false;
+                    entry.SetData(reference, DefaultStrategy?.NodeVarReferences.GetValue(reference.Name, null));
+                entry.IsFixed = DefaultStrategy?.NodeVarReferences.ContainsKey(reference.Name) ?? false;
                 index++;
             }
 
@@ -240,58 +218,37 @@ namespace Fractural.NodeVars
             _addElementButton.Disabled = CheckAllVarNamesTaken();
         }
 
-        private Control CurrentFocused
-        {
-            get
-            {
-                if (!IsInstanceValid(_currentFocused))
-                    _currentFocused = null;
-                return _currentFocused;
-            }
-            set => _currentFocused = value;
-        }
-        private Control _currentFocused;
         private void OnFocusChanged(Control control) => CurrentFocused = control;
 
         private void OnExpressionChanged(string newExpression)
         {
-            if (DefaultData != null && newExpression == DefaultData.Expression)
-                Data.Expression = "";
+            if (DefaultStrategy != null && newExpression == DefaultStrategy.Expression)
+                Strategy.Expression = "";
             else
-                Data.Expression = newExpression;
+                Strategy.Expression = newExpression;
+            UpdateExpressionResetButton();
             InvokeDataChanged();
         }
 
         private void OnResetExpressionButtonPressed()
         {
-            Data.Expression = "";
-            _expressionProperty.SetValue(DefaultData.Expression, false);
+            Strategy.Expression = "";
+            _expressionProperty.SetValue(DefaultStrategy.Expression, false);
             InvokeDataChanged();
         }
 
         private bool CheckAllVarNamesTaken()
         {
             var nextKey = GetNextVarName();
-            return Data.NodeVarReferences.ContainsKey(nextKey) || (DefaultData?.NodeVarReferences.ContainsKey(nextKey) ?? false);
+            return Strategy.NodeVarReferences.ContainsKey(nextKey) || (DefaultStrategy?.NodeVarReferences.ContainsKey(nextKey) ?? false);
         }
 
         private string GetNextVarName()
         {
-            IEnumerable<string> keys = Data.NodeVarReferences.Keys;
-            if (DefaultData != null)
-                keys = keys.Union(DefaultData.NodeVarReferences.Keys);
+            IEnumerable<string> keys = Strategy.NodeVarReferences.Keys;
+            if (DefaultStrategy != null)
+                keys = keys.Union(DefaultStrategy.NodeVarReferences.Keys);
             return NodeVarUtils.GetNextVarName(keys);
-        }
-
-        private void OnAddElementPressed()
-        {
-            var nextKey = GetNextVarName();
-            Data.NodeVarReferences[nextKey] = new NodeVarReference()
-            {
-                Name = nextKey,
-            };
-            InvokeDataChanged();
-            UpdateReferencesUI();
         }
 
         private ExpressionNodeVarReferenceEntry CreateNewEntry()
@@ -311,17 +268,28 @@ namespace Fractural.NodeVars
             return entry;
         }
 
+        private void OnAddElementPressed()
+        {
+            var nextKey = GetNextVarName();
+            Strategy.NodeVarReferences[nextKey] = new NodeVarReference()
+            {
+                Name = nextKey,
+            };
+            InvokeDataChanged();
+            UpdateReferencesUI();
+        }
+
         private void OnEntryNameChanged(string oldKey, ExpressionNodeVarReferenceEntry entry)
         {
             var newKey = entry.Data.Name;
-            if (Data.NodeVarReferences.ContainsKey(newKey))
+            if (Strategy.NodeVarReferences.ContainsKey(newKey))
             {
                 // Reject change since the newKey already exists
                 entry.ResetName(oldKey);
                 return;
             }
-            Data.NodeVarReferences.Remove(oldKey);
-            Data.NodeVarReferences[newKey] = entry.Data.Clone();
+            Strategy.NodeVarReferences.Remove(oldKey);
+            Strategy.NodeVarReferences[newKey] = entry.Data.Clone();
             InvokeDataChanged();
             UpdateReferencesUI();
         }
@@ -329,13 +297,13 @@ namespace Fractural.NodeVars
         private void OnEntryDataChanged(string key, NodeVarReference newValue)
         {
             // Remove entry if it is the same as the fixed value (no point in storing redundant information)
-            if (DefaultData != null && DefaultData.NodeVarReferences.TryGetValue(key, out NodeVarReference existingReference) && existingReference.Equals(newValue))
+            if (DefaultStrategy != null && DefaultStrategy.NodeVarReferences.TryGetValue(key, out NodeVarReference existingReference) && existingReference.Equals(newValue))
             {
-                Data.NodeVarReferences.Remove(key);
+                Strategy.NodeVarReferences.Remove(key);
             }
             else
             {
-                Data.NodeVarReferences[key] = newValue;
+                Strategy.NodeVarReferences[key] = newValue;
             }
             InvokeDataChanged();
             UpdateReferencesUI();
@@ -343,19 +311,10 @@ namespace Fractural.NodeVars
 
         private void OnEntryDeleted(string key)
         {
-            Data.NodeVarReferences.Remove(key);
+            Strategy.NodeVarReferences.Remove(key);
             InvokeDataChanged();
             UpdateReferencesUI();
         }
-
-        public void OnBeforeSerialize()
-        {
-            _assetsRegistry = null;
-            Data = null;
-            DefaultData = null;
-        }
-
-        public void OnAfterDeserialize() { }
     }
 }
 #endif

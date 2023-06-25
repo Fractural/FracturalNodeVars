@@ -1,4 +1,5 @@
 ﻿using Godot;
+using System;
 
 namespace Fractural.NodeVars
 {
@@ -11,14 +12,12 @@ namespace Fractural.NodeVars
             var tokens = Lexer.Tokenize(text);
             if (tokens == null)
             {
-                GD.PushError($"{nameof(ParseFromText)}: Could not tokenize the text.");
-                return null;
+                throw new Exception($"{nameof(ParseFromText)}: Could not tokenize the text.");
             }
             var ast = Parser.Parse(tokens, getVariableFunc, callFunctionFunc);
             if (ast == null)
             {
-                GD.PushError($"{nameof(ParseFromText)}: Could not parse the tokens.");
-                return null;
+                throw new Exception($"{nameof(ParseFromText)}: Could not parse the tokens.");
             }
             return ast;
         }
@@ -29,6 +28,5 @@ namespace Fractural.NodeVars
             if (ast == null) return null;
             return ast.Evaluate();
         }
-
     }
 }

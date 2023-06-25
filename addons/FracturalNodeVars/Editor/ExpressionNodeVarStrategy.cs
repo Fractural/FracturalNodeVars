@@ -152,6 +152,8 @@ namespace Fractural.NodeVars
             var methods = node.GetType().GetMethods().Where(x => x.GetCustomAttributes(typeof(NodeVarFuncAttribute), false).Length > 0).ToArray();
 
             AST = ExpressionUtils.ParseFromText(Expression, GetVariable, CallFunction);
+            if (AST == null)
+                GD.PushError($"{nameof(ExpressionNodeVarStrategy)}: An expression in NodeVarContainer ({_node.GetPath()}) could not be parsed!");
             foreach (var reference in NodeVarReferences.Values)
                 reference.Ready(node);
         }

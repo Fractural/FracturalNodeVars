@@ -13,28 +13,41 @@ namespace Fractural.NodeVars
     /// <summary>
     /// The operation that users of the DictNodeVar can perform on a given DictNodeVar.
     /// </summary>
+    [Flags]
     public enum NodeVarOperation
     {
         /// <summary>
-        /// public get; private set;
-        /// DictNodeVar can be fetched from the outside. Can aslo be set privately.
-        /// </summary>
-        Get,
-        /// <summary>
-        /// private get; public set;
-        /// DictNodeVar can be set from the outside. Can also be read privately.
-        /// </summary>
-        Set,
-        /// <summary>
         /// public get; public set;
-        /// DictNodeVar can be fetched and set from the outside
         /// </summary>
         GetSet,
         /// <summary>
-        /// private get; private set;
-        /// DictNodeVar that can only be fetched and set privately.
+        /// public get;
         /// </summary>
-        Private,
+        Get,
+        /// <summary>
+        /// public set;
+        /// </summary>
+        Set,
+        /// <summary>
+        /// public get; private set;
+        /// </summary>
+        GetPrivateSet,
+        /// <summary>
+        /// private get; public set;
+        /// </summary>
+        SetPrivateGet,
+        /// <summary>
+        /// private get;
+        /// </summary>
+        PrivateGet,
+        /// <summary>
+        /// private set;
+        /// </summary>
+        PrivateSet,
+        /// <summary>
+        /// private get; set;
+        /// </summary>
+        PrivateGetSet,
     }
 
     // TODO NOW: Make NodeVarPointerSelect work with Private NodeVars
@@ -355,9 +368,9 @@ namespace Fractural.NodeVars
 
         private bool CanEntryHandleNodeVar(NodeVarEntry entry, NodeVarData nodeVarData)
         {
-            if (nodeVarData is DynamicNodeVarData && entry is DynamicNodeVarEntry)
+            if (nodeVarData is PointerNodeVarStrategy && entry is DynamicNodeVarEntry)
                 return true;
-            if (nodeVarData is ExpressionNodeVarData && entry is ExpressionNodeVarEntry)
+            if (nodeVarData is ExpressionNodeVarStrategy && entry is ExpressionNodeVarEntry)
                 return true;
             return false;
         }
@@ -365,9 +378,9 @@ namespace Fractural.NodeVars
         private NodeVarEntry CreateNewEntry(NodeVarData nodeVar)
         {
             NodeVarEntry entry;
-            if (nodeVar is DynamicNodeVarData)
+            if (nodeVar is PointerNodeVarStrategy)
                 entry = new DynamicNodeVarEntry(_data._propagationSource, _data._assetsRegistry, _data._defaultValuesRegistry, _data._sceneRoot, _data._relativeToNode);
-            else if (nodeVar is ExpressionNodeVarData)
+            else if (nodeVar is ExpressionNodeVarStrategy)
                 entry = new ExpressionNodeVarEntry(_data._propagationSource, _data._assetsRegistry, _data._defaultValuesRegistry, _data._sceneRoot, _data._relativeToNode);
             else
                 throw new Exception($"{nameof(DictNodeVarsValueProperty)}: No suitable entry type foudn for {nodeVar.GetType()}.");
@@ -420,7 +433,7 @@ namespace Fractural.NodeVars
             switch ((AddOptionIndex)_data._addOptionButton.Selected)
             {
                 case AddOptionIndex.Dynamic:
-                    Value[nextKey] = new DynamicNodeVarData()
+                    Value[nextKey] = new PointerNodeVarStrategy()
                     {
                         Name = nextKey,
                         ValueType = typeof(int),
@@ -428,7 +441,7 @@ namespace Fractural.NodeVars
                     }.ToGDDict();
                     break;
                 case AddOptionIndex.Expression:
-                    Value[nextKey] = new ExpressionNodeVarData()
+                    Value[nextKey] = new ExpressionNodeVarStrategy()
                     {
                         Name = nextKey,
                     }.ToGDDict();

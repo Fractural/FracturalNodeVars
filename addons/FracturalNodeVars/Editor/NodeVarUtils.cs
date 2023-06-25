@@ -8,21 +8,57 @@ using System.Linq;
 
 namespace Fractural.NodeVars
 {
+    public static class NodeVarOperations
+    {
+        public static readonly NodeVarOperation[] All = new[]
+        {
+            NodeVarOperation.GetSet,
+            NodeVarOperation.Get,
+            NodeVarOperation.Set,
+            NodeVarOperation.GetPrivateSet,
+            NodeVarOperation.SetPrivateGet,
+            NodeVarOperation.PrivateGet,
+            NodeVarOperation.PrivateSet,
+            NodeVarOperation.PrivateGetSet,
+        };
+        public static readonly NodeVarOperation[] OnlyGet = new[] { NodeVarOperation.Get, NodeVarOperation.PrivateGet };
+        public static readonly NodeVarOperation[] OnlySet = new[] { NodeVarOperation.Set, NodeVarOperation.PrivateSet };
+        public static readonly NodeVarOperation[] GetSet = new[] { NodeVarOperation.GetSet, NodeVarOperation.GetPrivateSet, NodeVarOperation.SetPrivateGet, NodeVarOperation.PrivateGetSet };
+        public static readonly NodeVarOperation[] Settable = new[] {
+            NodeVarOperation.Set, NodeVarOperation.PrivateSet,
+            NodeVarOperation.GetSet, NodeVarOperation.SetPrivateGet, NodeVarOperation.PrivateGetSet, NodeVarOperation.GetPrivateSet
+        };
+        public static readonly NodeVarOperation[] Gettable = new[] {
+            NodeVarOperation.Get, NodeVarOperation.PrivateGet,
+            NodeVarOperation.GetSet, NodeVarOperation.SetPrivateGet, NodeVarOperation.PrivateGetSet, NodeVarOperation.GetPrivateSet
+        };
+    }
+
     public static class NodeVarUtils
     {
+        public static bool IsPrivateGet(this NodeVarOperation operation)
+        {
+            return operation == NodeVarOperation.SetPrivateGet || operation == NodeVarOperation.PrivateGet;
+        }
+
+        public static bool IsPrivateSet(this NodeVarOperation operation)
+        {
+            return operation == NodeVarOperation.GetPrivateSet || operation == NodeVarOperation.PrivateSet;
+        }
+
         public static bool IsGet(this NodeVarOperation operation, bool includePrivate = false)
         {
-            return operation == NodeVarOperation.Get || operation == NodeVarOperation.GetSet || (includePrivate && operation == NodeVarOperation.Private);
+            return operation == NodeVarOperation.Get || operation == NodeVarOperation.GetSet || (includePrivate && IsPrivateGet(operation));
         }
 
         public static bool IsSet(this NodeVarOperation operation, bool includePrivate = false)
         {
-            return operation == NodeVarOperation.Set || operation == NodeVarOperation.GetSet || (includePrivate && operation == NodeVarOperation.Private);
+            return operation == NodeVarOperation.Set || operation == NodeVarOperation.GetSet || (includePrivate && IsPrivateSet(operation));
         }
 
         public static bool IsNodeVarValidPointer(INodeVarContainer nodeVarContainer, Node sourceNode, Node sceneRoot, NodeVarData nodeVar, NodeVarOperation sourceOperation, Type sourceValueType = null)
         {
-            if (sourceValueType != null && nodeVar is ITypedNodeVar typedNodeVar && typedNodeVar.ValueType != sourceValueType) return false;
+            if (sourceValueType != null && nodeVar.ValueType != sourceValueType) return false;
             NodeVarOperation nodeVarOperation = nodeVar.Operation;
 
             // Pointers can only be set on NodeVars that have a publically accessible setter.
@@ -46,22 +82,20 @@ namespace Fractural.NodeVars
             return node != sceneRoot && node.Filename != "";
         }
 
-        public static NodeVarData NodeVarDataFromGDDict(GDC.Dictionary dict, string key)
+        public static NodeVarStrategy NodeVarStrategyFromGDDict(GDC.Dictionary dict)
         {
-            string type = dict.Get<string>("Type", nameof(DynamicNodeVarData));
-            NodeVarData result;
+            string type = dict.Get<string>("Type", nameof(PointerNodeVarStrategy));
+            NodeVarStrategy result;
             switch (type)
             {
-                case nameof(DynamicNodeVarData):
-                    result = new DynamicNodeVarData();
-                    result.FromGDDict(dict, key);
+                case nameof(PointerNodeVarStrategy):
+                    result = new PointerNodeVarStrategy();
                     break;
-                case nameof(ExpressionNodeVarData):
-                    result = new ExpressionNodeVarData();
-                    result.FromGDDict(dict, key);
+                case nameof(ExpressionNodeVarStrategy):
+                    result = new ExpressionNodeVarStrategy();
                     break;
                 default:
-                    throw new Exception($"{nameof(NodeVarData)}: Cannot convert type \"{type}\" to NodeVarData from GDDict.");
+                    throw new Exception($"{nameof(NodeVarUtils)}: Cannot convert type \"{type}\" to {nameof(NodeVarStrategy)} from GDDict.");
             }
             return result;
         }
@@ -72,9 +106,9 @@ namespace Fractural.NodeVars
         /// </summary>
         /// <param name="objectType"></param>
         /// <returns></returns>
-        public static DynamicNodeVarData[] GetNodeVarsFromAttributes(Type objectType)
+        public static NodeVarData[] GetNodeVarsFromAttributes(Type objectType)
         {
-            var fixedDictNodeVars = new List<DynamicNodeVarData>();
+            var fixedDictNodeVars = new List<NodeVarData>();
             foreach (var property in objectType.GetProperties(BindingFlags.Instance | BindingFlags.Public).Concat(objectType.GetProperties(BindingFlags.Instance | BindingFlags.NonPublic)))
             {
                 var attribute = property.GetCustomAttribute<NodeVarAttribute>();
@@ -103,11 +137,12 @@ namespace Fractural.NodeVars
                         operation = NodeVarOperation.Get;
                 }
 
-                fixedDictNodeVars.Add(new DynamicNodeVarData()
+                fixedDictNodeVars.Add(new NodeVarData()
                 {
                     Name = property.Name,
                     ValueType = property.PropertyType,
                     Operation = operation,
+                    Strategy = new // TODO NOW: FINISH THIS
                     InitialValue = DefaultValueUtils.GetDefault(property.PropertyType)
                 });
             }
@@ -120,7 +155,7 @@ namespace Fractural.NodeVars
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public static DynamicNodeVarData[] GetNodeVarsFromAttributes<T>() => GetNodeVarsFromAttributes(typeof(T));
+        public static PointerNodeVarStrategy[] GetNodeVarsFromAttributes<T>() => GetNodeVarsFromAttributes(typeof(T));
 
         public static string GetNextVarName(IEnumerable<string> previousValues)
         {

@@ -4,14 +4,14 @@ using Fractural.Plugin;
 using Fractural.Plugin.AssetsRegistry;
 using Fractural.Utils;
 using Godot;
-using static Fractural.NodeVars.ExpressionNodeVarData;
+using static Fractural.NodeVars.ExpressionNodeVarStrategy;
 
 #if TOOLS
 namespace Fractural.NodeVars
 {
     // TODO: Add meta based collapsing
     [Tool]
-    public class ExpressionNodeVarEntry : NodeVarEntry<ExpressionNodeVarData>
+    public class ExpressionNodeVarEntry : NodeVarEntry<ExpressionNodeVarStrategy>
     {
         private StringValueProperty _expressionProperty;
         private VBoxContainer _referenceEntriesVBox;
@@ -80,7 +80,7 @@ namespace Fractural.NodeVars
             GetViewport().Connect("gui_focus_changed", this, nameof(OnFocusChanged));
         }
 
-        public override void SetData(ExpressionNodeVarData value, ExpressionNodeVarData defaultData = null)
+        public override void SetData(ExpressionNodeVarStrategy value, ExpressionNodeVarStrategy defaultData = null)
         {
             base.SetData(value, defaultData);
 

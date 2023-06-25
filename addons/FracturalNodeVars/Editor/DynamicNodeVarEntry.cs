@@ -25,7 +25,7 @@ namespace Fractural.NodeVars
     }
 
     [Tool]
-    public class DynamicNodeVarEntry : NodeVarEntry<DynamicNodeVarData>
+    public class DynamicNodeVarEntry : NodeVarEntry<PointerNodeVarStrategy>
     {
         private OptionButton _valueTypeButton;
         private Button _isPointerButton;
@@ -130,7 +130,7 @@ namespace Fractural.NodeVars
                 _valueTypeButton.Text = "";
         }
 
-        public override void SetData(DynamicNodeVarData value, DynamicNodeVarData defaultData = null)
+        public override void SetData(PointerNodeVarStrategy value, PointerNodeVarStrategy defaultData = null)
         {
             var oldData = Data;
             base.SetData(value, defaultData);

@@ -9,7 +9,7 @@ using System.Linq;
 namespace Fractural.NodeVars
 {
     [Tool]
-    public abstract class NodeVarEntry : HBoxContainer
+    public class NodeVarEntry : HBoxContainer
     {
         /// <summary>
         /// NameChanged(string oldName, Entry entry)
@@ -60,6 +60,9 @@ namespace Fractural.NodeVars
         protected OptionButton _operationButton;
         protected OperationTypeData[] _operationTypes;
         protected IAssetsRegistry _assetsRegistry;
+
+        private HBoxContainer _firstRowHBox;
+        private HBoxContainer _secondRowHBox;
 
         /// <summary>
         /// Checks whether the NodeVarContainer containing the DynamicNodeVar is an instance of a scene.
@@ -199,21 +202,30 @@ namespace Fractural.NodeVars
         }
     }
 
-    public abstract class NodeVarEntry<T> : NodeVarEntry where T : NodeVarData
+    // TODO NOW: Finish porting UI code to use new NodeVarStrategy system
+    [Tool]
+    public abstract class NodeVarStrategyDisplay : HBoxContainer
     {
-        public new T Data
+        public NodeVarStrategy Strategy { get; set; }
+        public NodeVarStrategy DefaultStrategy { get; set; }
+        public abstract void SetData(NodeVarStrategy)
         {
-            get => (T)base.Data;
-            set => base.Data = value;
-        }
-        public new T DefaultData
-        {
-            get => (T)base.DefaultData;
-            set => base.DefaultData = value;
-        }
 
-        public NodeVarEntry() : base() { }
-        public NodeVarEntry(Node sceneRoot, Node relativeToNode, IAssetsRegistry assetsRegistry) : base(sceneRoot, relativeToNode, assetsRegistry) { }
+        }
+    }
+
+    public abstract class NodeVarStrategyDisplay<T> : NodeVarStrategyDisplay where T : NodeVarStrategy
+    {
+        public new T Strategy
+        {
+            get => (T)base.Strategy;
+            set => base.Strategy = value;
+        }
+        public new T DefaultStrategy
+        {
+            get => (T)base.DefaultStrategy;
+            set => base.DefaultStrategy = value;
+        }
 
         public override void SetData(NodeVarData data, NodeVarData defaultData = null) => SetData((T)data, (T)defaultData);
         public virtual void SetData(T data, T defaultData = null) => base.SetData(data, defaultData);

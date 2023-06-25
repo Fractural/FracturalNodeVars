@@ -5,15 +5,8 @@ using GDC = Godot.Collections;
 namespace Tests
 {
     [Tool]
-    public class InheritedNodeVarContainer : NodeVarContainer
+    public class CustomNodeVarContainer : NodeVarContainer
     {
-        [Export]
-        public Vector2 SomeVector2 { get; set; }
-        [Export]
-        public GDC.Dictionary SomeDictionary { get; set; }
-        [Export]
-        public GDC.Array SomeArray { get; set; }
-
         [NodeVar]
         public float MyFloatVar
         {
@@ -29,35 +22,29 @@ namespace Tests
         }
 
         [NodeVar]
-        public Vector3 MySetVar
+        public Vector3 MyGetVar
         {
-            set => SetNodeVar(nameof(MySetVar), value);
+            set => SetNodeVar(nameof(MyGetVar), value);
         }
 
         [NodeVar]
-        public string MyGetVar
+        public string MySetVar
         {
-            get => GetDictNodeVar<string>(nameof(MyGetVar));
+            get => GetDictNodeVar<string>(nameof(MySetVar));
         }
 
-        [NodeVar(NodeVarOperation.Set)]
+        [NodeVar(NodeVarOperation.SetPrivateGet)]
         public bool MyAttributeSetVar
         {
             get => GetDictNodeVar<bool>(nameof(MyAttributeSetVar));
             set => SetNodeVar(nameof(MyAttributeSetVar), value);
         }
 
-        [NodeVar(NodeVarOperation.Get)]
+        [NodeVar(NodeVarOperation.GetPrivateSet)]
         public bool MyAttributeGetVar
         {
             get => GetDictNodeVar<bool>(nameof(MyAttributeGetVar));
             set => SetNodeVar(nameof(MyAttributeGetVar), value);
-        }
-
-        [NodeVarFunc]
-        public int MyPow(int num, int amount)
-        {
-            return (int)Mathf.Pow(num, amount);
         }
     }
 }

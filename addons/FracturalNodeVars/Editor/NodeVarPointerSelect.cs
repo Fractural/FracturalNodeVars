@@ -120,10 +120,7 @@ namespace Fractural.NodeVars
                 .Select(x =>
                 {
                     var entry = new SearchEntry(x.Name);
-                    if (x is ITypedNodeVar typedVar)
-                        entry.Icon = _valueTypes.FirstOrDefault(v => v.Type == typedVar.ValueType)?.Icon;
-                    else if (x is ExpressionNodeVarData)
-                        entry.Icon = _expressionIcon;
+                    entry.Icon = _valueTypes.FirstOrDefault(v => v.Type == x.ValueType)?.Icon;
                     return entry;
                 })
                 .ToArray();

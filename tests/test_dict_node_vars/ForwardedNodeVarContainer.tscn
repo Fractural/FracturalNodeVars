@@ -2,84 +2,51 @@
 
 [ext_resource path="res://addons/FracturalNodeVars/NodeVarContainer/NodeVarContainer/NodeVarContainer.cs" type="Script" id=2]
 
-
 [node name="ForwardedNodeVarContainer" type="Node"]
 script = ExtResource( 2 )
 __meta__ = {
 "_nodeVars/visible": true
 }
 _nodeVars = {
-"ExpressionVar": {
-"Expression": "dummy + Var3",
-"NodeVarReferences": {
-"Var3": {
-"ContainerPath": NodePath("ChildNodeVarContainer"),
-"ContainerVarName": "dummy2"
-},
-"dummy": {
-"ContainerPath": NodePath("ChildNodeVarContainer")
-}
-},
-"Type": "ExpressionNodeVarData"
-},
-"ExpressionVarForwarded": {
-"Expression": "dummy2 + var",
-"NodeVarReferences": {
-"dummy2": {
-"ContainerPath": NodePath("ChildNodeVarContainer"),
-"ContainerVarName": "dummy"
-},
-"var": {
-"ContainerPath": NodePath("ChildNodeVarContainer"),
-"ContainerVarName": "dummy2"
-}
-},
-"Type": "ExpressionNodeVarData"
-},
 "Var1": {
-"ContainerPath": NodePath("ChildNodeVarContainer"),
-"ContainerVarName": "dummy",
-"InitialValue": 0,
 "Operation": 0,
+"Strategy": {
+"ContainerPath": NodePath("NodeVarContainer"),
+"ContainerVarName": "Var1",
+"Type": "PointerNodeVarStrategy"
+},
 "ValueType": "System.Int32"
 },
 "Var2": {
-"InitialValue": "Heyoo",
 "Operation": 0,
+"Strategy": {
+"InitialValue": "some string value",
+"Type": "ValueNodeVarStrategy"
+},
 "ValueType": "System.String"
 },
 "Var3": {
-"InitialValue": 0,
 "Operation": 0,
-"ValueType": "System.Int32"
+"Strategy": {
+"InitialValue": 0,
+"Type": "ValueNodeVarStrategy"
 },
-"Var4": {
-"InitialValue": Vector2( 0, 0 ),
-"Operation": 1,
-"Type": "DynamicNodeVarData",
-"ValueType": "Godot.Vector2"
+"ValueType": "System.Int32"
 }
 }
 
-[node name="SomeNode" type="Node" parent="."]
-
-[node name="SomeOtherNode" type="Node" parent="."]
-
-[node name="ChildNodeVarContainer" type="Node" parent="."]
+[node name="NodeVarContainer" type="Node" parent="."]
 script = ExtResource( 2 )
 __meta__ = {
 "_nodeVars/visible": true
 }
 _nodeVars = {
-"dummy": {
+"Var1": {
+"Operation": 0,
+"Strategy": {
 "InitialValue": 235,
-"Operation": 0,
-"ValueType": "System.Int32"
+"Type": "ValueNodeVarStrategy"
 },
-"dummy2": {
-"InitialValue": 43,
-"Operation": 0,
-"Type": "DynamicNodeVarData",
 "ValueType": "System.Int32"
 }
 }

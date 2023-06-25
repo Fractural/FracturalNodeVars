@@ -44,24 +44,15 @@ namespace Tests
         {
             Describe("When a NodeVarContainer scene instance is readied");
 
-            var container = _testSceneInstance.GetNode<INodeVarContainer>("Prefab");
+            var container = _testSceneInstance.GetNode<CustomNodeVarContainer>("CustomNodeVarContainer");
             Assert.IsEqual(container.GetNodeVar("InstancedVar1"), 0, "InstancedVar1 is default");
             Assert.IsEqual(container.GetNodeVar("InstancedVar2"), "heyo", "InstancedVar2 is default");
             Assert.IsEqual(container.GetNodeVar("InstancedVar3"), "new stuff", "InstancedVar3 is overwritten");
-            Assert.IsEqual(container.GetNodeVar(nameof(InheritedNodeVarContainer.MyAttributeGetVar)), true, $"{nameof(InheritedNodeVarContainer.MyAttributeGetVar)} is overwritten");
-            //Assert.IsEqual(
-            //    container.GetDictNodeVar(nameof(InheritedNodeVarContainer.MyAttributeSetVar), true),
-            //    true,
-            //    $"{nameof(InheritedNodeVarContainer.MyAttributeSetVar)} is default"
-            //);
-            Assert.IsEqual(container.GetNodeVar(nameof(InheritedNodeVarContainer.MyBoolVar)), false, $"{nameof(InheritedNodeVarContainer.MyBoolVar)} is default");
-            Assert.IsEqual(container.GetNodeVar(nameof(InheritedNodeVarContainer.MyFloatVar)), 0.543f, $"{nameof(InheritedNodeVarContainer.MyFloatVar)} is overwritten");
-            //Assert.IsEqual(
-            //    container.GetDictNodeVar(nameof(InheritedNodeVarContainer.MyGetVar), true),
-            //    "newText",
-            //    $"{nameof(InheritedNodeVarContainer.MyGetVar)} is overwritten"
-            //);
-            Assert.IsEqual(container.GetNodeVar(nameof(InheritedNodeVarContainer.MySetVar)), Vector3.Zero, $"{nameof(InheritedNodeVarContainer.MySetVar)} is default");
+            Assert.IsEqual(container.PrivateGetNodeVar(nameof(CustomNodeVarContainer.MyAttributeSetVar)), true, $"{nameof(CustomNodeVarContainer.MyAttributeSetVar)} is overwritten");
+            Assert.IsEqual(container.GetNodeVar(nameof(CustomNodeVarContainer.MyBoolVar)), false, $"{nameof(CustomNodeVarContainer.MyBoolVar)} is default");
+            Assert.IsEqual(container.GetNodeVar(nameof(CustomNodeVarContainer.MyFloatVar)), 0.543f, $"{nameof(CustomNodeVarContainer.MyFloatVar)} is overwritten");
+            Assert.IsEqual(container.GetNodeVar(nameof(CustomNodeVarContainer.MyGetVar)), Vector3.Zero, $"{nameof(CustomNodeVarContainer.MyGetVar)} is default");
+            Assert.IsEqual(container.GetNodeVar(nameof(CustomNodeVarContainer.MyAttributeGetVar)), false, $"{nameof(CustomNodeVarContainer.MyAttributeGetVar)} is default");
         }
 
         [Test]
@@ -69,17 +60,11 @@ namespace Tests
         {
             Describe("When a NodeVarContainer has forwarded variables and is readied");
 
-            var forwardContainer = _testSceneInstance.GetNode<INodeVarContainer>("Forwarded");
-            var siblingContainer = _testSceneInstance.GetNode<INodeVarContainer>("AnotherContainer");
+            var forwardContainer = _testSceneInstance.GetNode<INodeVarContainer>("ForwardedNodeVarContainer");
 
             Assert.IsEqual(forwardContainer.GetNodeVar("Var1"), 235, "Var1 is forwarded from child");
             Assert.IsEqual(forwardContainer.GetNodeVar("Var2"), "This is from another container!", "Var2 is forwarded from sibling");
             Assert.IsEqual(forwardContainer.GetNodeVar("Var3"), 0, "Var3 is default");
-
-            var newVec = new Vector2(35, 3.5f);
-            Assert.IsEqual(siblingContainer.GetNodeVar("SettableVar"), Vector2.Zero, "Sibling SettableVar is initially Vector2.Zero");
-            forwardContainer.SetNodeVar("Var4", newVec);
-            Assert.IsEqual(siblingContainer.GetNodeVar("SettableVar"), newVec, "Sibling SettableVar is now Vector2(35, 3.5f) after setting through Var4 forwarding");
         }
 
         [Test]
@@ -87,26 +72,11 @@ namespace Tests
         {
             Describe("When a NodeVarContainer has an expression and is readied");
 
-            var forwardContainer = _testSceneInstance.GetNode<INodeVarContainer>("Forwarded");
-            var functionCallContainer = _testSceneInstance.GetNode<INodeVarContainer>("FunctionCall");
+            var functionCallContainer = _testSceneInstance.GetNode<INodeVarContainer>("FunctionCallNodeVarContainer");
 
-            Assert.IsEqual(forwardContainer.GetNodeVar("ExpressionVar"), 235 + 43, "ExpressionVar should evaluate to the correct value");
-            Assert.IsEqual(forwardContainer.GetNodeVar("ExpressionVarForwarded"), (43 + 34) * 2, "ExpressionVarForwarded should evaluate to the correct value");
-            Assert.IsEqual(functionCallContainer.GetNodeVar("FuncExpression"), 100000, "FuncExpression should evaluate to correct value");
+            Assert.IsEqual(functionCallContainer.GetNodeVar("ExpressionVar"), 235 + 43, "ExpressionVar should evaluate to the correct value");
+            Assert.IsEqual(functionCallContainer.GetNodeVar("ExpressionVarForwarded"), (43 + 34) * 2, "ExpressionVarForwarded should evaluate to the correct value");
+            Assert.IsEqual(functionCallContainer.GetNodeVar("FuncExpressionVar"), 100000, "FuncExpression should evaluate to correct value");
         }
-
-        //[Test]
-        //public void TestDoubleDefaultInheritance()
-        //{
-        //    var doubleInheritPrefab = _testSceneInstance.Get("DoubleInherit");
-        //    Assert.AutoPass("TODO LATER: Make default values work with inherited scenes");
-        //}
-
-        //[Test]
-        //public void TestTripleInheritance()
-        //{
-        //    var tripleInheritPrefab = _testSceneInstance.Get("TripleInherit");
-        //    Assert.AutoPass("TODO LATER: Make default values work with inherited scenes");
-        //}
     }
 }

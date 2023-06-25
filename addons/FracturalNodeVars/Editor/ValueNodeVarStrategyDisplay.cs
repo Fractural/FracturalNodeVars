@@ -33,11 +33,13 @@ namespace Fractural.NodeVars
             base.SetData(value, defaultData);
 
             bool rebuildProperty = false;
+            bool isInitialSetup = _prevValueType == null;
             if (_prevValueType != Data.ValueType)
             {
                 rebuildProperty = true;
                 _prevValueType = Data.ValueType;
-                Strategy.InitialValue = DefaultValueUtils.GetDefault(Data.ValueType);
+                if (!isInitialSetup)
+                    Strategy.InitialValue = DefaultValueUtils.GetDefault(Data.ValueType);
                 InvokeDataChanged();
             }
             UpdateValuePropertyType(rebuildProperty);
@@ -60,6 +62,7 @@ namespace Fractural.NodeVars
                 };
                 _valuePropertyContainer.AddChild(_valueProperty);
             }
+
             _valueProperty.SetValue(Strategy.InitialValue, false);
         }
     }

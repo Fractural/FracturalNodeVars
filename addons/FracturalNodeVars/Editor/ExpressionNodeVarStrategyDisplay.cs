@@ -13,6 +13,9 @@ namespace Fractural.NodeVars
     [Tool]
     public class ExpressionNodeVarStrategyDisplay : NodeVarStrategyDisplay<ExpressionNodeVarStrategy>
     {
+        public override bool IsSameAsDefault => CheckReferencesSameAsDefault() &&
+                Equals(Data.Name, DefaultData.Name);
+
         private StringValueProperty _expressionProperty;
         private VBoxContainer _referenceEntriesVBox;
         private Button _addElementButton;
@@ -87,10 +90,11 @@ namespace Fractural.NodeVars
         {
             base.SetData(value, defaultData);
 
-            if (defaultData != null && Strategy.Expression == "")
+            if (DefaultStrategy != null && Strategy.Expression == "")
                 _expressionProperty.SetValue(DefaultStrategy.Expression, false);
             else
                 _expressionProperty.SetValue(Strategy.Expression, false);
+
             UpdateReferencesUI();
             UpdateExpressionResetButton();
         }
@@ -108,26 +112,14 @@ namespace Fractural.NodeVars
 
         private void UpdateExpressionResetButton()
         {
-            _resetExpressionButton.Visible = DefaultData != null && !IsExpressionSameAsDefault;
+            _resetExpressionButton.Visible = DefaultStrategy != null && !IsExpressionSameAsDefault;
         }
-
-        // TODO LATER: Delete if unecessary
-        //protected override bool IsSameAsDefault()
-        //{
-        //    if (DefaultData == null)
-        //        return false;
-        //    return CheckReferencesSameAsDefault() &&
-        //        Equals(Data.Name, DefaultData.Name) &&
-        //        CheckExpressionSameAsDefault();
-        //}
 
         private bool CheckReferencesSameAsDefault()
         {
             if (Strategy.NodeVarReferences.Count == 0)
                 return true;
-            if (DefaultStrategy == null)
-                return false;
-            if (Strategy.NodeVarReferences.Count > DefaultStrategy.NodeVarReferences.Count)
+            if (DefaultStrategy == null || Strategy.NodeVarReferences.Count > DefaultStrategy.NodeVarReferences.Count)
                 return false;
             foreach (var reference in Strategy.NodeVarReferences.Values)
             {
@@ -152,7 +144,7 @@ namespace Fractural.NodeVars
                 displayedReferences.Add(reference.Name, reference);
             }
 
-            if (DefaultData != null)
+            if (DefaultStrategy != null)
                 foreach (var fixedReference in DefaultStrategy.NodeVarReferences.Values)
                 {
                     var displayReference = fixedReference;
@@ -182,11 +174,13 @@ namespace Fractural.NodeVars
             });
 
             var currFocusedEntry = CurrentFocused?.GetAncestor<ExpressionNodeVarReferenceEntry>();
-            if (currFocusedEntry != null && currFocusedEntry.HasParent(this))
+            if (currFocusedEntry != null && currFocusedEntry.HasParent(_referenceEntriesVBox))
             {
                 int keyIndex = sortedReferences.FindIndex(x => x.Name == currFocusedEntry.Data.Name);
                 if (keyIndex < 0)
+                {
                     currFocusedEntry = null;
+                }
                 else
                 {
                     var targetEntry = _referenceEntriesVBox.GetChild(keyIndex);
@@ -252,7 +246,7 @@ namespace Fractural.NodeVars
         private string GetNextVarName()
         {
             IEnumerable<string> keys = Strategy.NodeVarReferences.Keys;
-            if (DefaultData != null)
+            if (DefaultStrategy != null)
                 keys = keys.Union(DefaultStrategy.NodeVarReferences.Keys);
             return NodeVarUtils.GetNextVarName(keys);
         }

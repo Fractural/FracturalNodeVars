@@ -48,12 +48,12 @@ namespace Fractural.NodeVars
 
         public static bool IsGet(this NodeVarOperation operation, bool includePrivate = false)
         {
-            return operation == NodeVarOperation.Get || operation == NodeVarOperation.GetSet || (includePrivate && IsPrivateGet(operation));
+            return operation == NodeVarOperation.Get || operation == NodeVarOperation.GetSet || operation == NodeVarOperation.GetPrivateSet || (includePrivate && IsPrivateGet(operation));
         }
 
         public static bool IsSet(this NodeVarOperation operation, bool includePrivate = false)
         {
-            return operation == NodeVarOperation.Set || operation == NodeVarOperation.GetSet || (includePrivate && IsPrivateSet(operation));
+            return operation == NodeVarOperation.Set || operation == NodeVarOperation.GetSet || operation == NodeVarOperation.SetPrivateGet || (includePrivate && IsPrivateSet(operation));
         }
 
         public static bool IsPrivate(this NodeVarOperation operation)
@@ -75,7 +75,7 @@ namespace Fractural.NodeVars
             // Private Get NodeVars are only used when the sourceNode is a child of the nodeVarContainer.
 
             bool isSourceNodeInstanced = IsInstancedScene(sourceNode, sceneRoot);
-            bool includePrivate = sourceNode.HasParent(nodeVarContainer as Node);
+            bool includePrivate = sourceNode == nodeVarContainer || sourceNode.HasParent(nodeVarContainer as Node);
             if (isSourceNodeInstanced)
                 // If the source node is instanced, then we can only make pointers for settable NodeVars, and only 
                 // attach gettable NodeVars as pointers.

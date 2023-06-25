@@ -121,6 +121,8 @@ namespace Fractural.NodeVars
                     Name = Name
                 };
             }
+
+            public override string ToString() => $"{Name}: {JSON.Print(ToGDDict())}";
         }
 
         #region Main

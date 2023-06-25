@@ -127,7 +127,7 @@ namespace Fractural.NodeVars
         {
             var data = NodeVars[key];
             if (data.Operation.IsGet())
-                return data.Value;
+                return data.GetValue();
             throw new Exception($"{nameof(NodeVarContainer)}: Could not get NodeVar of \"{key}\".");
         }
 
@@ -142,7 +142,7 @@ namespace Fractural.NodeVars
             var data = NodeVars[key];
             if (data.Operation.IsSet())
             {
-                data.Value = value;
+                data.SetValue(value);
                 return;
             }
             throw new Exception($"{nameof(NodeVarContainer)}: Could not set NodeVar of \"{key}\".");
@@ -157,7 +157,7 @@ namespace Fractural.NodeVars
         {
             var data = NodeVars[key];
             if (data.Operation.IsGet(true))
-                return data.Value;
+                return data.GetValue(true);
             throw new Exception($"{nameof(NodeVarContainer)}: Could not private get NodeVar of \"{key}\".");
         }
 
@@ -171,7 +171,7 @@ namespace Fractural.NodeVars
             var data = NodeVars[key];
             if (data.Operation.IsSet(true))
             {
-                data.Value = value;
+                data.SetValue(value, true);
                 return;
             }
             throw new Exception($"{nameof(NodeVarContainer)}: Could not private get NodeVar of \"{key}\".");

@@ -130,7 +130,11 @@ namespace Fractural.NodeVars
         /// </summary>
         private bool NonSetDisabled => IsNodeVarContainerInstanced && Data != null && !Data.Operation.IsSet();
 
-        private bool IsSameAsDefault => DefaultData != null && Data.Equals(DefaultData);
+        private bool IsSameAsDefault => DefaultData != null &&
+                Equals(DefaultData.Name, Data.Name) &&
+                Equals(DefaultData.Operation, Data.Operation) &&
+                _strategyDisplay.IsSameAsDefault &&
+                Equals(DefaultData.ValueType, Data.ValueType);
 
         public NodeVarEntry() { }
         public NodeVarEntry(INodeVarContainer propagationSource, IAssetsRegistry assetsRegistry, PackedSceneDefaultValuesRegistry defaultValuesRegistry, Node sceneRoot, Node relativeToNode)
@@ -204,6 +208,8 @@ namespace Fractural.NodeVars
             if (NodeUtils.IsInEditorSceneTab(this))
                 return;
 #endif
+            _valueTypeButton.AddColorOverride("icon_color_disabled", Colors.White);
+            _valueTypeButton.AddColorOverride("font_color_disabled", _operationButton.GetColor("font_color"));
             _operationButton.AddColorOverride("font_color_disabled", _operationButton.GetColor("font_color"));
             _deleteButton.Icon = GetIcon("Remove", "EditorIcons");
             _resetInitialValueButton.Icon = GetIcon("Reload", "EditorIcons");
@@ -302,6 +308,7 @@ namespace Fractural.NodeVars
             _deleteButton.Visible = !(IsFixed || PrivateDisabled || NonSetDisabled);
             _deleteButton.Disabled = Disabled;
             _strategyDisplay.UpdateDisabledAndFixedUI(IsFixed, Disabled, PrivateDisabled, NonSetDisabled);
+            _valueTypeButton.Disabled = IsFixed || Disabled || PrivateDisabled || NonSetDisabled;
 
             _secondRowHBox.Visible = !NonSetDisabled;
             _strategyDisplayBottomRow.Visible = !NonSetDisabled;
@@ -309,7 +316,7 @@ namespace Fractural.NodeVars
 
         private void UpdateResetButton()
         {
-            _resetInitialValueButton.Visible = DefaultData != null && !Data.Equals(DefaultData);
+            _resetInitialValueButton.Visible = DefaultData != null && !IsSameAsDefault;
         }
 
         private void UpdateOperationsValueDisplay()
@@ -359,24 +366,19 @@ namespace Fractural.NodeVars
 
         private void UpdateStrategyDisplay()
         {
-            if (Data?.Strategy == null)
-                ClearStrategyDisplay();
-            else
+            var strategyType = _validStrategyTypes.FirstOrDefault(x => x.StrategyType == Data.Strategy.GetType());
+            _strategyToggleButton.Icon = strategyType.Icon;
+
+            if (_strategyDisplay?.GetType() != strategyType.StrategyDisplayType)
             {
-                var strategyType = _validStrategyTypes.FirstOrDefault(x => x.StrategyType == Data.Strategy.GetType());
-                _strategyToggleButton.Icon = strategyType.Icon;
+                ClearStrategyDisplay();
 
-                if (_strategyDisplay?.GetType() != strategyType.StrategyDisplayType)
-                {
-                    ClearStrategyDisplay();
-
-                    _strategyDisplay = strategyType.BuildDisplay();
-                    AddChild(_strategyDisplay);
-                }
-
-                _strategyDisplay.SetData(Data, DefaultData);
-                _strategyDisplay.DataChanged += InvokeDataChanged;
+                _strategyDisplay = strategyType.BuildDisplay();
+                AddChild(_strategyDisplay);
             }
+
+            _strategyDisplay.SetData(Data, DefaultData);
+            _strategyDisplay.DataChanged += InvokeDataChanged;
         }
 
         private void InvokeDeleted() => Deleted?.Invoke(Data.Name);

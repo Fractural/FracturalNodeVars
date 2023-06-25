@@ -21,6 +21,7 @@ namespace Fractural.NodeVars
             DefaultData = defaultData;
         }
 
+        public virtual bool IsSameAsDefault => Equals(Data, DefaultData);
         public virtual void UpdateDisabledAndFixedUI(bool isFixed, bool disabled, bool privateDisabled, bool nonSetDisabled) { }
         protected void InvokeDataChanged() => DataChanged?.Invoke();
     }
@@ -30,11 +31,11 @@ namespace Fractural.NodeVars
     {
         public new T Strategy
         {
-            get => (T)base.Strategy;
+            get => base.Strategy as T;
         }
         public new T DefaultStrategy
         {
-            get => (T)base.DefaultStrategy;
+            get => base.DefaultStrategy as T;
         }
     }
 }

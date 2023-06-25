@@ -1,145 +1,160 @@
-[gd_scene load_steps=7 format=2]
+[gd_scene load_steps=5 format=2]
 
-[ext_resource path="res://tests/test_dict_node_vars/DoubleInhertiNodeVarContainer.tscn" type="PackedScene" id=1]
-[ext_resource path="res://tests/test_dict_node_vars/RegularNodeVarContainer.tscn" type="PackedScene" id=2]
-[ext_resource path="res://tests/test_dict_node_vars/TripleInheritNodeVarContainer.tscn" type="PackedScene" id=3]
+[ext_resource path="res://tests/test_dict_node_vars/CustomNodeVarContainer.tscn" type="PackedScene" id=2]
+[ext_resource path="res://tests/test_dict_node_vars/FunctionCallNodeVarContainer.cs" type="Script" id=3]
 [ext_resource path="res://addons/FracturalNodeVars/NodeVarContainer/NodeVarContainer/NodeVarContainer.cs" type="Script" id=4]
 [ext_resource path="res://tests/test_dict_node_vars/ForwardedNodeVarContainer.tscn" type="PackedScene" id=5]
-[ext_resource path="res://tests/test_dict_node_vars/InheritedNodeVarContainer.cs" type="Script" id=6]
 
 [node name="TestDictNodeVars" type="Node"]
 __meta__ = {
 "_nodeVars/visible": true
 }
 
-[node name="Prefab" parent="." instance=ExtResource( 2 )]
+[node name="CustomNodeVarContainer" parent="." instance=ExtResource( 2 )]
 _nodeVars = {
 "InstancedVar3": {
+"Operation": 0,
+"Strategy": {
 "InitialValue": "new stuff",
-"Operation": 0,
+"Type": "ValueNodeVarStrategy"
+},
 "ValueType": "System.String"
 },
-"MyAttributeGetVar": {
+"MyAttributeSetVar": {
+"Operation": 4,
+"Strategy": {
 "InitialValue": true,
+"Type": "ValueNodeVarStrategy"
+},
+"ValueType": "System.Boolean"
+},
+"MyFloatVar": {
 "Operation": 0,
-"Type": "DynamicNodeVarData",
-"ValueType": "System.Boolean"
-},
-"MyFloatVar": {
+"Strategy": {
 "InitialValue": 0.543,
-"Operation": 2,
-"ValueType": "System.Single"
+"Type": "ValueNodeVarStrategy"
 },
-"MyGetVar": {
-"InitialValue": "newText",
-"Operation": 1,
+"ValueType": "System.Single"
+}
+}
+
+[node name="ForwardedNodeVarContainer" parent="." instance=ExtResource( 5 )]
+_nodeVars = {
+"Var1": {
+"Operation": 0,
+"Strategy": {
+"ContainerPath": NodePath("NodeVarContainer"),
+"ContainerVarName": "Var1",
+"Type": "PointerNodeVarStrategy"
+},
+"ValueType": "System.Int32"
+},
+"Var2": {
+"Operation": 0,
+"Strategy": {
+"ContainerPath": NodePath("../ForwardedToNodeVarContainer"),
+"ContainerVarName": "Var1",
+"Type": "PointerNodeVarStrategy"
+},
 "ValueType": "System.String"
-}
-}
-
-[node name="DoubleInherit" parent="." instance=ExtResource( 1 )]
-_nodeVars = {
-"MyBoolVar": {
-"InitialValue": false,
-"Operation": 2,
-"ValueType": "System.Boolean"
 },
-"MyFloatVar": {
-"InitialValue": 2.3,
-"Operation": 2,
-"ValueType": "System.Single"
+"Var3": {
+"Operation": 0,
+"Strategy": {
+"InitialValue": 0,
+"Type": "ValueNodeVarStrategy"
+},
+"ValueType": "System.Int32"
 }
 }
 
-[node name="TripleInherit" parent="." instance=ExtResource( 3 )]
+[node name="FunctionCallNodeVarContainer" type="Node" parent="."]
+script = ExtResource( 3 )
+__meta__ = {
+"_nodeVars/visible": true
+}
 _nodeVars = {
+"ExpressionVar": {
+"Operation": 0,
+"Strategy": {
+"Expression": "235 + 43",
+"Type": "ExpressionNodeVarStrategy"
+},
+"ValueType": "System.Int32"
+},
+"ExpressionVarForwarded": {
+"Operation": 0,
+"Strategy": {
+"Expression": "(Var1 + Var2) * Var3",
+"NodeVarReferences": {
+"Var1": {
+"ContainerPath": NodePath("NodeVarContainer")
+},
+"Var2": {
+"ContainerPath": NodePath("NodeVarContainer")
+},
+"Var3": {
+"ContainerPath": NodePath("NodeVarContainer")
+}
+},
+"Type": "ExpressionNodeVarStrategy"
+},
+"ValueType": "System.Int32"
+},
+"FuncExpressionVar": {
+"Operation": 0,
+"Strategy": {
+"Expression": "MyPow(10, 5)",
+"Type": "ExpressionNodeVarStrategy"
+},
+"ValueType": "System.Int32"
+}
 }
 
-[node name="DummyNode" type="Node" parent="."]
-
-[node name="AnotherContainer" type="Node" parent="."]
+[node name="NodeVarContainer" type="Node" parent="FunctionCallNodeVarContainer"]
 script = ExtResource( 4 )
 __meta__ = {
 "_nodeVars/visible": true
 }
 _nodeVars = {
-"SettableVar": {
-"InitialValue": Vector2( 0, 0 ),
-"Operation": 2,
-"Type": "DynamicNodeVarData",
-"ValueType": "Godot.Vector2"
-},
-"SomeInt": {
-"InitialValue": 34,
+"Var1": {
 "Operation": 0,
-"Type": "DynamicNodeVarData",
+"Strategy": {
+"InitialValue": 43,
+"Type": "ValueNodeVarStrategy"
+},
 "ValueType": "System.Int32"
-},
-"SomeString": {
-"InitialValue": "This is from another container!",
-"Operation": 0,
-"Type": "DynamicNodeVarData",
-"ValueType": "System.String"
-}
-}
-
-[node name="Forwarded" parent="." instance=ExtResource( 5 )]
-_nodeVars = {
-"ExpressionVarForwarded": {
-"Expression": "(dummy2 + var) * 2",
-"NodeVarReferences": {
-"dummy2": {
-"ContainerPath": NodePath("../AnotherContainer"),
-"ContainerVarName": "SomeInt"
-}
-},
-"Type": "ExpressionNodeVarData"
 },
 "Var2": {
-"ContainerPath": NodePath("../AnotherContainer"),
-"ContainerVarName": "SomeString",
-"InitialValue": "Heyoo",
 "Operation": 0,
-"ValueType": "System.String"
+"Strategy": {
+"InitialValue": 34,
+"Type": "ValueNodeVarStrategy"
 },
-"Var3": {
-"InitialValue": 0,
-"Operation": 0,
 "ValueType": "System.Int32"
 },
-"Var4": {
-"ContainerPath": NodePath("../AnotherContainer"),
-"ContainerVarName": "SettableVar",
-"InitialValue": Vector2( 0, 0 ),
-"Operation": 1,
-"Type": "DynamicNodeVarData",
-"ValueType": "Godot.Vector2"
+"Var3": {
+"Operation": 0,
+"Strategy": {
+"InitialValue": 2,
+"Type": "ValueNodeVarStrategy"
+},
+"ValueType": "System.Int32"
 }
 }
 
-[node name="FunctionCall" type="Node" parent="."]
-script = ExtResource( 6 )
+[node name="ForwardedToNodeVarContainer" type="Node" parent="."]
+script = ExtResource( 3 )
 __meta__ = {
 "_nodeVars/visible": true
 }
-SomeDictionary = {
-}
-SomeArray = [  ]
 _nodeVars = {
-"FuncExpression": {
-"Expression": "MyPow(10, Var1)",
-"NodeVarReferences": {
 "Var1": {
-"ContainerPath": NodePath("."),
-"ContainerVarName": "MyInt"
-}
-},
-"Type": "ExpressionNodeVarData"
-},
-"MyInt": {
-"InitialValue": 5,
 "Operation": 0,
-"Type": "DynamicNodeVarData",
-"ValueType": "System.Int32"
+"Strategy": {
+"InitialValue": "This is from another container!",
+"Type": "ValueNodeVarStrategy"
+},
+"ValueType": "System.String"
 }
 }

@@ -1,0 +1,39 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://tests/test_dict_node_vars/CustomNodeVarContainer.cs" type="Script" id=1]
+
+[node name="CustomNodeVarContainer" type="Node"]
+script = ExtResource( 1 )
+__meta__ = {
+"_nodeVars/visible": true
+}
+_nodeVars = {
+"InstancedVar1": {
+"Operation": 0,
+"Strategy": {
+"InitialValue": 0,
+"Type": "ValueNodeVarStrategy"
+},
+"ValueType": "System.Int32"
+},
+"InstancedVar2": {
+"Operation": 0,
+"Strategy": {
+"InitialValue": "heyo",
+"Type": "ValueNodeVarStrategy"
+},
+"ValueType": "System.String"
+},
+"InstancedVar3": {
+"Operation": 0,
+"Strategy": {
+"InitialValue": "some stuff",
+"Type": "ValueNodeVarStrategy"
+},
+"ValueType": "System.String"
+}
+}
+
+[node name="SomeNode" type="Node" parent="."]
+
+[node name="SomeOtherNode" type="Node" parent="."]

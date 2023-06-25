@@ -10,46 +10,6 @@ using GDC = Godot.Collections;
 #if TOOLS
 namespace Fractural.NodeVars
 {
-    /// <summary>
-    /// The operation that users of the DictNodeVar can perform on a given DictNodeVar.
-    /// </summary>
-    [Flags]
-    public enum NodeVarOperation
-    {
-        /// <summary>
-        /// public get; public set;
-        /// </summary>
-        GetSet,
-        /// <summary>
-        /// public get;
-        /// </summary>
-        Get,
-        /// <summary>
-        /// public set;
-        /// </summary>
-        Set,
-        /// <summary>
-        /// public get; private set;
-        /// </summary>
-        GetPrivateSet,
-        /// <summary>
-        /// private get; public set;
-        /// </summary>
-        SetPrivateGet,
-        /// <summary>
-        /// private get;
-        /// </summary>
-        PrivateGet,
-        /// <summary>
-        /// private set;
-        /// </summary>
-        PrivateSet,
-        /// <summary>
-        /// private get; set;
-        /// </summary>
-        PrivateGetSet,
-    }
-
     // TODO NOW: Make NodeVarPointerSelect work with Private NodeVars
     // TODO NOW: Figure out how NodeVars should actualy work (See procreate).
     [Tool]
@@ -75,6 +35,7 @@ namespace Fractural.NodeVars
 
             public string EditButtonText => $"DictNodeVars [{_source.Value.Count}]";
             public bool HasFixedNodeVars => _fixedNodeVarsDict != null;
+            public bool IsNodeVarContainerInstanced => NodeVarUtils.IsInstancedScene(_relativeToNode, _sceneRoot);
             public bool _canAddNewVars;
             public IAssetsRegistry _assetsRegistry;
             public Control CurrentFocused
@@ -243,10 +204,20 @@ namespace Fractural.NodeVars
             {
                 if (_data._fixedNodeVarsDict != null)
                 {
-                    // Sort by whether it's fixed, and then by alphabetical order
+                    // Sort by whether it's fixed, then by settable, and then by alphabetical order
                     int fixedOrdering = _data._fixedNodeVarsDict.ContainsKey(b.Name).CompareTo(_data._fixedNodeVarsDict.ContainsKey(a.Name));
                     if (fixedOrdering == 0)
-                        return a.Name.CompareTo(b.Name);
+                    {
+                        if (_data.IsNodeVarContainerInstanced)
+                        {
+                            int setabbleOrdering = a.Operation.IsSet().CompareTo(b.Operation.IsSet());
+                            if (setabbleOrdering == 0)
+                                return a.Name.CompareTo(b.Name);
+                            return setabbleOrdering;
+                        }
+                        else
+                            return a.Name.CompareTo(b.Name);
+                    }
                     return fixedOrdering;
                 }
                 return a.Name.CompareTo(b.Name);

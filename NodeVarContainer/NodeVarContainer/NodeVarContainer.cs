@@ -18,6 +18,7 @@ namespace Fractural.NodeVars
 
     public interface IDictNodeVarContainer : INodeVarContainer
     {
+        event Action RawNodeVarsChanged;
         GDC.Dictionary RawNodeVarsGDDict { get; }
     }
 
@@ -65,8 +66,7 @@ namespace Fractural.NodeVars
     [Tool]
     public class NodeVarContainer : Node, IDictNodeVarContainer, IInjectDIContainer, ISerializationListener, IPrivateNodeVarContainer
     {
-        [Signal]
-        public delegate void RawNodeVarsChanged();
+        public event Action RawNodeVarsChanged;
 
         // Native C# Dictionary is around x9 faster than Godot Dictionary
         public IDictionary<string, NodeVarData> NodeVars { get; private set; }
@@ -78,7 +78,7 @@ namespace Fractural.NodeVars
             set
             {
                 _nodeVars = value;
-                EmitSignal(nameof(RawNodeVarsChanged));
+                RawNodeVarsChanged?.Invoke();
             }
         }
 

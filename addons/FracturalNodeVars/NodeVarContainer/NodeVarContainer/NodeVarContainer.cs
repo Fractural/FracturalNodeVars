@@ -20,6 +20,7 @@ namespace Fractural.NodeVars
     {
         event Action RawNodeVarsChanged;
         GDC.Dictionary RawNodeVarsGDDict { get; }
+        PackedSceneDefaultValuesRegistry PackedSceneDefaultValuesRegistry { get; set; }
     }
 
     /// <summary>
@@ -94,11 +95,11 @@ namespace Fractural.NodeVars
             }
         }
         public GDC.Dictionary RawNodeVarsGDDict => _NodeVars;
-        protected PackedSceneDefaultValuesRegistry _packedSceneDefaultValuesRegistry;
+        public PackedSceneDefaultValuesRegistry PackedSceneDefaultValuesRegistry { get; set; }
 
         public void Construct(DIContainer container)
         {
-            _packedSceneDefaultValuesRegistry = container.Resolve<PackedSceneDefaultValuesRegistry>();
+            PackedSceneDefaultValuesRegistry = container.Resolve<PackedSceneDefaultValuesRegistry>();
         }
 
         public override void _Ready()
@@ -194,7 +195,7 @@ namespace Fractural.NodeVars
         /// Gets a list of all DictNodeVars for this <see cref="INodeVarContainer"/>
         /// </summary>
         /// <returns></returns>
-        public NodeVarData[] GetNodeVarsList() => NodeVarUtils.GetNodeVarsList(this, _packedSceneDefaultValuesRegistry);
+        public NodeVarData[] GetNodeVarsList() => NodeVarUtils.GetNodeVarsList(this, PackedSceneDefaultValuesRegistry);
 
         public override GDC.Array _GetPropertyList()
         {

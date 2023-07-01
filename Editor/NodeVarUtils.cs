@@ -209,7 +209,7 @@ namespace Fractural.NodeVars
                 var defaultNodeVars = new Dictionary<string, NodeVarData>();
                 if (containerNode.Filename != "")
                 {
-                    var defaultInheritedNodeVars = packedSceneDefaultValuesRegistry.GetDefaultValue<GDC.Dictionary>(containerNode.Filename, "_nodeVars");
+                    var defaultInheritedNodeVars = packedSceneDefaultValuesRegistry.GetDefaultValue<GDC.Dictionary>(containerNode.Filename, "_NodeVars");
                     foreach (string key in defaultInheritedNodeVars.Keys)
                         defaultNodeVars.Add(key, NodeVarDataFromGDDict(defaultInheritedNodeVars.Get<GDC.Dictionary>(key), key));
                 }

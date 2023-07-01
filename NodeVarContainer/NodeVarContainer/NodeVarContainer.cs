@@ -65,10 +65,23 @@ namespace Fractural.NodeVars
     [Tool]
     public class NodeVarContainer : Node, IDictNodeVarContainer, IInjectDIContainer, ISerializationListener, IPrivateNodeVarContainer
     {
+        [Signal]
+        public delegate void RawNodeVarsChanged();
+
         // Native C# Dictionary is around x9 faster than Godot Dictionary
         public IDictionary<string, NodeVarData> NodeVars { get; private set; }
 
         protected GDC.Dictionary _nodeVars;
+        protected GDC.Dictionary _NodeVars
+        {
+            get => _nodeVars;
+            set
+            {
+                _nodeVars = value;
+                EmitSignal(nameof(RawNodeVarsChanged));
+            }
+        }
+
         private HintString.DictNodeVarsMode _mode = HintString.DictNodeVarsMode.LocalAttributes;
         [Export]
         public virtual HintString.DictNodeVarsMode Mode
@@ -80,7 +93,7 @@ namespace Fractural.NodeVars
                 PropertyListChangedNotify();
             }
         }
-        public GDC.Dictionary RawNodeVarsGDDict => _nodeVars;
+        public GDC.Dictionary RawNodeVarsGDDict => _NodeVars;
         protected PackedSceneDefaultValuesRegistry _packedSceneDefaultValuesRegistry;
 
         public void Construct(DIContainer container)
@@ -187,7 +200,7 @@ namespace Fractural.NodeVars
         {
             var builder = new PropertyListBuilder();
             builder.AddDictNodeVarsProp(
-                name: nameof(_nodeVars),
+                name: nameof(_NodeVars),
                 mode: Mode
             );
             return builder.Build();

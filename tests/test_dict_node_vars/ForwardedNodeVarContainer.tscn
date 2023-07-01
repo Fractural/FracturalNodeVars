@@ -5,9 +5,9 @@
 [node name="ForwardedNodeVarContainer" type="Node"]
 script = ExtResource( 2 )
 __meta__ = {
-"_nodeVars/visible": true
+"_NodeVars/visible": true
 }
-_nodeVars = {
+_NodeVars = {
 "Var1": {
 "Operation": 0,
 "Strategy": {
@@ -38,9 +38,9 @@ _nodeVars = {
 [node name="NodeVarContainer" type="Node" parent="."]
 script = ExtResource( 2 )
 __meta__ = {
-"_nodeVars/visible": true
+"_NodeVars/visible": true
 }
-_nodeVars = {
+_NodeVars = {
 "Var1": {
 "Operation": 0,
 "Strategy": {

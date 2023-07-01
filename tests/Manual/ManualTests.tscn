@@ -5,7 +5,7 @@
 [node name="ManualTests" type="Node"]
 
 [node name="TestExpressionContainer" parent="." instance=ExtResource( 1 )]
-_nodeVars = {
+_NodeVars = {
 "__ExpressionVar": {
 "Operation": 0,
 "Strategy": {

@@ -7,11 +7,11 @@
 
 [node name="TestDictNodeVars" type="Node"]
 __meta__ = {
-"_nodeVars/visible": true
+"_NodeVars/visible": true
 }
 
 [node name="CustomNodeVarContainer" parent="." instance=ExtResource( 2 )]
-_nodeVars = {
+_NodeVars = {
 "InstancedVar3": {
 "Operation": 0,
 "Strategy": {
@@ -39,7 +39,7 @@ _nodeVars = {
 }
 
 [node name="ForwardedNodeVarContainer" parent="." instance=ExtResource( 5 )]
-_nodeVars = {
+_NodeVars = {
 "Var1": {
 "Operation": 0,
 "Strategy": {
@@ -71,9 +71,9 @@ _nodeVars = {
 [node name="FunctionCallNodeVarContainer" type="Node" parent="."]
 script = ExtResource( 3 )
 __meta__ = {
-"_nodeVars/visible": true
+"_NodeVars/visible": true
 }
-_nodeVars = {
+_NodeVars = {
 "ExpressionVar": {
 "Operation": 0,
 "Strategy": {
@@ -114,9 +114,9 @@ _nodeVars = {
 [node name="NodeVarContainer" type="Node" parent="FunctionCallNodeVarContainer"]
 script = ExtResource( 4 )
 __meta__ = {
-"_nodeVars/visible": true
+"_NodeVars/visible": true
 }
-_nodeVars = {
+_NodeVars = {
 "Var1": {
 "Operation": 0,
 "Strategy": {
@@ -146,9 +146,9 @@ _nodeVars = {
 [node name="ForwardedToNodeVarContainer" type="Node" parent="."]
 script = ExtResource( 3 )
 __meta__ = {
-"_nodeVars/visible": true
+"_NodeVars/visible": true
 }
-_nodeVars = {
+_NodeVars = {
 "Var1": {
 "Operation": 0,
 "Strategy": {

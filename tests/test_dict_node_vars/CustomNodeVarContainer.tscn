@@ -5,9 +5,9 @@
 [node name="CustomNodeVarContainer" type="Node"]
 script = ExtResource( 1 )
 __meta__ = {
-"_nodeVars/visible": true
+"_NodeVars/visible": true
 }
-_nodeVars = {
+_NodeVars = {
 "InstancedVar1": {
 "Operation": 0,
 "Strategy": {

@@ -5,9 +5,9 @@
 [node name="TestExpressionContainer" type="Node"]
 script = ExtResource( 1 )
 __meta__ = {
-"_nodeVars/visible": true
+"_NodeVars/visible": true
 }
-_nodeVars = {
+_NodeVars = {
 "GetSetVar": {
 "Operation": 0,
 "Strategy": {
@@ -86,9 +86,9 @@ _nodeVars = {
 [node name="NodeVarContainer2" type="Node" parent="."]
 script = ExtResource( 1 )
 __meta__ = {
-"_nodeVars/visible": true
+"_NodeVars/visible": true
 }
-_nodeVars = {
+_NodeVars = {
 "GetSetVar": {
 "Operation": 0,
 "Strategy": {
